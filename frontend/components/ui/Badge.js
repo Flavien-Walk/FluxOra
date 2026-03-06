@@ -5,6 +5,7 @@ const variants = {
   danger: 'bg-red-100 text-red-700',
   info: 'bg-blue-100 text-blue-700',
   indigo: 'bg-indigo-100 text-indigo-700',
+  purple: 'bg-purple-100 text-purple-700',
 };
 
 // Mapping automatique pour les statuts de facture + devis
@@ -12,11 +13,15 @@ const statusVariant = {
   // Facture
   draft: 'default',
   sent: 'info',
+  email_opened: 'indigo',
+  viewed: 'indigo',
+  payment_pending: 'purple',
   paid: 'success',
   late: 'danger',
   cancelled: 'warning',
   // Devis
   accepted: 'success',
+  refused: 'danger',
   rejected: 'danger',
   expired: 'warning',
 };
@@ -25,11 +30,15 @@ const statusLabel = {
   // Facture
   draft: 'Brouillon',
   sent: 'Envoyé(e)',
+  email_opened: 'Email ouvert',
+  viewed: 'Consulté(e)',
+  payment_pending: 'Paiement en cours',
   paid: 'Payée',
   late: 'En retard',
   cancelled: 'Annulée',
   // Devis
   accepted: 'Accepté',
+  refused: 'Refusé',
   rejected: 'Refusé',
   expired: 'Expiré',
 };
