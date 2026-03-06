@@ -1,6 +1,12 @@
-import Link from "next/link";
+import Link from 'next/link';
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
 
-export default function Home() {
+export default async function Home() {
+  // Si l'utilisateur est déjà connecté → dashboard directement
+  const { userId } = await auth();
+  if (userId) redirect('/dashboard');
+
   return (
     <main className="min-h-screen flex flex-col items-center justify-center bg-white px-6">
       <div className="text-center max-w-2xl">
