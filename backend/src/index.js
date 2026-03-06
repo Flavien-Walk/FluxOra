@@ -12,9 +12,19 @@ const PORT = process.env.PORT || 5000;
 // Connexion MongoDB
 connectDB();
 
-// CORS
+// CORS — accepte localhost (dev) + Vercel (prod) + URL custom via CLIENT_URL
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://flux-ora.vercel.app',
+  process.env.CLIENT_URL,
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: (origin, cb) => {
+    // Autorise les requêtes sans origin (Postman, curl, Render healthcheck)
+    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+    cb(new Error(`CORS bloqué pour : ${origin}`));
+  },
   credentials: true,
 }));
 
