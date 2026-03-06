@@ -7,21 +7,31 @@ const variants = {
   indigo: 'bg-indigo-100 text-indigo-700',
 };
 
-// Mapping automatique pour les statuts de facture
+// Mapping automatique pour les statuts de facture + devis
 const statusVariant = {
+  // Facture
   draft: 'default',
   sent: 'info',
   paid: 'success',
   late: 'danger',
   cancelled: 'warning',
+  // Devis
+  accepted: 'success',
+  rejected: 'danger',
+  expired: 'warning',
 };
 
 const statusLabel = {
+  // Facture
   draft: 'Brouillon',
-  sent: 'Envoyée',
+  sent: 'Envoyé(e)',
   paid: 'Payée',
   late: 'En retard',
   cancelled: 'Annulée',
+  // Devis
+  accepted: 'Accepté',
+  rejected: 'Refusé',
+  expired: 'Expiré',
 };
 
 export default function Badge({ children, variant = 'default', status }) {
