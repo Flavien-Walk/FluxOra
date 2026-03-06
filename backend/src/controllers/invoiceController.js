@@ -1,4 +1,6 @@
 const Invoice = require('../models/Invoice');
+const Payment = require('../models/Payment');
+const AccountingEntry = require('../models/AccountingEntry');
 const Organization = require('../models/Organization');
 
 const getUserOrg = async (userId) =>
@@ -87,13 +89,43 @@ const updateInvoice = async (req, res) => {
   }
 
   const { lines, dueDate, notes, status, clientId } = req.body;
+  const wasUnpaid = invoice.status !== 'paid';
   if (lines) invoice.lines = lines;
   if (dueDate) invoice.dueDate = dueDate;
   if (notes !== undefined) invoice.notes = notes;
   if (status) invoice.status = status;
   if (clientId) invoice.clientId = clientId;
 
-  await invoice.save(); // déclenche le pre-save pour recalculer les totaux
+  // Si passage à "paid" manuellement → paiement + écriture comptable
+  if (status === 'paid' && wasUnpaid) {
+    invoice.paidAt = new Date();
+    await invoice.save();
+
+    const payment = await Payment.create({
+      organizationId: org._id,
+      invoiceId: invoice._id,
+      amount: invoice.total,
+      currency: invoice.currency || 'EUR',
+      status: 'succeeded',
+      paidAt: invoice.paidAt,
+    });
+
+    await AccountingEntry.create({
+      organizationId: org._id,
+      date: invoice.paidAt,
+      description: `Paiement facture ${invoice.number}`,
+      category: 'revenue',
+      type: 'credit',
+      amount: invoice.total,
+      currency: invoice.currency || 'EUR',
+      source: 'invoice',
+      sourceId: invoice._id,
+      sourceModel: 'Invoice',
+    });
+  } else {
+    await invoice.save();
+  }
+
   res.json(invoice);
 };
 
