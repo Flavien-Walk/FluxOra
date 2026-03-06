@@ -3,24 +3,24 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useInvoice } from '@/hooks/useInvoices';
+import { useQuote } from '@/hooks/useQuotes';
 import api from '@/lib/api';
 import Header from '@/components/layout/Header';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Modal from '@/components/ui/Modal';
-import InvoiceForm from '@/components/modules/InvoiceForm';
-import { ArrowLeft, Pencil, Trash2, Send, CreditCard, Mail } from 'lucide-react';
+import QuoteForm from '@/components/modules/QuoteForm';
+import { ArrowLeft, Pencil, Trash2, Send, CheckCircle, XCircle, FileText, Mail } from 'lucide-react';
 
 const fmt = (n) =>
   new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n ?? 0);
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('fr-FR') : '—');
 
-export default function InvoiceDetailPage() {
+export default function QuoteDetailPage() {
   const { id } = useParams();
   const router = useRouter();
-  const { invoice, isLoading, mutate } = useInvoice(id);
+  const { quote, isLoading, mutate } = useQuote(id);
   const [editOpen, setEditOpen] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
   const [loading, setLoading] = useState('');
@@ -30,7 +30,7 @@ export default function InvoiceDetailPage() {
   const updateStatus = async (status) => {
     setLoading(status);
     try {
-      await api.put(`/api/invoices/${id}`, { status });
+      await api.put(`/api/quotes/${id}`, { status });
       mutate();
     } finally {
       setLoading('');
@@ -38,11 +38,11 @@ export default function InvoiceDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!confirm('Supprimer cette facture ?')) return;
+    if (!confirm('Supprimer ce devis ?')) return;
     setLoading('delete');
     try {
-      await api.delete(`/api/invoices/${id}`);
-      router.push('/invoices');
+      await api.delete(`/api/quotes/${id}`);
+      router.push('/quotes');
     } finally {
       setLoading('');
     }
@@ -52,50 +52,54 @@ export default function InvoiceDetailPage() {
     e.preventDefault();
     setLoading('email');
     try {
-      await api.post(`/api/invoices/${id}/send-email`, {
+      await api.post(`/api/quotes/${id}/send-email`, {
         overrideEmail: emailOverride || undefined,
       });
       setEmailSent(true);
       setEmailOpen(false);
       mutate();
     } catch (err) {
-      alert(err.response?.data?.error || "Erreur lors de l'envoi.");
+      alert(err.response?.data?.error || 'Erreur lors de l\'envoi.');
     } finally {
       setLoading('');
     }
   };
 
+  const handleConvert = async () => {
+    if (!confirm('Convertir ce devis en facture ?')) return;
+    setLoading('convert');
+    try {
+      const { data } = await api.post(`/api/quotes/${id}/convert`);
+      router.push(`/invoices/${data.invoice._id}`);
+    } catch (err) {
+      alert(err.response?.data?.error || 'Erreur lors de la conversion.');
+      setLoading('');
+    }
+  };
+
   if (isLoading) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <div className="flex-1 flex items-center justify-center"><div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" /></div>;
   }
-  if (!invoice) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <p className="text-gray-500">Facture introuvable.</p>
-      </div>
-    );
+  if (!quote) {
+    return <div className="flex-1 flex items-center justify-center"><p className="text-gray-500">Devis introuvable.</p></div>;
   }
 
-  const isDraft = invoice.status === 'draft';
-  const isSent = invoice.status === 'sent';
-  const isPaid = invoice.status === 'paid';
-  const canEdit = isDraft;
-  const canDelete = isDraft || invoice.status === 'cancelled';
-  const clientEmail = invoice.clientId?.email;
+  const isDraft = quote.status === 'draft';
+  const isSent = quote.status === 'sent';
+  const canEdit = isDraft || isSent;
+  const canDelete = ['draft', 'rejected', 'expired'].includes(quote.status);
+  const canConvert = ['draft', 'sent', 'accepted'].includes(quote.status) && !quote.invoiceId;
+  const clientEmail = quote.clientId?.email;
 
   return (
     <>
-      <Header title={invoice.number} />
+      <Header title={quote.number} />
       <div className="flex-1 p-6 max-w-3xl space-y-5">
 
         {/* Navigation + actions */}
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <Link href="/invoices" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800">
-            <ArrowLeft size={15} /> Retour aux factures
+          <Link href="/quotes" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800">
+            <ArrowLeft size={15} /> Retour aux devis
           </Link>
           <div className="flex gap-2 flex-wrap">
             {canEdit && (
@@ -103,19 +107,22 @@ export default function InvoiceDetailPage() {
                 <Pencil size={14} /> Modifier
               </Button>
             )}
-            {!isPaid && (
-              <Button variant="secondary" size="sm" onClick={() => { setEmailOverride(clientEmail || ''); setEmailOpen(true); }} loading={loading === 'email'}>
-                <Mail size={14} /> Envoyer par email
-              </Button>
-            )}
-            {isDraft && (
-              <Button size="sm" onClick={() => updateStatus('sent')} loading={loading === 'sent'}>
-                <Send size={14} /> Marquer envoyée
-              </Button>
-            )}
+            <Button size="sm" variant="secondary" onClick={() => { setEmailOverride(clientEmail || ''); setEmailOpen(true); }} loading={loading === 'email'}>
+              <Mail size={14} /> Envoyer par email
+            </Button>
             {isSent && (
-              <Button size="sm" variant="secondary" onClick={() => updateStatus('paid')} loading={loading === 'paid'}>
-                <CreditCard size={14} /> Marquer payée
+              <>
+                <Button size="sm" onClick={() => updateStatus('accepted')} loading={loading === 'accepted'}>
+                  <CheckCircle size={14} /> Accepté
+                </Button>
+                <Button size="sm" variant="danger" onClick={() => updateStatus('rejected')} loading={loading === 'rejected'}>
+                  <XCircle size={14} /> Refusé
+                </Button>
+              </>
+            )}
+            {canConvert && (
+              <Button size="sm" onClick={handleConvert} loading={loading === 'convert'}>
+                <FileText size={14} /> Convertir en facture
               </Button>
             )}
             {canDelete && (
@@ -128,43 +135,47 @@ export default function InvoiceDetailPage() {
 
         {emailSent && (
           <div className="bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-2 rounded-lg">
-            ✓ Facture envoyée par email avec succès.
+            ✓ Devis envoyé par email avec succès.
           </div>
         )}
 
-        {/* En-tête facture */}
+        {/* En-tête devis */}
         <Card>
           <CardBody>
             <div className="flex justify-between items-start flex-wrap gap-4">
               <div>
                 <div className="flex items-center gap-3 mb-3">
-                  <h2 className="text-2xl font-bold font-mono text-gray-900">{invoice.number}</h2>
-                  <Badge status={invoice.status} />
+                  <h2 className="text-2xl font-bold font-mono text-gray-900">{quote.number}</h2>
+                  <Badge status={quote.status} />
                 </div>
                 <p className="text-sm text-gray-500">
-                  Émise le {fmtDate(invoice.issueDate)}
-                  {invoice.dueDate && ` · Échéance le ${fmtDate(invoice.dueDate)}`}
+                  Émis le {fmtDate(quote.issueDate)}
+                  {quote.expiryDate && ` · Valable jusqu'au ${fmtDate(quote.expiryDate)}`}
                 </p>
-                {invoice.sentAt && <p className="text-sm text-blue-600 mt-1">Envoyée le {fmtDate(invoice.sentAt)}</p>}
-                {invoice.paidAt && <p className="text-sm text-green-600 mt-1">Payée le {fmtDate(invoice.paidAt)}</p>}
+                {quote.acceptedAt && <p className="text-sm text-green-600 mt-1">Accepté le {fmtDate(quote.acceptedAt)}</p>}
+                {quote.invoiceId && (
+                  <p className="text-sm text-indigo-600 mt-1">
+                    Converti → <Link href={`/invoices/${quote.invoiceId._id}`} className="underline">Facture {quote.invoiceId.number}</Link>
+                  </p>
+                )}
               </div>
               <div className="text-right">
                 <p className="text-xs text-gray-400 uppercase font-medium">Total TTC</p>
-                <p className="text-3xl font-bold text-gray-900">{fmt(invoice.total)}</p>
+                <p className="text-3xl font-bold text-gray-900">{fmt(quote.total)}</p>
               </div>
             </div>
           </CardBody>
         </Card>
 
         {/* Client */}
-        {invoice.clientId && (
+        {quote.clientId && (
           <Card>
             <CardHeader><h3 className="text-sm font-semibold text-gray-700">Client</h3></CardHeader>
             <CardBody>
-              <Link href={`/clients/${invoice.clientId._id}`} className="hover:text-indigo-600">
-                <p className="font-medium text-gray-900">{invoice.clientId.name}</p>
-                {invoice.clientId.company && <p className="text-sm text-gray-500">{invoice.clientId.company}</p>}
-                {invoice.clientId.email && <p className="text-sm text-gray-500">{invoice.clientId.email}</p>}
+              <Link href={`/clients/${quote.clientId._id}`} className="hover:text-indigo-600">
+                <p className="font-medium text-gray-900">{quote.clientId.name}</p>
+                {quote.clientId.company && <p className="text-sm text-gray-500">{quote.clientId.company}</p>}
+                {quote.clientId.email && <p className="text-sm text-gray-500">{quote.clientId.email}</p>}
               </Link>
             </CardBody>
           </Card>
@@ -185,7 +196,7 @@ export default function InvoiceDetailPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {invoice.lines?.map((line, i) => (
+                {quote.lines?.map((line, i) => (
                   <tr key={i}>
                     <td className="px-6 py-3 text-gray-900">{line.description}</td>
                     <td className="px-3 py-3 text-center text-gray-600">{line.quantity}</td>
@@ -198,37 +209,41 @@ export default function InvoiceDetailPage() {
             </table>
             <div className="px-6 py-4 border-t border-gray-100 space-y-1 text-sm">
               <div className="flex justify-end gap-8 text-gray-600">
-                <span>Sous-total HT</span><span className="w-24 text-right">{fmt(invoice.subtotal)}</span>
+                <span>Sous-total HT</span><span className="w-24 text-right">{fmt(quote.subtotal)}</span>
               </div>
               <div className="flex justify-end gap-8 text-gray-600">
-                <span>TVA</span><span className="w-24 text-right">{fmt(invoice.vatAmount)}</span>
+                <span>TVA</span><span className="w-24 text-right">{fmt(quote.vatAmount)}</span>
               </div>
               <div className="flex justify-end gap-8 font-bold text-gray-900 text-base pt-2 border-t border-gray-200">
-                <span>Total TTC</span><span className="w-24 text-right">{fmt(invoice.total)}</span>
+                <span>Total TTC</span><span className="w-24 text-right">{fmt(quote.total)}</span>
               </div>
             </div>
           </CardBody>
         </Card>
 
-        {invoice.notes && (
+        {quote.notes && (
           <Card>
             <CardHeader><h3 className="text-sm font-semibold text-gray-700">Notes</h3></CardHeader>
-            <CardBody><p className="text-sm text-gray-600 whitespace-pre-line">{invoice.notes}</p></CardBody>
+            <CardBody><p className="text-sm text-gray-600 whitespace-pre-line">{quote.notes}</p></CardBody>
           </Card>
         )}
       </div>
 
-      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Modifier la facture" size="lg">
-        <InvoiceForm invoice={invoice} onSuccess={() => { setEditOpen(false); mutate(); }} onCancel={() => setEditOpen(false)} />
+      {/* Modal edit */}
+      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Modifier le devis" size="lg">
+        <QuoteForm quote={quote} onSuccess={() => { setEditOpen(false); mutate(); }} onCancel={() => setEditOpen(false)} />
       </Modal>
 
-      <Modal open={emailOpen} onClose={() => setEmailOpen(false)} title="Envoyer la facture par email">
+      {/* Modal email */}
+      <Modal open={emailOpen} onClose={() => setEmailOpen(false)} title="Envoyer le devis par email">
         <form onSubmit={handleSendEmail} className="space-y-4">
           <p className="text-sm text-gray-600">
-            La facture <strong>{invoice.number}</strong> ({fmt(invoice.total)}) sera envoyée par email.
+            Le devis <strong>{quote.number}</strong> sera envoyé par email au client.
           </p>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email destinataire</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email destinataire
+            </label>
             <input
               type="email"
               value={emailOverride}

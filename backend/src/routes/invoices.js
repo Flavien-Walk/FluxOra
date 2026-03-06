@@ -7,6 +7,7 @@ const {
   createInvoice,
   updateInvoice,
   deleteInvoice,
+  sendEmail,
 } = require('../controllers/invoiceController');
 
 router.get('/', requireAuth, getInvoices);
@@ -14,5 +15,6 @@ router.get('/:id', requireAuth, getInvoice);
 router.post('/', requireAuth, createInvoice);
 router.put('/:id', requireAuth, updateInvoice);
 router.delete('/:id', requireAuth, deleteInvoice);
+router.post('/:id/send-email', requireAuth, sendEmail);
 
 module.exports = router;

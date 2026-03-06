@@ -42,6 +42,7 @@ app.use('/api/health', require('./routes/health'));
 app.use('/api/organizations', require('./routes/organizations'));
 app.use('/api/clients', require('./routes/clients'));
 app.use('/api/invoices', require('./routes/invoices'));
+app.use('/api/quotes', require('./routes/quotes'));
 app.use('/api/expenses', require('./routes/expenses'));
 app.use('/api/accounting', require('./routes/accounting'));
 app.use('/api/dashboard', require('./routes/dashboard'));

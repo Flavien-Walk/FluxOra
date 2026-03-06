@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Users,
   FileText,
+  ClipboardList,
   Receipt,
   BookOpen,
   Settings,
@@ -16,6 +17,7 @@ const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/clients', label: 'Clients', icon: Users },
   { href: '/invoices', label: 'Factures', icon: FileText },
+  { href: '/quotes', label: 'Devis', icon: ClipboardList },
   { href: '/expenses', label: 'Dépenses', icon: Receipt },
   { href: '/accounting', label: 'Comptabilité', icon: BookOpen },
 ];
