@@ -1,26 +1,44 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
+import api from '@/lib/api';
 import Button from '@/components/ui/Button';
 import { Zap } from 'lucide-react';
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { user, isLoaded } = useUser();
   const [form, setForm] = useState({ name: '', email: '', currency: 'EUR' });
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
   const [error, setError] = useState('');
+
+  // Si l'utilisateur a déjà une organisation, redirige vers le dashboard
+  useEffect(() => {
+    if (!isLoaded) return;
+    api.get('/api/organizations/me')
+      .then(() => router.replace('/dashboard'))
+      .catch(() => setChecking(false)); // 404 = pas d'org → affiche le formulaire
+  }, [isLoaded, router]);
+
+  // Pré-remplit l'email depuis Clerk
+  useEffect(() => {
+    if (user?.primaryEmailAddress?.emailAddress) {
+      setForm((f) => ({ ...f, email: user.primaryEmailAddress.emailAddress }));
+    }
+  }, [user]);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!form.name.trim()) return;
     setLoading(true);
     setError('');
     try {
-      // Sera connecté au backend en Phase 4 (Clerk token)
-      // const res = await api.post('/api/organizations', form);
-      // Pour l'instant on redirige
+      await api.post('/api/organizations', form);
       router.push('/dashboard');
     } catch (err) {
       setError(err.response?.data?.error || 'Erreur lors de la création.');
@@ -29,10 +47,17 @@ export default function OnboardingPage() {
     }
   };
 
+  if (checking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-4">
             <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
@@ -46,7 +71,6 @@ export default function OnboardingPage() {
           </p>
         </div>
 
-        {/* Formulaire */}
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
