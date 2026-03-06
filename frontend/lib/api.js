@@ -7,12 +7,18 @@ const api = axios.create({
   },
 });
 
-// Injecte automatiquement le token Clerk dans chaque requête
-// Sera activé en Phase 4 quand Clerk sera configuré
-// api.interceptors.request.use(async (config) => {
-//   const token = await window.Clerk?.session?.getToken();
-//   if (token) config.headers.Authorization = `Bearer ${token}`;
-//   return config;
-// });
+// Injecte le token Clerk dans chaque requête via window.Clerk
+// Clerk expose l'objet globalement côté client
+api.interceptors.request.use(async (config) => {
+  try {
+    const token = await window.Clerk?.session?.getToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } catch {
+    // Clerk pas encore chargé — la requête part sans token
+  }
+  return config;
+});
 
 export default api;
