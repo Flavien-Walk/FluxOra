@@ -130,12 +130,13 @@ const sendEmail = async (req, res) => {
     overrideEmail,
   });
 
-  // Marquer comme envoyé si brouillon
+  // Enregistrer l'événement et mettre à jour le statut
+  quote.events.push({ type: 'sent', timestamp: new Date() });
   if (quote.status === 'draft') {
     quote.status = 'sent';
     quote.sentAt = new Date();
-    await quote.save();
   }
+  await quote.save();
 
   res.json({ message: 'Devis envoyé par email.', status: quote.status });
 };

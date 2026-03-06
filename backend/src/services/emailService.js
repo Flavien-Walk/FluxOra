@@ -5,7 +5,10 @@ const fmt = (n, currency = 'EUR') =>
 
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('fr-FR') : '—');
 
-// ─── Template de base ───────────────────────────────────────────────────────
+const getServerUrl = () => process.env.SERVER_URL || 'https://fluxora-ld8h.onrender.com';
+const getClientUrl = () => process.env.CLIENT_URL || 'https://flux-ora.vercel.app';
+
+// ─── Template de base ────────────────────────────────────────────────────────
 const baseTemplate = ({ title, preheader, bodyHtml, orgName }) => `
 <!DOCTYPE html>
 <html lang="fr">
@@ -26,7 +29,7 @@ const baseTemplate = ({ title, preheader, bodyHtml, orgName }) => `
             <table width="100%" cellpadding="0" cellspacing="0">
               <tr>
                 <td>
-                  <span style="color:#fff;font-size:22px;font-weight:700;letter-spacing:-0.5px;">⚡ Fluxora</span>
+                  <span style="color:#fff;font-size:22px;font-weight:700;letter-spacing:-0.5px;">Fluxora</span>
                 </td>
                 <td align="right">
                   <span style="color:#c7d2fe;font-size:13px;">${orgName}</span>
@@ -62,8 +65,13 @@ const baseTemplate = ({ title, preheader, bodyHtml, orgName }) => `
 </html>
 `;
 
-// ─── Template Facture ────────────────────────────────────────────────────────
+// ─── Template Facture ─────────────────────────────────────────────────────────
 const invoiceEmailHtml = ({ invoice, org, client }) => {
+  const serverUrl = getServerUrl();
+  const clientUrl = getClientUrl();
+  const token = invoice.trackingToken;
+  const payUrl = `${clientUrl}/pay/${token}`;
+
   const linesHtml = invoice.lines.map((l) => `
     <tr style="border-bottom:1px solid #f3f4f6;">
       <td style="padding:10px 12px;font-size:14px;color:#374151;">${l.description}</td>
@@ -139,9 +147,28 @@ const invoiceEmailHtml = ({ invoice, org, client }) => {
       <p style="margin:0;font-size:13px;color:#78350f;">${invoice.notes}</p>
     </div>` : ''}
 
+    ${token ? `
+    <!-- Bouton paiement -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+      <tr>
+        <td align="center">
+          <a href="${payUrl}" style="display:inline-block;background:#4f46e5;color:#fff;font-size:16px;font-weight:700;text-decoration:none;padding:16px 40px;border-radius:10px;letter-spacing:0.01em;">
+            Payer maintenant — ${fmt(invoice.total, invoice.currency)}
+          </a>
+        </td>
+      </tr>
+      <tr>
+        <td align="center" style="padding-top:8px;">
+          <span style="font-size:11px;color:#9ca3af;">Paiement sécurisé · Carte, virement, SEPA</span>
+        </td>
+      </tr>
+    </table>` : ''}
+
     <p style="margin:0;font-size:13px;color:#6b7280;text-align:center;">
       Pour toute question, contactez-nous à <strong>${org.email || 'contact@fluxora.app'}</strong>
     </p>
+
+    ${token ? `<img src="${serverUrl}/api/public/track/invoice/${token}" width="1" height="1" alt="" style="display:block;width:1px;height:1px;" />` : ''}
   `;
 
   return baseTemplate({
@@ -152,8 +179,13 @@ const invoiceEmailHtml = ({ invoice, org, client }) => {
   });
 };
 
-// ─── Template Devis ──────────────────────────────────────────────────────────
+// ─── Template Devis ───────────────────────────────────────────────────────────
 const quoteEmailHtml = ({ quote, org, client }) => {
+  const serverUrl = getServerUrl();
+  const clientUrl = getClientUrl();
+  const token = quote.trackingToken;
+  const quoteUrl = `${clientUrl}/q/${token}`;
+
   const linesHtml = quote.lines.map((l) => `
     <tr style="border-bottom:1px solid #f3f4f6;">
       <td style="padding:10px 12px;font-size:14px;color:#374151;">${l.description}</td>
@@ -165,11 +197,12 @@ const quoteEmailHtml = ({ quote, org, client }) => {
   `).join('');
 
   const bodyHtml = `
+    ${quote.expiryDate ? `
     <div style="background:#eef2ff;border-left:4px solid #4f46e5;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:24px;">
       <p style="margin:0;font-size:13px;color:#4338ca;font-weight:500;">
-        📋 Ce devis est valable jusqu'au <strong>${fmtDate(quote.expiryDate)}</strong>. Pour l'accepter, contactez-nous.
+        Devis valable jusqu'au <strong>${fmtDate(quote.expiryDate)}</strong>.
       </p>
-    </div>
+    </div>` : ''}
 
     <h2 style="margin:0 0 4px;font-size:24px;font-weight:700;color:#111827;">Devis ${quote.number}</h2>
     <p style="margin:0 0 24px;font-size:14px;color:#6b7280;">Émis le ${fmtDate(quote.issueDate)}${quote.expiryDate ? ` · Valable jusqu'au ${fmtDate(quote.expiryDate)}` : ''}</p>
@@ -233,9 +266,46 @@ const quoteEmailHtml = ({ quote, org, client }) => {
       <p style="margin:0;font-size:13px;color:#78350f;">${quote.notes}</p>
     </div>` : ''}
 
+    ${token ? `
+    <!-- Boutons Accepter / Refuser -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
+      <tr>
+        <td align="center">
+          <table cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="background:#4f46e5;border-radius:8px;">
+                <a href="${quoteUrl}" style="display:inline-block;padding:14px 32px;font-size:15px;font-weight:700;color:#fff;text-decoration:none;border-radius:8px;">
+                  Consulter et répondre au devis
+                </a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td align="center" style="padding-top:12px;">
+          <table cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="padding:0 8px;">
+                <a href="${quoteUrl}?action=accept" style="display:inline-block;background:#d1fae5;color:#065f46;font-size:14px;font-weight:600;text-decoration:none;padding:10px 24px;border-radius:8px;border:1px solid #6ee7b7;">
+                  Accepter
+                </a>
+              </td>
+              <td style="padding:0 8px;">
+                <a href="${quoteUrl}?action=refuse" style="display:inline-block;background:#fff;color:#6b7280;font-size:14px;font-weight:600;text-decoration:none;padding:10px 24px;border-radius:8px;border:1px solid #e5e7eb;">
+                  Refuser
+                </a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>` : `
     <p style="margin:0;font-size:13px;color:#6b7280;text-align:center;">
       Pour accepter ce devis ou pour toute question : <strong>${org.email || 'contact@fluxora.app'}</strong>
-    </p>
+    </p>`}
+
+    ${token ? `<img src="${serverUrl}/api/public/track/quote/${token}" width="1" height="1" alt="" style="display:block;width:1px;height:1px;" />` : ''}
   `;
 
   return baseTemplate({
@@ -246,7 +316,7 @@ const quoteEmailHtml = ({ quote, org, client }) => {
   });
 };
 
-// ─── Envoi via Brevo ─────────────────────────────────────────────────────────
+// ─── Envoi via Brevo ──────────────────────────────────────────────────────────
 const sendEmail = async ({ to, toName, subject, html }) => {
   const senderEmail = process.env.BREVO_SENDER_EMAIL || 'noreply@fluxora.app';
   const senderName = process.env.BREVO_SENDER_NAME || 'Fluxora';
@@ -275,7 +345,7 @@ const sendEmail = async ({ to, toName, subject, html }) => {
   return res.json();
 };
 
-// ─── Exports ─────────────────────────────────────────────────────────────────
+// ─── Exports ──────────────────────────────────────────────────────────────────
 const sendInvoiceEmail = async ({ invoice, org, client, overrideEmail }) => {
   const toEmail = overrideEmail || client.email;
   if (!toEmail) throw new Error('Aucune adresse email pour ce client.');

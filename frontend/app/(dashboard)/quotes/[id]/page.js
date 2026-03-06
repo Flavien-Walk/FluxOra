@@ -11,7 +11,18 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Modal from '@/components/ui/Modal';
 import QuoteForm from '@/components/modules/QuoteForm';
-import { ArrowLeft, Pencil, Trash2, Send, CheckCircle, XCircle, FileText, Mail } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2, Send, CheckCircle, XCircle, FileText, Mail, Clock } from 'lucide-react';
+
+const EVENT_CONFIG = {
+  created:      { label: 'Créé',               color: 'bg-gray-100 text-gray-500' },
+  sent:         { label: 'Envoyé par email',    color: 'bg-blue-100 text-blue-600' },
+  email_opened: { label: 'Email ouvert',        color: 'bg-indigo-100 text-indigo-600' },
+  viewed:       { label: 'Consulté par le client', color: 'bg-indigo-100 text-indigo-600' },
+  accepted:     { label: 'Accepté',             color: 'bg-green-100 text-green-600' },
+  refused:      { label: 'Refusé',              color: 'bg-red-100 text-red-600' },
+  expired:      { label: 'Expiré',              color: 'bg-yellow-100 text-yellow-600' },
+  reminder_sent:{ label: 'Rappel envoyé',       color: 'bg-blue-100 text-blue-500' },
+};
 
 const fmt = (n) =>
   new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n ?? 0);
@@ -225,6 +236,39 @@ export default function QuoteDetailPage() {
           <Card>
             <CardHeader><h3 className="text-sm font-semibold text-gray-700">Notes</h3></CardHeader>
             <CardBody><p className="text-sm text-gray-600 whitespace-pre-line">{quote.notes}</p></CardBody>
+          </Card>
+        )}
+
+        {quote.events?.length > 0 && (
+          <Card>
+            <CardHeader>
+              <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <Clock size={14} className="text-gray-400" /> Historique
+              </h3>
+            </CardHeader>
+            <CardBody>
+              <ol className="relative border-l border-gray-200 space-y-4 ml-2">
+                {[...quote.events].reverse().map((ev, i) => {
+                  const cfg = EVENT_CONFIG[ev.type] || { label: ev.type, color: 'bg-gray-100 text-gray-500' };
+                  return (
+                    <li key={i} className="ml-4">
+                      <span className={`absolute -left-1.5 mt-1 w-3 h-3 rounded-full border-2 border-white ${cfg.color.split(' ')[0]}`} />
+                      <div className="flex items-start gap-3">
+                        <div className="flex-1">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${cfg.color}`}>
+                            {cfg.label}
+                          </span>
+                          {ev.note && <p className="text-xs text-gray-500 mt-0.5">{ev.note}</p>}
+                        </div>
+                        <time className="text-xs text-gray-400 whitespace-nowrap mt-0.5">
+                          {new Date(ev.timestamp).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}
+                        </time>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
+            </CardBody>
           </Card>
         )}
       </div>

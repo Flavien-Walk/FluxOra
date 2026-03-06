@@ -109,11 +109,12 @@ const sendEmail = async (req, res) => {
   if (!invoice) return res.status(404).json({ error: 'Facture introuvable.' });
   const { overrideEmail } = req.body;
   await sendInvoiceEmail({ invoice, org, client: invoice.clientId, overrideEmail });
+  invoice.events.push({ type: 'sent', timestamp: new Date() });
   if (invoice.status === 'draft') {
     invoice.status = 'sent';
     invoice.sentAt = new Date();
-    await invoice.save();
   }
+  await invoice.save();
   res.json({ message: 'Facture envoyée par email.', status: invoice.status });
 };
 

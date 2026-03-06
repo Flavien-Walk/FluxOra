@@ -34,6 +34,9 @@ app.use('/api/webhooks', express.raw({ type: 'application/json' }));
 // Body parser JSON
 app.use(express.json());
 
+// Routes publiques (sans auth) — AVANT le clerkMiddleware
+app.use('/api/public', require('./routes/public'));
+
 // Clerk middleware — parse le JWT sur chaque requête
 app.use(clerkMiddleware());
 
