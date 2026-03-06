@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const Invoice = require('../models/Invoice');
 const Payment = require('../models/Payment');
 const AccountingEntry = require('../models/AccountingEntry');
@@ -8,6 +7,7 @@ const AccountingEntry = require('../models/AccountingEntry');
 // POST /api/webhooks/stripe
 // Corps brut requis — monté avant express.json() dans index.js
 router.post('/stripe', async (req, res) => {
+  const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
   const sig = req.headers['stripe-signature'];
   let event;
 
