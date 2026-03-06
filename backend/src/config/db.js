@@ -1,4 +1,9 @@
 const mongoose = require('mongoose');
+const dns = require('dns');
+
+// Force Google DNS pour résoudre les enregistrements SRV MongoDB Atlas
+// Contourne les box/routeurs qui ne supportent pas les requêtes SRV
+dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 const connectDB = async () => {
   try {
