@@ -11,7 +11,7 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Modal from '@/components/ui/Modal';
 import InvoiceForm from '@/components/modules/InvoiceForm';
-import { ArrowLeft, Pencil, Trash2, Send, CreditCard, Mail, Clock } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2, Send, CreditCard, Mail, Clock, CheckCircle2, Building2, Banknote, Smartphone } from 'lucide-react';
 
 const EVENT_CONFIG = {
   created:           { label: 'Créée',                  color: 'bg-gray-100 text-gray-500' },
@@ -27,6 +27,116 @@ const EVENT_CONFIG = {
 const fmt = (n) =>
   new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n ?? 0);
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('fr-FR') : '—');
+
+const PAYMENT_METHODS = [
+  { id: 'card',    label: 'Carte bancaire',  sub: 'Visa, Mastercard, CB',       Icon: CreditCard,  color: 'indigo' },
+  { id: 'wire',    label: 'Virement SEPA',   sub: 'Délai 1–2 jours ouvrés',    Icon: Building2,   color: 'blue'   },
+  { id: 'direct',  label: 'Prélèvement',     sub: 'Autorisation SEPA requise',  Icon: Banknote,    color: 'violet' },
+  { id: 'wallet',  label: 'Wallet Fluxora',  sub: 'Paiement instantané simulé', Icon: Smartphone,  color: 'emerald'},
+];
+
+const COLOR_RING = {
+  indigo:  'border-indigo-400 bg-indigo-50',
+  blue:    'border-blue-400 bg-blue-50',
+  violet:  'border-violet-400 bg-violet-50',
+  emerald: 'border-emerald-400 bg-emerald-50',
+};
+const COLOR_ICON = {
+  indigo:  'text-indigo-600',
+  blue:    'text-blue-600',
+  violet:  'text-violet-600',
+  emerald: 'text-emerald-600',
+};
+
+function PaymentSimulationBlock({ invoice, onMarkPaid, loading }) {
+  const [selected, setSelected] = useState('card');
+  const [confirmed, setConfirmed] = useState(false);
+
+  const fmt = (n) =>
+    new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n ?? 0);
+
+  const handleConfirm = async () => {
+    setConfirmed(true);
+    await onMarkPaid();
+  };
+
+  if (confirmed) {
+    return (
+      <div className="bg-green-50 border border-green-200 rounded-xl p-6 flex items-center gap-4">
+        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+          <CheckCircle2 size={20} className="text-green-600" />
+        </div>
+        <div>
+          <p className="font-semibold text-green-800">Paiement confirmé</p>
+          <p className="text-sm text-green-600">La facture a été marquée comme payée.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+      <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-semibold text-gray-700">Procéder au paiement</h3>
+          <p className="text-xs text-gray-400 mt-0.5">Simulation — en production via Stripe</p>
+        </div>
+        <p className="text-xl font-bold text-gray-900">{fmt(invoice.total)}</p>
+      </div>
+
+      <div className="p-6 space-y-4">
+        {/* Choix du mode de paiement */}
+        <p className="text-xs font-medium text-gray-500 uppercase">Mode de paiement</p>
+        <div className="grid grid-cols-2 gap-3">
+          {PAYMENT_METHODS.map(({ id, label, sub, Icon, color }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setSelected(id)}
+              className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${
+                selected === id ? COLOR_RING[color] : 'border-gray-100 hover:border-gray-200'
+              }`}
+            >
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${selected === id ? '' : 'bg-gray-100'}`}>
+                <Icon size={16} className={selected === id ? COLOR_ICON[color] : 'text-gray-400'} />
+              </div>
+              <div>
+                <p className={`text-xs font-semibold ${selected === id ? 'text-gray-900' : 'text-gray-600'}`}>{label}</p>
+                <p className="text-xs text-gray-400">{sub}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {/* Récapitulatif */}
+        <div className="bg-gray-50 rounded-xl p-4 text-sm space-y-1">
+          <div className="flex justify-between text-gray-500">
+            <span>Facture</span>
+            <span className="font-mono">{invoice.number}</span>
+          </div>
+          <div className="flex justify-between text-gray-500">
+            <span>Mode</span>
+            <span>{PAYMENT_METHODS.find((m) => m.id === selected)?.label}</span>
+          </div>
+          <div className="flex justify-between font-bold text-gray-900 pt-1 border-t border-gray-200">
+            <span>Total à payer</span>
+            <span>{fmt(invoice.total)}</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 pt-1">
+          <Button onClick={handleConfirm} loading={loading} className="flex-1">
+            <CheckCircle2 size={15} />
+            Confirmer le paiement
+          </Button>
+          <p className="text-xs text-gray-400 text-center">
+            Sécurisé via<br />Stripe (simulation)
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function InvoiceDetailPage() {
   const { id } = useParams();
@@ -220,6 +330,15 @@ export default function InvoiceDetailPage() {
             </div>
           </CardBody>
         </Card>
+
+        {/* Simulation paiement (visible si facture envoyée ou en retard) */}
+        {(isSent || invoice.status === 'late') && (
+          <PaymentSimulationBlock
+            invoice={invoice}
+            onMarkPaid={() => updateStatus('paid')}
+            loading={loading === 'paid'}
+          />
+        )}
 
         {invoice.notes && (
           <Card>
