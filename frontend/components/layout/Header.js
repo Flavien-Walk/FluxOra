@@ -6,17 +6,14 @@ import { cn } from '@/lib/utils';
 
 export default function Header({ title, subtitle, actions }) {
   return (
-    <header className="h-14 bg-white border-b border-gray-100 flex items-center justify-between px-6 flex-shrink-0">
+    <header className="h-14 bg-white border-b border-slate-100 flex items-center justify-between px-6 flex-shrink-0">
       {/* Left: page title */}
       <div className="min-w-0">
-        <h1 className={cn(
-          'font-semibold text-gray-900 truncate',
-          subtitle ? 'text-sm' : 'text-sm'
-        )}>
+        <h1 className="text-sm font-semibold text-slate-900 truncate">
           {title}
         </h1>
         {subtitle && (
-          <p className="text-xs text-gray-400 truncate">{subtitle}</p>
+          <p className="text-xs text-slate-400 truncate mt-0.5">{subtitle}</p>
         )}
       </div>
 
@@ -26,10 +23,10 @@ export default function Header({ title, subtitle, actions }) {
 
         <button className={cn(
           'w-8 h-8 flex items-center justify-center rounded-lg',
-          'text-gray-400 hover:text-gray-600 hover:bg-gray-50',
+          'text-slate-400 hover:text-slate-600 hover:bg-slate-50',
           'transition-colors duration-150'
         )}>
-          <Bell size={16} />
+          <Bell size={15} />
         </button>
 
         <UserButton afterSignOutUrl="/" />

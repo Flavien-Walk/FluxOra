@@ -4,10 +4,10 @@ import { cn } from '@/lib/utils';
 
 const variants = {
   primary:   'bg-accent-500 text-white shadow-xs hover:bg-accent-600 active:bg-accent-700',
-  secondary: 'bg-white text-gray-700 border border-gray-200 shadow-xs hover:bg-gray-50 active:bg-gray-100',
-  danger:    'bg-red-500 text-white shadow-xs hover:bg-red-600 active:bg-red-700',
-  ghost:     'text-gray-600 hover:bg-gray-100 hover:text-gray-900 active:bg-gray-200',
-  outline:   'border border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50',
+  secondary: 'bg-white text-slate-700 border border-slate-200 shadow-xs hover:bg-slate-50 active:bg-slate-100',
+  danger:    'bg-danger-500 text-white shadow-xs hover:bg-danger-600 active:bg-danger-700',
+  ghost:     'text-slate-600 hover:bg-slate-100 hover:text-slate-900 active:bg-slate-200',
+  outline:   'border border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50',
 };
 
 const sizes = {

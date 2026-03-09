@@ -31,16 +31,16 @@ export default function ClientsPage() {
       <div className="flex-1 p-6">
         {/* Recherche */}
         <div className="relative w-full sm:w-72 mb-5">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             placeholder="Rechercher un client…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className={cn(
-              'w-full pl-9 pr-3 h-9 border border-gray-200 rounded-lg text-sm',
+              'w-full pl-9 pr-3 h-9 border border-slate-200 rounded-lg text-sm bg-white',
               'focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent',
-              'placeholder:text-gray-400 transition-shadow'
+              'placeholder:text-slate-400 transition-shadow'
             )}
           />
         </div>
@@ -60,25 +60,25 @@ export default function ClientsPage() {
           </Card>
         ) : (
           <Card>
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-slate-50">
               {clients.map((client) => (
                 <Link
                   key={client._id}
                   href={`/clients/${client._id}`}
-                  className="flex items-center justify-between px-5 py-3.5 hover:bg-gray-50/70 transition-colors group"
+                  className="flex items-center justify-between px-5 py-3.5 hover:bg-slate-50/80 transition-colors group"
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="w-9 h-9 bg-accent-50 text-accent-700 rounded-full flex items-center justify-center font-semibold text-sm flex-shrink-0">
+                    <div className="w-9 h-9 bg-accent-50 text-accent-600 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
                       {client.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-medium text-gray-900 text-sm truncate">{client.name}</p>
+                      <p className="font-medium text-slate-900 text-sm truncate">{client.name}</p>
                       {client.company && (
-                        <p className="text-xs text-gray-400 truncate">{client.company}</p>
+                        <p className="text-xs text-slate-400 truncate">{client.company}</p>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-5 text-xs text-gray-400 flex-shrink-0">
+                  <div className="flex items-center gap-5 text-xs text-slate-400 flex-shrink-0">
                     {client.email && (
                       <span className="hidden sm:flex items-center gap-1.5">
                         <Mail size={12} /> {client.email}
@@ -89,13 +89,13 @@ export default function ClientsPage() {
                         <Phone size={12} /> {client.phone}
                       </span>
                     )}
-                    <ChevronRight size={14} className="text-gray-300 group-hover:text-gray-500 transition-colors" />
+                    <ChevronRight size={14} className="text-slate-300 group-hover:text-slate-500 transition-colors" />
                   </div>
                 </Link>
               ))}
             </div>
             {total > clients.length && (
-              <div className="px-5 py-3 border-t border-gray-50 text-xs text-gray-400 text-center">
+              <div className="px-5 py-3 border-t border-slate-100 text-xs text-slate-400 text-center">
                 {total} clients au total
               </div>
             )}

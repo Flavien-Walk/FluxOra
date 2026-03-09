@@ -2,14 +2,14 @@ import { cn } from '@/lib/utils';
 
 /* ─── Variants ─────────────────────────────────────────── */
 const variants = {
-  default:  { bg: 'bg-gray-100',   text: 'text-gray-600',   dot: 'bg-gray-400'   },
-  success:  { bg: 'bg-green-50',   text: 'text-green-700',  dot: 'bg-green-500'  },
-  warning:  { bg: 'bg-amber-50',   text: 'text-amber-700',  dot: 'bg-amber-400'  },
-  danger:   { bg: 'bg-red-50',     text: 'text-red-700',    dot: 'bg-red-500'    },
-  info:     { bg: 'bg-blue-50',    text: 'text-blue-700',   dot: 'bg-blue-500'   },
-  indigo:   { bg: 'bg-indigo-50',  text: 'text-indigo-700', dot: 'bg-indigo-500' },
-  purple:   { bg: 'bg-purple-50',  text: 'text-purple-700', dot: 'bg-purple-500' },
-  orange:   { bg: 'bg-orange-50',  text: 'text-orange-700', dot: 'bg-orange-500' },
+  default:  { bg: 'bg-slate-100',   text: 'text-slate-600',   dot: 'bg-slate-400'   },
+  success:  { bg: 'bg-success-50',  text: 'text-success-700', dot: 'bg-success-500' },
+  warning:  { bg: 'bg-warning-50',  text: 'text-warning-700', dot: 'bg-warning-500' },
+  danger:   { bg: 'bg-danger-50',   text: 'text-danger-700',  dot: 'bg-danger-500'  },
+  info:     { bg: 'bg-accent-50',   text: 'text-accent-600',  dot: 'bg-accent-500'  },
+  indigo:   { bg: 'bg-accent-50',   text: 'text-accent-700',  dot: 'bg-accent-500'  },
+  purple:   { bg: 'bg-purple-50',   text: 'text-purple-700',  dot: 'bg-purple-500'  },
+  orange:   { bg: 'bg-orange-50',   text: 'text-orange-700',  dot: 'bg-orange-500'  },
 };
 
 /* ─── Status → variant mapping ─────────────────────────── */

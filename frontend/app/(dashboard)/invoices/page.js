@@ -29,7 +29,7 @@ const fmtDate = (d) =>
   d ? new Date(d).toLocaleDateString('fr-FR') : '—';
 
 export default function InvoicesPage() {
-  const [filter, setFilter]     = useState('');
+  const [filter, setFilter]       = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const { invoices, isLoading, mutate } = useInvoices(filter);
 
@@ -45,16 +45,16 @@ export default function InvoicesPage() {
       />
       <div className="flex-1 p-6">
         {/* Filtres */}
-        <div className="flex gap-1 flex-wrap mb-5">
+        <div className="flex gap-1.5 flex-wrap mb-5">
           {FILTERS.map(({ label, value }) => (
             <button
               key={value}
               onClick={() => setFilter(value)}
               className={cn(
-                'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                'px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150',
                 filter === value
-                  ? 'bg-accent-600 text-white'
-                  : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                  ? 'bg-accent-600 text-white shadow-xs'
+                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
               )}
             >
               {label}
@@ -78,7 +78,7 @@ export default function InvoicesPage() {
         ) : (
           <Card>
             {/* En-tête tableau */}
-            <div className="hidden sm:grid grid-cols-12 gap-4 px-5 py-3 border-b border-gray-100 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+            <div className="hidden sm:grid grid-cols-12 gap-4 px-5 py-3 border-b border-slate-100 text-[11px] font-semibold text-slate-400 uppercase tracking-wide bg-slate-50/60">
               <span className="col-span-2">Numéro</span>
               <span className="col-span-3">Client</span>
               <span className="col-span-2">Statut</span>
@@ -86,31 +86,31 @@ export default function InvoicesPage() {
               <span className="col-span-2 text-right">Montant TTC</span>
               <span className="col-span-1" />
             </div>
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-slate-50">
               {invoices.map((inv) => (
                 <Link
                   key={inv._id}
                   href={`/invoices/${inv._id}`}
-                  className="grid grid-cols-12 gap-4 px-5 py-3.5 items-center hover:bg-gray-50/70 transition-colors group"
+                  className="grid grid-cols-12 gap-4 px-5 py-3.5 items-center hover:bg-slate-50/80 transition-colors group"
                 >
-                  <span className="col-span-2 text-sm font-mono font-medium text-gray-900">
+                  <span className="col-span-2 text-sm font-mono font-semibold text-slate-900">
                     {inv.number}
                   </span>
-                  <span className="col-span-3 text-sm text-gray-700 truncate">
+                  <span className="col-span-3 text-sm text-slate-700 truncate">
                     {inv.clientId?.name || '—'}
                     {inv.clientId?.company && (
-                      <span className="block text-xs text-gray-400 truncate">{inv.clientId.company}</span>
+                      <span className="block text-xs text-slate-400 truncate">{inv.clientId.company}</span>
                     )}
                   </span>
                   <span className="col-span-2">
                     <Badge status={inv.status} />
                   </span>
-                  <span className="col-span-2 text-sm text-gray-500">{fmtDate(inv.dueDate)}</span>
-                  <span className="col-span-2 text-sm font-semibold text-gray-900 text-right tabular-nums">
+                  <span className="col-span-2 text-sm text-slate-500">{fmtDate(inv.dueDate)}</span>
+                  <span className="col-span-2 text-sm font-semibold text-slate-900 text-right tabular-nums">
                     {fmt(inv.total)}
                   </span>
                   <span className="col-span-1 flex justify-end">
-                    <ChevronRight size={14} className="text-gray-300 group-hover:text-gray-500 transition-colors" />
+                    <ChevronRight size={14} className="text-slate-300 group-hover:text-slate-500 transition-colors" />
                   </span>
                 </Link>
               ))}

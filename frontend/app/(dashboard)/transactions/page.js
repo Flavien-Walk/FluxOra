@@ -19,25 +19,25 @@ const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('fr-FR') : '—');
 
 const TYPE_CONFIG = {
   revenue: {
-    label:  'Encaissement',
-    color:  'text-green-700',
-    bg:     'bg-green-100',
-    sign:   '+',
-    Icon:   ArrowDownLeft,
+    label: 'Encaissement',
+    color: 'text-success-700',
+    bg:    'bg-success-100',
+    sign:  '+',
+    Icon:  ArrowDownLeft,
   },
   expense: {
-    label:  'Dépense',
-    color:  'text-red-700',
-    bg:     'bg-red-100',
-    sign:   '-',
-    Icon:   TrendingDown,
+    label: 'Dépense',
+    color: 'text-danger-700',
+    bg:    'bg-danger-100',
+    sign:  '-',
+    Icon:  TrendingDown,
   },
   transfer: {
-    label:  'Virement',
-    color:  'text-accent-700',
-    bg:     'bg-indigo-100',
-    sign:   '-',
-    Icon:   ArrowUpRight,
+    label: 'Virement',
+    color: 'text-accent-700',
+    bg:    'bg-accent-100',
+    sign:  '-',
+    Icon:  ArrowUpRight,
   },
 };
 
@@ -48,7 +48,7 @@ const CAT_LABELS = {
 };
 
 export default function TransactionsPage() {
-  const [filter, setFilter] = useState('all'); // all | revenue | expense | transfer
+  const [filter, setFilter] = useState('all');
 
   const key = filter === 'all' ? '/api/transactions' : `/api/transactions?type=${filter}`;
   const { data, isLoading } = useSWR(key, fetcher, { revalidateOnFocus: false });
@@ -66,49 +66,71 @@ export default function TransactionsPage() {
 
         {/* KPI */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-green-50 border border-green-100 rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <TrendingUp size={15} className="text-green-600" />
-              <span className="text-xs font-medium text-green-700 uppercase">Encaissements</span>
+          <div className="bg-success-50 border border-success-100 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 rounded-lg bg-success-100 flex items-center justify-center">
+                <TrendingUp size={14} className="text-success-600" />
+              </div>
+              <span className="text-xs font-semibold text-success-700 uppercase tracking-wide">Encaissements</span>
             </div>
-            <p className="text-2xl font-bold text-green-700">{fmt(totalRevenue)}</p>
+            <p className="text-2xl font-bold text-success-700 tabular-nums">{fmt(totalRevenue)}</p>
           </div>
-          <div className="bg-red-50 border border-red-100 rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <TrendingDown size={15} className="text-red-600" />
-              <span className="text-xs font-medium text-red-700 uppercase">Dépenses</span>
+          <div className="bg-danger-50 border border-danger-100 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 rounded-lg bg-danger-100 flex items-center justify-center">
+                <TrendingDown size={14} className="text-danger-600" />
+              </div>
+              <span className="text-xs font-semibold text-danger-700 uppercase tracking-wide">Dépenses</span>
             </div>
-            <p className="text-2xl font-bold text-red-700">{fmt(totalExpenses)}</p>
+            <p className="text-2xl font-bold text-danger-700 tabular-nums">{fmt(totalExpenses)}</p>
           </div>
-          <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <ArrowUpRight size={15} className="text-accent-600" />
-              <span className="text-xs font-medium text-accent-700 uppercase">Virements</span>
+          <div className="bg-accent-50 border border-accent-100 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 rounded-lg bg-accent-100 flex items-center justify-center">
+                <ArrowUpRight size={14} className="text-accent-600" />
+              </div>
+              <span className="text-xs font-semibold text-accent-700 uppercase tracking-wide">Virements</span>
             </div>
-            <p className="text-2xl font-bold text-accent-700">{fmt(totalTransfer)}</p>
+            <p className="text-2xl font-bold text-accent-700 tabular-nums">{fmt(totalTransfer)}</p>
           </div>
-          <div className={`border rounded-xl p-4 ${cashflow >= 0 ? 'bg-gray-50 border-gray-200' : 'bg-orange-50 border-orange-200'}`}>
-            <div className="flex items-center gap-2 mb-1">
-              <Minus size={15} className={cashflow >= 0 ? 'text-gray-600' : 'text-orange-600'} />
-              <span className={`text-xs font-medium uppercase ${cashflow >= 0 ? 'text-gray-600' : 'text-orange-700'}`}>Flux net</span>
+          <div className={cn(
+            'border rounded-xl p-4',
+            cashflow >= 0 ? 'bg-slate-50 border-slate-200' : 'bg-warning-50 border-warning-100'
+          )}>
+            <div className="flex items-center gap-2 mb-2">
+              <div className={cn(
+                'w-7 h-7 rounded-lg flex items-center justify-center',
+                cashflow >= 0 ? 'bg-slate-100' : 'bg-warning-100'
+              )}>
+                <Minus size={14} className={cashflow >= 0 ? 'text-slate-600' : 'text-warning-600'} />
+              </div>
+              <span className={cn(
+                'text-xs font-semibold uppercase tracking-wide',
+                cashflow >= 0 ? 'text-slate-600' : 'text-warning-700'
+              )}>
+                Flux net
+              </span>
             </div>
-            <p className={`text-2xl font-bold ${cashflow >= 0 ? 'text-gray-800' : 'text-orange-700'}`}>
+            <p className={cn(
+              'text-2xl font-bold tabular-nums',
+              cashflow >= 0 ? 'text-slate-800' : 'text-warning-700'
+            )}>
               {cashflow >= 0 ? '+' : ''}{fmt(cashflow)}
             </p>
           </div>
         </div>
 
-        {/* Filtres */}
+        {/* Table */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between flex-wrap gap-3">
-              <h2 className="text-sm font-semibold text-gray-700">
-                Journal des transactions
+              <div>
+                <h2 className="text-sm font-semibold text-slate-800">Journal des transactions</h2>
                 {data?.total != null && (
-                  <span className="ml-2 text-xs font-normal text-gray-400">({data.total} mouvements)</span>
+                  <p className="text-xs text-slate-400 mt-0.5">{data.total} mouvements</p>
                 )}
-              </h2>
-              <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+              </div>
+              <div className="flex gap-0.5 bg-slate-100 rounded-lg p-1">
                 {[
                   { id: 'all',      label: 'Tout' },
                   { id: 'revenue',  label: 'Encaissements' },
@@ -118,11 +140,12 @@ export default function TransactionsPage() {
                   <button
                     key={id}
                     onClick={() => setFilter(id)}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                    className={cn(
+                      'px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-150',
                       filter === id
-                        ? 'bg-white shadow-sm text-accent-700'
-                        : 'text-gray-500 hover:text-gray-700'
-                    }`}
+                        ? 'bg-white shadow-xs text-accent-700'
+                        : 'text-slate-500 hover:text-slate-700'
+                    )}
                   >
                     {label}
                   </button>
@@ -133,55 +156,55 @@ export default function TransactionsPage() {
           <CardBody className="p-0">
             {isLoading ? (
               <div className="flex justify-center py-16">
-                <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                <div className="w-6 h-6 border-2 border-accent-600 border-t-transparent rounded-full animate-spin" />
               </div>
             ) : transactions.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center">
-                <RefreshCw size={36} className="text-gray-200 mb-3" />
-                <p className="text-gray-500 font-medium">Aucune transaction</p>
-                <p className="text-gray-400 text-sm mt-1">
+                <RefreshCw size={36} className="text-slate-200 mb-3" />
+                <p className="text-slate-500 font-medium">Aucune transaction</p>
+                <p className="text-slate-400 text-sm mt-1">
                   Les mouvements financiers apparaîtront ici automatiquement
                 </p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50 border-b border-gray-100">
+                  <thead className="bg-slate-50/60 border-b border-slate-100">
                     <tr>
-                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Date</th>
-                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Type</th>
-                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Description</th>
-                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Tiers</th>
-                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Référence</th>
-                      <th className="text-right px-5 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Montant</th>
+                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Date</th>
+                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Type</th>
+                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Description</th>
+                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Tiers</th>
+                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Référence</th>
+                      <th className="text-right px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Montant</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-50">
+                  <tbody className="divide-y divide-slate-50">
                     {transactions.map((tx) => {
                       const cfg = TYPE_CONFIG[tx.type] || TYPE_CONFIG.expense;
                       return (
-                        <tr key={`${tx.source}-${tx._id}`} className="hover:bg-gray-50/70 transition-colors">
-                          <td className="px-5 py-3 text-gray-500 whitespace-nowrap text-xs">{fmtDate(tx.date)}</td>
+                        <tr key={`${tx.source}-${tx._id}`} className="hover:bg-slate-50/70 transition-colors">
+                          <td className="px-5 py-3 text-slate-500 whitespace-nowrap text-xs">{fmtDate(tx.date)}</td>
                           <td className="px-5 py-3">
                             <div className="flex items-center gap-2">
-                              <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${cfg.bg}`}>
+                              <span className={cn('inline-flex items-center justify-center w-6 h-6 rounded-lg', cfg.bg)}>
                                 <cfg.Icon size={12} className={cfg.color} />
                               </span>
-                              <span className={`text-xs font-medium ${cfg.color}`}>{cfg.label}</span>
+                              <span className={cn('text-xs font-medium', cfg.color)}>{cfg.label}</span>
                             </div>
                           </td>
-                          <td className="px-5 py-3 text-gray-900 font-medium max-w-[180px] truncate">
+                          <td className="px-5 py-3 text-slate-900 font-medium max-w-[180px] truncate">
                             {tx.label}
                             {tx.category && (
-                              <span className="ml-1.5 text-xs text-gray-400 font-normal">
+                              <span className="ml-1.5 text-xs text-slate-400 font-normal">
                                 {CAT_LABELS[tx.category] || tx.category}
                               </span>
                             )}
                           </td>
-                          <td className="px-5 py-3 text-gray-500 text-xs truncate max-w-[120px]">{tx.party}</td>
-                          <td className="px-5 py-3 text-gray-400 text-xs font-mono">{tx.reference || '—'}</td>
+                          <td className="px-5 py-3 text-slate-500 text-xs truncate max-w-[120px]">{tx.party}</td>
+                          <td className="px-5 py-3 text-slate-400 text-xs font-mono">{tx.reference || '—'}</td>
                           <td className="px-5 py-3 text-right">
-                            <span className={`font-semibold ${cfg.color}`}>
+                            <span className={cn('font-semibold tabular-nums', cfg.color)}>
                               {cfg.sign}{fmt(tx.amount)}
                             </span>
                           </td>
