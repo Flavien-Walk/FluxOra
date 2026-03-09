@@ -244,7 +244,11 @@ const deleteExpense = async (req, res) => {
   res.json({ message: 'Dépense supprimée.' });
 };
 
-// POST /api/expenses/scan — OCR via Mindee
+// POST /api/expenses/scan — OCR via Mindee v2
+const MINDEE_MODEL_ID = process.env.MINDEE_MODEL_ID || '09cef90e-48fb-406c-8a34-0335748bb7a1';
+const MINDEE_V2_BASE  = 'https://api-v2.mindee.net';
+const LEGAL_VAT_RATES = [0, 5.5, 10, 20];
+
 const scanReceipt = async (req, res) => {
   const { image, mimeType } = req.body;
   if (!image) return res.status(400).json({ error: 'Image manquante.' });
@@ -261,34 +265,52 @@ const scanReceipt = async (req, res) => {
     const buffer = Buffer.from(image, 'base64');
     const ext    = (mimeType || 'image/jpeg').includes('pdf') ? 'receipt.pdf' : 'receipt.jpg';
 
+    // 1. Enqueue le document
     const form = new FormData();
-    form.append('document', buffer, { filename: ext, contentType: mimeType || 'image/jpeg' });
+    form.append('file',     buffer,          { filename: ext, contentType: mimeType || 'image/jpeg' });
+    form.append('model_id', MINDEE_MODEL_ID);
 
-    const { data: json } = await axios.post(
-      'https://api.mindee.net/v1/products/mindee/expense_receipts/v5/predict',
+    const { data: enqueueData } = await axios.post(
+      `${MINDEE_V2_BASE}/v2/products/extraction/enqueue`,
       form,
-      {
-        headers: {
-          Authorization: `Token ${apiKey}`,
-          ...form.getHeaders(),
-        },
-      }
+      { headers: { Authorization: apiKey, ...form.getHeaders() } }
     );
 
-    const pred = json.document?.inference?.prediction;
-    if (!pred) return res.status(502).json({ error: 'Réponse OCR inattendue.' });
+    const jobId      = enqueueData.job?.id;
+    const pollingUrl = enqueueData.job?.polling_url;
+    if (!jobId) return res.status(502).json({ error: 'Job ID manquant dans la réponse Mindee.' });
 
-    const totalAmount = pred.total_amount?.value;
-    const totalNet    = pred.total_net?.value;
-    const taxes       = pred.taxes?.[0];
-    const rawVatRate  = taxes?.rate;
-    const supplier    = pred.supplier_name?.value || '';
-    const rawDate     = pred.date?.value; // YYYY-MM-DD
+    // 2. Poll jusqu'au résultat (max 15s, toutes les 2s)
+    let result = null;
+    for (let i = 0; i < 8; i++) {
+      await new Promise((r) => setTimeout(r, 2000));
+      const { data: jobData } = await axios.get(
+        pollingUrl || `${MINDEE_V2_BASE}/v2/jobs/${jobId}`,
+        { headers: { Authorization: apiKey } }
+      );
+      if (jobData.inference?.result) {
+        result = jobData.inference.result;
+        break;
+      }
+      if (jobData.job?.status === 'Failed') {
+        return res.status(502).json({ error: 'OCR échoué côté Mindee.' });
+      }
+    }
 
-    // Choisir le taux TVA le plus proche parmi les valeurs légales
-    const LEGAL_RATES = [0, 5.5, 10, 20];
+    if (!result) return res.status(504).json({ error: 'Délai OCR dépassé. Réessayez.' });
+
+    // 3. Extraire les champs utiles
+    const fields      = result.fields || {};
+    const supplier    = fields.supplier_name?.value   || '';
+    const rawDate     = fields.date?.value             || null;
+    const totalAmount = fields.total_amount?.value     || null;
+    const totalNet    = fields.total_net?.value        || null;
+    const rawVatRate  = fields.tax_rate?.value
+                     ?? fields.taxes?.items?.[0]?.rate
+                     ?? null;
+
     const vatRate = rawVatRate != null
-      ? LEGAL_RATES.reduce((prev, curr) => Math.abs(curr - rawVatRate) < Math.abs(prev - rawVatRate) ? curr : prev)
+      ? LEGAL_VAT_RATES.reduce((p, c) => Math.abs(c - rawVatRate) < Math.abs(p - rawVatRate) ? c : p)
       : 20;
 
     const amountHT = totalNet != null
@@ -299,13 +321,13 @@ const scanReceipt = async (req, res) => {
 
     res.json({
       supplier,
-      date:       rawDate || null,
-      amountHT:   amountHT,
+      date:       rawDate,
+      amountHT,
       vatRate,
-      confidence: pred.total_amount?.confidence ?? 0,
+      confidence: fields.total_amount?.confidence ?? null,
     });
   } catch (err) {
-    const msg = err.response?.data?.detail || err.message;
+    const msg = err.response?.data?.detail || err.response?.data?.message || err.message;
     res.status(502).json({ error: `Erreur OCR: ${msg}` });
   }
 };
