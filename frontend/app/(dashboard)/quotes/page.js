@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useQuotes } from '@/hooks/useQuotes';
 import { cn } from '@/lib/utils';
@@ -12,7 +12,7 @@ import Modal from '@/components/ui/Modal';
 import EmptyState from '@/components/ui/EmptyState';
 import { SkeletonTable } from '@/components/ui/Skeleton';
 import QuoteForm from '@/components/modules/QuoteForm';
-import { FilePlus, ClipboardList, ChevronRight } from 'lucide-react';
+import { FilePlus, ClipboardList, ChevronRight, Search, X } from 'lucide-react';
 
 const FILTERS = [
   { label: 'Tous',      value: '' },
@@ -25,13 +25,24 @@ const FILTERS = [
 
 const fmt = (n) =>
   new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n);
-
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('fr-FR') : '—');
 
 export default function QuotesPage() {
   const [filter, setFilter]       = useState('');
+  const [search, setSearch]       = useState('');
   const [modalOpen, setModalOpen] = useState(false);
-  const { quotes, isLoading, mutate } = useQuotes(filter);
+  const { quotes: allQuotes, isLoading, mutate } = useQuotes(filter);
+
+  /* Recherche client-side */
+  const quotes = useMemo(() => {
+    if (!search) return allQuotes;
+    const q = search.toLowerCase();
+    return allQuotes.filter((qt) =>
+      qt.number?.toLowerCase().includes(q) ||
+      qt.clientId?.name?.toLowerCase().includes(q) ||
+      qt.clientId?.company?.toLowerCase().includes(q)
+    );
+  }, [allQuotes, search]);
 
   return (
     <>
@@ -44,28 +55,45 @@ export default function QuotesPage() {
         }
       />
       <div className="flex-1 p-6">
-        {/* Filtres */}
-        <div className="flex gap-1 flex-wrap mb-5">
-          {FILTERS.map(({ label, value }) => (
-            <button
-              key={value}
-              onClick={() => setFilter(value)}
-              className={cn(
-                'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                filter === value
-                  ? 'bg-accent-600 text-white'
-                  : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-              )}
-            >
-              {label}
-            </button>
-          ))}
+        {/* Filtres + search intégrés */}
+        <div className="flex items-center gap-3 mb-5 flex-wrap">
+          <div className="flex gap-1.5 flex-wrap">
+            {FILTERS.map(({ label, value }) => (
+              <button
+                key={value}
+                onClick={() => setFilter(value)}
+                className={cn(
+                  'px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150',
+                  filter === value
+                    ? 'bg-accent-600 text-white shadow-xs'
+                    : 'bg-white border border-[rgba(148,163,184,0.4)] text-slate-600 hover:bg-slate-50'
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <div className="relative ml-auto">
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="N° ou client…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-8 pr-8 h-9 w-48 bg-white border border-[rgba(148,163,184,0.4)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent placeholder:text-slate-400"
+            />
+            {search && (
+              <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                <X size={13} />
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Contenu */}
         {isLoading ? (
           <Card><SkeletonTable rows={5} cols={6} /></Card>
-        ) : quotes.length === 0 ? (
+        ) : allQuotes.length === 0 ? (
           <Card>
             <EmptyState
               icon={ClipboardList}
@@ -75,9 +103,15 @@ export default function QuotesPage() {
               actionLabel="Nouveau devis"
             />
           </Card>
+        ) : quotes.length === 0 ? (
+          <Card>
+            <div className="py-12 text-center">
+              <p className="text-sm text-slate-400">Aucun résultat pour «&nbsp;{search}&nbsp;»</p>
+            </div>
+          </Card>
         ) : (
           <Card>
-            <div className="hidden sm:grid grid-cols-12 gap-4 px-5 py-3 border-b border-gray-100 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+            <div className="hidden sm:grid grid-cols-12 gap-4 px-5 py-3 border-b border-slate-100 bg-slate-50/60 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
               <span className="col-span-2">Numéro</span>
               <span className="col-span-3">Client</span>
               <span className="col-span-2">Statut</span>
@@ -85,25 +119,25 @@ export default function QuotesPage() {
               <span className="col-span-2 text-right">Montant TTC</span>
               <span className="col-span-1" />
             </div>
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-[rgba(148,163,184,0.12)]">
               {quotes.map((q) => (
                 <Link
                   key={q._id}
                   href={`/quotes/${q._id}`}
-                  className="grid grid-cols-12 gap-4 px-5 py-3.5 items-center hover:bg-gray-50/70 transition-colors group"
+                  className="row-accent grid grid-cols-12 gap-4 px-5 py-3.5 items-center hover:bg-slate-50/60 transition-colors group"
                 >
-                  <span className="col-span-2 text-sm font-mono font-medium text-gray-900">{q.number}</span>
-                  <span className="col-span-3 text-sm text-gray-700 truncate">
+                  <span className="col-span-2 text-sm font-mono font-semibold text-slate-900">{q.number}</span>
+                  <span className="col-span-3 text-sm text-slate-700 truncate">
                     {q.clientId?.name || '—'}
                     {q.clientId?.company && (
-                      <span className="block text-xs text-gray-400 truncate">{q.clientId.company}</span>
+                      <span className="block text-xs text-slate-400 truncate">{q.clientId.company}</span>
                     )}
                   </span>
                   <span className="col-span-2"><Badge status={q.status} /></span>
-                  <span className="col-span-2 text-sm text-gray-500">{fmtDate(q.expiryDate)}</span>
-                  <span className="col-span-2 text-sm font-semibold text-gray-900 text-right tabular-nums">{fmt(q.total)}</span>
+                  <span className="col-span-2 text-xs text-slate-500">{fmtDate(q.expiryDate)}</span>
+                  <span className="col-span-2 text-sm font-semibold text-slate-900 text-right tabular-nums">{fmt(q.total)}</span>
                   <span className="col-span-1 flex justify-end">
-                    <ChevronRight size={14} className="text-gray-300 group-hover:text-gray-500 transition-colors" />
+                    <ChevronRight size={14} className="text-slate-300 group-hover:text-slate-500 transition-colors" />
                   </span>
                 </Link>
               ))}

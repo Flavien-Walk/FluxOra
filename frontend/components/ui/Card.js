@@ -5,8 +5,9 @@ export function Card({ children, className, hover = false }) {
   return (
     <div
       className={cn(
-        'bg-white rounded-xl border border-slate-200 shadow-card overflow-hidden',
-        hover && 'card-interactive hover:shadow-card-hover hover:border-slate-300',
+        'bg-white rounded-xl shadow-card overflow-hidden',
+        'border border-[rgba(148,163,184,0.3)]',
+        hover && 'card-interactive hover:shadow-card-hover hover:border-[rgba(28,110,242,0.2)]',
         className
       )}
     >

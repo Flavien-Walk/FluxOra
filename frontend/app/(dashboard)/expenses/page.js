@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import useSWR from 'swr';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useAlerts } from '@/hooks/useAlerts';
@@ -12,7 +12,7 @@ import Modal from '@/components/ui/Modal';
 import { cn } from '@/lib/utils';
 import EmptyState from '@/components/ui/EmptyState';
 import { SkeletonTable } from '@/components/ui/Skeleton';
-import { Plus, Receipt, Trash2, Pencil, AlertTriangle, Camera, FileUp, Loader2 } from 'lucide-react';
+import { Plus, Receipt, Trash2, Pencil, AlertTriangle, Camera, FileUp, Loader2, Search, X } from 'lucide-react';
 
 const fmt = (n) =>
   new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n ?? 0);
@@ -45,7 +45,7 @@ const NON_DEDUCTIBLE = new Set(['salaries', 'taxes', 'banking']);
 const STATUS_CONFIG = {
   validated:      { label: 'Validée',      color: 'bg-green-100 text-green-700' },
   pending_review: { label: 'A vérifier',   color: 'bg-yellow-100 text-yellow-700' },
-  non_eligible:   { label: 'Non éligible', color: 'bg-gray-100 text-gray-500' },
+  non_eligible:   { label: 'Non éligible', color: 'bg-slate-100 text-slate-500' },
 };
 
 const ALERT_TYPE_LABELS = {
@@ -79,6 +79,17 @@ export default function ExpensesPage() {
   const [modalTab,       setModalTab]       = useState('manual');
   const [scanning,       setScanning]       = useState(false);
   const [scanError,      setScanError]      = useState('');
+  const [search,         setSearch]         = useState('');
+
+  const filteredExpenses = useMemo(() => {
+    if (!search) return expenses;
+    const q = search.toLowerCase();
+    return expenses.filter((e) =>
+      e.description?.toLowerCase().includes(q) ||
+      e.vendor?.toLowerCase().includes(q) ||
+      e.category?.toLowerCase().includes(q)
+    );
+  }, [expenses, search]);
 
   const closeModal = () => {
     setModalOpen(false);
@@ -207,50 +218,50 @@ export default function ExpensesPage() {
 
         {/* KPI */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <p className="text-xs text-gray-500 uppercase font-medium mb-1">Total TTC</p>
-            <p className="text-2xl font-bold text-gray-900">
+          <div className="bg-white border border-[rgba(148,163,184,0.3)] rounded-xl shadow-card p-4">
+            <p className="text-[11px] text-slate-400 uppercase font-semibold tracking-wide mb-1.5">Total TTC</p>
+            <p className="text-2xl font-bold text-slate-900 tabular-nums">
               {fmt(expenses.reduce((s, e) => s + (e.amount || 0), 0))}
             </p>
           </div>
-          <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <p className="text-xs text-gray-500 uppercase font-medium mb-1">Total HT</p>
-            <p className="text-2xl font-bold text-gray-900">{fmt(vatSummary?.totalHT)}</p>
+          <div className="bg-white border border-[rgba(148,163,184,0.3)] rounded-xl shadow-card p-4">
+            <p className="text-[11px] text-slate-400 uppercase font-semibold tracking-wide mb-1.5">Total HT</p>
+            <p className="text-2xl font-bold text-slate-900 tabular-nums">{fmt(vatSummary?.totalHT)}</p>
           </div>
-          <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
-            <p className="text-xs text-indigo-600 uppercase font-medium mb-1">TVA récupérable</p>
-            <p className="text-2xl font-bold text-indigo-700">{fmt(vatSummary?.vatRecoverable)}</p>
+          <div className="bg-accent-50 border border-accent-100 rounded-xl shadow-card p-4">
+            <p className="text-[11px] text-accent-600 uppercase font-semibold tracking-wide mb-1.5">TVA récupérable</p>
+            <p className="text-2xl font-bold text-accent-700 tabular-nums">{fmt(vatSummary?.vatRecoverable)}</p>
           </div>
           <button
             onClick={() => setAlertsOpen(true)}
             className={cn(
-              'rounded-xl p-4 text-left border transition-colors',
+              'rounded-xl p-4 text-left border shadow-card transition-all duration-150',
               openCount > 0
-                ? 'bg-amber-50 border-amber-200 hover:bg-amber-100'
-                : 'bg-white border-gray-200 hover:bg-gray-50'
+                ? 'bg-warning-50 border-warning-200 hover:bg-warning-100'
+                : 'bg-white border-[rgba(148,163,184,0.3)] hover:bg-slate-50'
             )}
           >
-            <p className={cn('text-xs uppercase font-medium mb-1', openCount > 0 ? 'text-amber-600' : 'text-gray-500')}>
+            <p className={cn('text-[11px] uppercase font-semibold tracking-wide mb-1.5', openCount > 0 ? 'text-warning-600' : 'text-slate-400')}>
               Alertes ouvertes
             </p>
             <div className="flex items-center gap-2">
-              <p className={cn('text-2xl font-bold', openCount > 0 ? 'text-amber-700' : 'text-gray-400')}>
+              <p className={cn('text-2xl font-bold tabular-nums', openCount > 0 ? 'text-warning-700' : 'text-slate-300')}>
                 {openCount}
               </p>
-              {openCount > 0 && <AlertTriangle size={18} className="text-yellow-500" />}
+              {openCount > 0 && <AlertTriangle size={18} className="text-warning-500" />}
             </div>
           </button>
         </div>
 
         {/* Détail TVA par taux */}
         {vatSummary?.vatRecoverable > 0 && (
-          <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
-            <p className="text-xs text-indigo-700 font-semibold uppercase mb-3">Détail TVA récupérable</p>
-            <div className="flex flex-wrap gap-4">
+          <div className="bg-accent-50 border border-accent-100 rounded-xl p-4">
+            <p className="text-[11px] text-accent-700 font-semibold uppercase tracking-wide mb-3">Détail TVA récupérable par taux</p>
+            <div className="flex flex-wrap gap-3">
               {Object.entries(vatSummary.byRate || {}).filter(([, v]) => v > 0).map(([rate, amount]) => (
-                <div key={rate} className="bg-white rounded-lg px-4 py-2 border border-indigo-100">
-                  <p className="text-xs text-indigo-500 font-medium">TVA {rate}%</p>
-                  <p className="text-base font-bold text-indigo-700">{fmt(amount)}</p>
+                <div key={rate} className="bg-white rounded-lg px-4 py-2.5 border border-accent-100 shadow-xs">
+                  <p className="text-[11px] text-accent-500 font-semibold">TVA {rate}%</p>
+                  <p className="text-base font-bold text-accent-700 tabular-nums">{fmt(amount)}</p>
                 </div>
               ))}
             </div>
@@ -260,9 +271,24 @@ export default function ExpensesPage() {
         {/* Liste */}
         <Card>
           <CardHeader>
-            <div className="flex justify-between items-center">
-              <h2 className="text-sm font-semibold text-gray-700">Liste des dépenses</h2>
-              <Button size="sm" onClick={() => setModalOpen(true)}>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h2 className="text-sm font-semibold text-slate-800 flex-shrink-0">Liste des dépenses</h2>
+              <div className="relative">
+                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Description, fournisseur…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-8 pr-8 h-8 w-52 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent placeholder:text-slate-400"
+                />
+                {search && (
+                  <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
+              <Button size="sm" onClick={() => setModalOpen(true)} className="ml-auto">
                 <Plus size={14} /> Nouvelle dépense
               </Button>
             </div>
@@ -281,41 +307,41 @@ export default function ExpensesPage() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50 border-b border-gray-100">
+                  <thead className="bg-slate-50/80 border-b border-slate-100">
                     <tr>
-                      <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Date</th>
-                      <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Description</th>
-                      <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Catégorie</th>
-                      <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">HT</th>
-                      <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">TVA récup.</th>
-                      <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">TTC</th>
-                      <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Statut</th>
+                      <th className="text-left px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Date</th>
+                      <th className="text-left px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Description</th>
+                      <th className="text-left px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Catégorie</th>
+                      <th className="text-right px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">HT</th>
+                      <th className="text-right px-4 py-3 text-[11px] font-semibold text-accent-600 uppercase tracking-wide">TVA récup.</th>
+                      <th className="text-right px-4 py-3 text-[11px] font-semibold text-danger-600 uppercase tracking-wide">TTC</th>
+                      <th className="px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Statut</th>
                       <th className="px-4 py-3" />
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {expenses.map((exp) => {
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredExpenses.map((exp) => {
                       const cat = CATEGORIES.find((c) => c.value === exp.category);
                       const st  = STATUS_CONFIG[exp.status] || STATUS_CONFIG.validated;
                       return (
-                        <tr key={exp._id} className="hover:bg-gray-50">
-                          <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmtDate(exp.date)}</td>
-                          <td className="px-4 py-3 text-gray-900">
+                        <tr key={exp._id} className="row-accent hover:bg-slate-50/60 transition-colors">
+                          <td className="px-4 py-3 text-slate-500 text-xs whitespace-nowrap">{fmtDate(exp.date)}</td>
+                          <td className="px-4 py-3 text-slate-900 font-medium">
                             <div>{exp.description}</div>
-                            {exp.vendor && <div className="text-xs text-gray-400">{exp.vendor}</div>}
+                            {exp.vendor && <div className="text-xs text-slate-400 mt-0.5">{exp.vendor}</div>}
                           </td>
                           <td className="px-4 py-3">
-                            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
                               {cat?.label || exp.category}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-right text-gray-600">{fmt(exp.amountHT)}</td>
-                          <td className="px-4 py-3 text-right font-medium text-indigo-600">
+                          <td className="px-4 py-3 text-right text-slate-600 tabular-nums">{fmt(exp.amountHT)}</td>
+                          <td className="px-4 py-3 text-right font-semibold text-accent-600 tabular-nums">
                             {exp.vatRecoverable > 0
                               ? fmt(exp.vatRecoverable)
-                              : <span className="text-gray-300">—</span>}
+                              : <span className="text-slate-300">—</span>}
                           </td>
-                          <td className="px-4 py-3 text-right font-semibold text-red-700">{fmt(exp.amount)}</td>
+                          <td className="px-4 py-3 text-right font-semibold text-danger-700 tabular-nums">{fmt(exp.amount)}</td>
                           <td className="px-4 py-3">
                             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${st.color}`}>
                               {st.label}
@@ -325,7 +351,7 @@ export default function ExpensesPage() {
                             <div className="flex items-center justify-end gap-1">
                               <button
                                 onClick={() => openEdit(exp)}
-                                className="text-gray-400 hover:text-indigo-500 p-1 rounded transition-colors"
+                                className="text-slate-400 hover:text-accent-500 p-1 rounded transition-colors"
                                 title="Modifier"
                               >
                                 <Pencil size={14} />
@@ -333,7 +359,7 @@ export default function ExpensesPage() {
                               <button
                                 onClick={() => handleDelete(exp._id)}
                                 disabled={deleting === exp._id}
-                                className="text-gray-400 hover:text-red-500 p-1 rounded transition-colors"
+                                className="text-slate-400 hover:text-danger-500 p-1 rounded transition-colors"
                                 title="Supprimer"
                               >
                                 <Trash2 size={14} />

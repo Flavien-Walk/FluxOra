@@ -16,6 +16,7 @@ import {
   ArrowLeft, Pencil, Trash2, Mail, Phone,
   MapPin, Building, FileText, ClipboardList,
   TrendingUp, Clock, ChevronRight, Plus,
+  AlertCircle,
 } from 'lucide-react';
 
 const fetcher = (url) => api.get(url).then((r) => r.data);
@@ -25,11 +26,11 @@ const fmt = (n) =>
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('fr-FR') : '—');
 
 const QUOTE_STATUS = {
-  draft:    { label: 'Brouillon', color: 'bg-gray-100 text-gray-500' },
-  sent:     { label: 'Envoyé',    color: 'bg-blue-100 text-blue-700' },
-  accepted: { label: 'Accepté',   color: 'bg-green-100 text-green-700' },
-  rejected: { label: 'Refusé',    color: 'bg-red-100 text-red-700' },
-  expired:  { label: 'Expiré',    color: 'bg-orange-100 text-orange-700' },
+  draft:    { label: 'Brouillon', color: 'bg-slate-100 text-slate-500' },
+  sent:     { label: 'Envoyé',    color: 'bg-accent-50 text-accent-700' },
+  accepted: { label: 'Accepté',   color: 'bg-success-50 text-success-700' },
+  rejected: { label: 'Refusé',    color: 'bg-danger-50 text-danger-700' },
+  expired:  { label: 'Expiré',    color: 'bg-warning-50 text-warning-700' },
 };
 
 export default function ClientDetailPage() {
@@ -53,7 +54,6 @@ export default function ClientDetailPage() {
   const invoices = invData?.invoices || [];
   const quotes   = qData?.quotes    || [];
 
-  // KPIs client
   const totalCA      = invoices.filter((i) => i.status === 'paid').reduce((s, i) => s + i.total, 0);
   const totalPending = invoices.filter((i) => ['sent', 'late'].includes(i.status)).reduce((s, i) => s + i.total, 0);
   const lateCount    = invoices.filter((i) => i.status === 'late').length;
@@ -72,7 +72,7 @@ export default function ClientDetailPage() {
   if (isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-accent-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -80,7 +80,7 @@ export default function ClientDetailPage() {
   if (!client) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-gray-500">Client introuvable.</p>
+        <p className="text-slate-500">Client introuvable.</p>
       </div>
     );
   }
@@ -91,8 +91,11 @@ export default function ClientDetailPage() {
       <div className="flex-1 p-6 max-w-3xl space-y-5">
 
         {/* Retour + actions */}
-        <div className="flex items-center justify-between">
-          <Link href="/clients" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <Link
+            href="/clients"
+            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors"
+          >
             <ArrowLeft size={15} /> Retour aux clients
           </Link>
           <div className="flex gap-2">
@@ -108,31 +111,47 @@ export default function ClientDetailPage() {
         {/* KPIs client */}
         {invoices.length > 0 && (
           <div className="grid grid-cols-3 gap-4">
-            <div className="bg-green-50 border border-green-100 rounded-xl p-4">
-              <div className="flex items-center gap-1.5 mb-1">
-                <TrendingUp size={13} className="text-green-600" />
-                <span className="text-xs font-medium text-green-700 uppercase">CA encaissé</span>
+            {/* CA encaissé */}
+            <div className="bg-white rounded-xl border border-[rgba(148,163,184,0.3)] shadow-card overflow-hidden">
+              <div className="h-[3px] bg-success-500" />
+              <div className="p-4">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <TrendingUp size={13} className="text-success-600" />
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">CA encaissé</span>
+                </div>
+                <p className="text-xl font-bold text-slate-900 tabular-nums">{fmt(totalCA)}</p>
               </div>
-              <p className="text-xl font-bold text-green-700">{fmt(totalCA)}</p>
             </div>
-            <div className={`border rounded-xl p-4 ${totalPending > 0 ? 'bg-yellow-50 border-yellow-100' : 'bg-white border-gray-200'}`}>
-              <div className="flex items-center gap-1.5 mb-1">
-                <Clock size={13} className={totalPending > 0 ? 'text-yellow-600' : 'text-gray-400'} />
-                <span className={`text-xs font-medium uppercase ${totalPending > 0 ? 'text-yellow-700' : 'text-gray-500'}`}>En attente</span>
+
+            {/* En attente */}
+            <div className="bg-white rounded-xl border border-[rgba(148,163,184,0.3)] shadow-card overflow-hidden">
+              <div className={`h-[3px] ${totalPending > 0 ? 'bg-warning-500' : 'bg-slate-200'}`} />
+              <div className="p-4">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Clock size={13} className={totalPending > 0 ? 'text-warning-600' : 'text-slate-400'} />
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">En attente</span>
+                </div>
+                <p className={`text-xl font-bold tabular-nums ${totalPending > 0 ? 'text-warning-700' : 'text-slate-400'}`}>
+                  {fmt(totalPending)}
+                </p>
               </div>
-              <p className={`text-xl font-bold ${totalPending > 0 ? 'text-yellow-700' : 'text-gray-400'}`}>{fmt(totalPending)}</p>
             </div>
-            <div className="bg-white border border-gray-200 rounded-xl p-4">
-              <div className="flex items-center gap-1.5 mb-1">
-                <FileText size={13} className="text-gray-400" />
-                <span className="text-xs font-medium text-gray-500 uppercase">Factures</span>
+
+            {/* Factures */}
+            <div className="bg-white rounded-xl border border-[rgba(148,163,184,0.3)] shadow-card overflow-hidden">
+              <div className={`h-[3px] ${lateCount > 0 ? 'bg-danger-500' : 'bg-slate-200'}`} />
+              <div className="p-4">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <FileText size={13} className={lateCount > 0 ? 'text-danger-500' : 'text-slate-400'} />
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Factures</span>
+                </div>
+                <p className="text-xl font-bold text-slate-900 tabular-nums">
+                  {invoices.length}
+                  {lateCount > 0 && (
+                    <span className="text-sm font-medium text-danger-500 ml-2">({lateCount} en retard)</span>
+                  )}
+                </p>
               </div>
-              <p className="text-xl font-bold text-gray-800">
-                {invoices.length}
-                {lateCount > 0 && (
-                  <span className="text-sm font-medium text-red-500 ml-2">({lateCount} en retard)</span>
-                )}
-              </p>
             </div>
           </div>
         )}
@@ -141,14 +160,14 @@ export default function ClientDetailPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center text-xl font-bold">
+              <div className="w-14 h-14 bg-accent-50 text-accent-600 rounded-full flex items-center justify-center text-xl font-bold flex-shrink-0">
                 {client.name.charAt(0).toUpperCase()}
               </div>
               <div>
-                <h2 className="text-lg font-bold text-gray-900">{client.name}</h2>
+                <h2 className="text-lg font-bold text-slate-900">{client.name}</h2>
                 {client.company && (
-                  <p className="text-sm text-gray-500 flex items-center gap-1">
-                    <Building size={13} /> {client.company}
+                  <p className="text-sm text-slate-500 flex items-center gap-1.5 mt-0.5">
+                    <Building size={13} className="text-slate-400" /> {client.company}
                   </p>
                 )}
               </div>
@@ -157,34 +176,39 @@ export default function ClientDetailPage() {
           <CardBody>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               {client.email && (
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Mail size={14} className="text-gray-400" />
-                  <a href={`mailto:${client.email}`} className="hover:text-indigo-600">{client.email}</a>
+                <div className="flex items-center gap-2 text-slate-600">
+                  <Mail size={14} className="text-slate-400 flex-shrink-0" />
+                  <a
+                    href={`mailto:${client.email}`}
+                    className="hover:text-accent-600 transition-colors truncate"
+                  >
+                    {client.email}
+                  </a>
                 </div>
               )}
               {client.phone && (
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Phone size={14} className="text-gray-400" />
+                <div className="flex items-center gap-2 text-slate-600">
+                  <Phone size={14} className="text-slate-400 flex-shrink-0" />
                   {client.phone}
                 </div>
               )}
               {(client.address || client.city) && (
-                <div className="flex items-center gap-2 text-gray-600 sm:col-span-2">
-                  <MapPin size={14} className="text-gray-400" />
+                <div className="flex items-center gap-2 text-slate-600 sm:col-span-2">
+                  <MapPin size={14} className="text-slate-400 flex-shrink-0" />
                   {[client.address, client.city, client.country].filter(Boolean).join(', ')}
                 </div>
               )}
               {client.vatNumber && (
-                <div className="text-gray-600">
-                  <span className="text-gray-400 text-xs uppercase font-medium">N° TVA</span>
-                  <p>{client.vatNumber}</p>
+                <div className="text-slate-600">
+                  <span className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider">N° TVA</span>
+                  <p className="mt-0.5">{client.vatNumber}</p>
                 </div>
               )}
             </div>
             {client.notes && (
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <p className="text-xs uppercase font-medium text-gray-400 mb-1">Notes</p>
-                <p className="text-sm text-gray-600 whitespace-pre-line">{client.notes}</p>
+              <div className="mt-4 pt-4 border-t border-slate-100">
+                <p className="text-[10px] uppercase font-semibold text-slate-400 tracking-wider mb-1">Notes</p>
+                <p className="text-sm text-slate-600 whitespace-pre-line">{client.notes}</p>
               </div>
             )}
           </CardBody>
@@ -195,15 +219,17 @@ export default function ClientDetailPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <FileText size={15} className="text-gray-400" />
-                <h3 className="text-sm font-semibold text-gray-700">Factures</h3>
+                <FileText size={15} className="text-slate-400" />
+                <h3 className="text-sm font-semibold text-slate-700">Factures</h3>
                 {invoices.length > 0 && (
-                  <span className="text-xs text-gray-400">({invoices.length})</span>
+                  <span className="text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">
+                    {invoices.length}
+                  </span>
                 )}
               </div>
               <Link
                 href={`/invoices/new?clientId=${id}`}
-                className="flex items-center gap-1 text-xs text-indigo-600 hover:underline"
+                className="flex items-center gap-1 text-xs text-accent-600 hover:text-accent-700 font-medium transition-colors"
               >
                 <Plus size={12} /> Nouvelle facture
               </Link>
@@ -212,30 +238,33 @@ export default function ClientDetailPage() {
           <CardBody className="p-0">
             {invoices.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-sm text-gray-400">Aucune facture pour ce client</p>
-                <Link href={`/invoices`} className="text-xs text-indigo-600 hover:underline mt-1 inline-block">
+                <p className="text-sm text-slate-400">Aucune facture pour ce client</p>
+                <Link
+                  href="/invoices"
+                  className="text-xs text-accent-600 hover:underline mt-1 inline-block"
+                >
                   Créer une facture →
                 </Link>
               </div>
             ) : (
-              <div className="divide-y divide-gray-50">
+              <div className="divide-y divide-slate-100">
                 {invoices.map((inv) => (
                   <Link
                     key={inv._id}
                     href={`/invoices/${inv._id}`}
-                    className="flex items-center justify-between px-5 py-3 hover:bg-gray-50 transition-colors"
+                    className="flex items-center justify-between px-5 py-3 hover:bg-slate-50 transition-colors group"
                   >
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{inv.number}</p>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-sm font-medium text-slate-900 font-mono">{inv.number}</p>
+                      <p className="text-xs text-slate-400">
                         {fmtDate(inv.issueDate)}
                         {inv.dueDate && ` · Échéance ${fmtDate(inv.dueDate)}`}
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
                       <Badge status={inv.status} />
-                      <span className="text-sm font-semibold text-gray-800">{fmt(inv.total)}</span>
-                      <ChevronRight size={14} className="text-gray-300" />
+                      <span className="text-sm font-semibold text-slate-800 tabular-nums">{fmt(inv.total)}</span>
+                      <ChevronRight size={14} className="text-slate-300 group-hover:text-slate-400 transition-colors" />
                     </div>
                   </Link>
                 ))}
@@ -247,42 +276,44 @@ export default function ClientDetailPage() {
         {/* Devis du client */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ClipboardList size={15} className="text-gray-400" />
-                <h3 className="text-sm font-semibold text-gray-700">Devis</h3>
-                {quotes.length > 0 && (
-                  <span className="text-xs text-gray-400">({quotes.length})</span>
-                )}
-              </div>
+            <div className="flex items-center gap-2">
+              <ClipboardList size={15} className="text-slate-400" />
+              <h3 className="text-sm font-semibold text-slate-700">Devis</h3>
+              {quotes.length > 0 && (
+                <span className="text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">
+                  {quotes.length}
+                </span>
+              )}
             </div>
           </CardHeader>
           <CardBody className="p-0">
             {quotes.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-sm text-gray-400">Aucun devis pour ce client</p>
+                <p className="text-sm text-slate-400">Aucun devis pour ce client</p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-50">
+              <div className="divide-y divide-slate-100">
                 {quotes.map((q) => {
                   const st = QUOTE_STATUS[q.status] || QUOTE_STATUS.draft;
                   return (
                     <Link
                       key={q._id}
                       href={`/quotes/${q._id}`}
-                      className="flex items-center justify-between px-5 py-3 hover:bg-gray-50 transition-colors"
+                      className="flex items-center justify-between px-5 py-3 hover:bg-slate-50 transition-colors group"
                     >
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{q.number}</p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-sm font-medium text-slate-900 font-mono">{q.number}</p>
+                        <p className="text-xs text-slate-400">
                           {fmtDate(q.issueDate)}
                           {q.expiryDate && ` · Expire ${fmtDate(q.expiryDate)}`}
                         </p>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${st.color}`}>{st.label}</span>
-                        <span className="text-sm font-semibold text-gray-800">{fmt(q.total)}</span>
-                        <ChevronRight size={14} className="text-gray-300" />
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${st.color}`}>
+                          {st.label}
+                        </span>
+                        <span className="text-sm font-semibold text-slate-800 tabular-nums">{fmt(q.total)}</span>
+                        <ChevronRight size={14} className="text-slate-300 group-hover:text-slate-400 transition-colors" />
                       </div>
                     </Link>
                   );

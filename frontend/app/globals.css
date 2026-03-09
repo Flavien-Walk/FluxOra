@@ -8,17 +8,22 @@
 :root {
   --accent:         #1C6EF2;
   --accent-hover:   #1558D6;
-  --accent-light:   #EBF3FE;
+  --accent-light:   #E8F0FE;
 
   --success:        #10B981;
   --warning:        #F59E0B;
   --danger:         #EF4444;
 
+  --app-bg:         #E8EDF7;
+  --app-surface:    #F0F4FA;
+
   --sidebar-bg:     #0F172A;
   --sidebar-border: #1E293B;
 
+  --card-border:    rgba(148,163,184,0.3);
+
   --shadow-xs: 0 1px 2px rgba(0,0,0,0.05);
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-sm: 0 1px 3px rgba(28,110,242,0.06), 0 1px 2px rgba(0,0,0,0.04);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
   --shadow-lg: 0 8px 24px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.04);
 }
@@ -30,6 +35,8 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  /* Fond bleu-teinté : cartes blanches ressortent avec clarté */
+  background: #E8EDF7;
 }
 
 body {
@@ -37,7 +44,7 @@ body {
   font-size: 14px;
   line-height: 1.5;
   color: #0F172A;
-  background: #F8FAFC;
+  background: transparent;
 }
 
 /* ─── Scrollbars ─────────────────────────────────────── */
@@ -63,34 +70,39 @@ body {
 /* ─── Utilities ──────────────────────────────────────── */
 @layer utilities {
   .text-balance { text-wrap: balance; }
-
   .tabular-nums { font-variant-numeric: tabular-nums; }
 
-  /* Skeleton shimmer */
-  .skeleton { @apply animate-pulse bg-slate-100 rounded-md; }
+  /* Skeleton */
+  .skeleton { @apply animate-pulse bg-slate-200 rounded-md; }
 
   /* Press feedback */
   .press { @apply active:scale-95 transition-transform duration-75; }
 
-  /* Card hover transition */
-  .card-interactive {
-    @apply transition-all duration-200 ease-out;
-  }
-  .card-interactive:hover {
-    transform: translateY(-1px);
-  }
+  /* Card hover lift */
+  .card-interactive { @apply transition-all duration-200 ease-out; }
+  .card-interactive:hover { transform: translateY(-2px); }
 }
 
 /* ─── Sidebar dark scrollbar ─────────────────────────── */
 .sidebar-scroll { scrollbar-color: #1E293B transparent; }
 .sidebar-scroll::-webkit-scrollbar-thumb { background: #334155; }
 
-/* ─── Activity Timeline line ─────────────────────────── */
-.timeline-line {
-  position: absolute;
-  left: 15px;
-  top: 20px;
-  bottom: 0;
-  width: 1px;
-  background: linear-gradient(to bottom, #E2E8F0 0%, transparent 100%);
+/* ─── Table row left-border accent on hover (Linear style) ── */
+.row-accent {
+  position: relative;
 }
+.row-accent::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity 120ms ease;
+  border-radius: 0 2px 2px 0;
+}
+.row-accent:hover::before { opacity: 1; }
+
+/* ─── Hero glows ─────────────────────────────────────── */
+.hero-glow-blue   { background: radial-gradient(circle, rgba(28,110,242,0.3) 0%, transparent 70%); }
+.hero-glow-purple { background: radial-gradient(circle, rgba(139,92,246,0.2) 0%, transparent 70%); }

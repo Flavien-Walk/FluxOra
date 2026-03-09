@@ -47,18 +47,22 @@ function NavItem({ href, label, icon: Icon, isActive, badge }) {
     <Link
       href={href}
       className={cn(
-        'group flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium',
+        'group relative flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium',
         'transition-all duration-150',
         isActive
-          ? 'bg-white/[0.12] text-slate-50'
-          : 'text-slate-400 hover:bg-white/[0.07] hover:text-slate-200'
+          ? 'bg-white/[0.12] text-white'
+          : 'text-slate-400 hover:bg-white/[0.07] hover:text-slate-100'
       )}
     >
+      {/* Active left indicator */}
+      {isActive && (
+        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-accent-400 rounded-r-full" />
+      )}
       <Icon
         size={15}
         className={cn(
           'flex-shrink-0 transition-colors duration-150',
-          isActive ? 'text-slate-100' : 'text-slate-500 group-hover:text-slate-300'
+          isActive ? 'text-accent-400' : 'text-slate-500 group-hover:text-slate-300'
         )}
       />
       <span className="flex-1 truncate">{label}</span>
@@ -94,8 +98,7 @@ export default function Sidebar() {
       <nav className="flex-1 px-2 py-4 space-y-5 overflow-y-auto sidebar-scroll">
         {NAV_GROUPS.map((group) => (
           <div key={group.label}>
-            <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-widest select-none"
-              style={{ color: 'var(--tw-sidebar-label, #475569)' }}>
+            <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-600 select-none">
               {group.label}
             </p>
             <div className="space-y-0.5">
