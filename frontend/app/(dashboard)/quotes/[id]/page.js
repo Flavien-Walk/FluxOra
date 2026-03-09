@@ -11,7 +11,7 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Modal from '@/components/ui/Modal';
 import QuoteForm from '@/components/modules/QuoteForm';
-import { ArrowLeft, Pencil, Trash2, Send, CheckCircle, XCircle, FileText, Mail, Clock } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2, Send, FileText, Mail, Clock, Link2, Copy } from 'lucide-react';
 
 const EVENT_CONFIG = {
   created:      { label: 'Créé',               color: 'bg-gray-100 text-gray-500' },
@@ -96,11 +96,15 @@ export default function QuoteDetailPage() {
   }
 
   const isDraft = quote.status === 'draft';
-  const isSent = quote.status === 'sent';
-  const canEdit = isDraft || isSent;
-  const canDelete = ['draft', 'rejected', 'expired'].includes(quote.status);
-  const canConvert = ['draft', 'sent', 'accepted'].includes(quote.status) && !quote.invoiceId;
+  const isWaiting = ['sent', 'email_opened', 'viewed'].includes(quote.status);
+  const isFinished = ['accepted', 'refused', 'rejected', 'expired'].includes(quote.status);
+  const canEdit = isDraft;
+  const canDelete = ['draft', 'refused', 'rejected', 'expired'].includes(quote.status);
+  const canConvert = !quote.invoiceId && (isDraft || isWaiting || quote.status === 'accepted');
   const clientEmail = quote.clientId?.email;
+  const publicUrl = quote.trackingToken
+    ? `${typeof window !== 'undefined' ? window.location.origin : 'https://flux-ora.vercel.app'}/q/${quote.trackingToken}`
+    : null;
 
   return (
     <>
@@ -118,18 +122,10 @@ export default function QuoteDetailPage() {
                 <Pencil size={14} /> Modifier
               </Button>
             )}
-            <Button size="sm" variant="secondary" onClick={() => { setEmailOverride(clientEmail || ''); setEmailOpen(true); }} loading={loading === 'email'}>
-              <Mail size={14} /> Envoyer par email
-            </Button>
-            {isSent && (
-              <>
-                <Button size="sm" onClick={() => updateStatus('accepted')} loading={loading === 'accepted'}>
-                  <CheckCircle size={14} /> Accepté
-                </Button>
-                <Button size="sm" variant="danger" onClick={() => updateStatus('rejected')} loading={loading === 'rejected'}>
-                  <XCircle size={14} /> Refusé
-                </Button>
-              </>
+            {!isFinished && (
+              <Button size="sm" variant="secondary" onClick={() => { setEmailOverride(clientEmail || ''); setEmailOpen(true); }} loading={loading === 'email'}>
+                <Mail size={14} /> {isWaiting ? 'Renvoyer' : 'Envoyer par email'}
+              </Button>
             )}
             {canConvert && (
               <Button size="sm" onClick={handleConvert} loading={loading === 'convert'}>
@@ -145,8 +141,42 @@ export default function QuoteDetailPage() {
         </div>
 
         {emailSent && (
-          <div className="bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-2 rounded-lg">
-            ✓ Devis envoyé par email avec succès.
+          <div className="bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-3 rounded-lg">
+            ✓ Devis envoyé par email avec succès. Le client recevra un lien pour accepter ou refuser.
+          </div>
+        )}
+
+        {/* Bandeau En attente de réponse client */}
+        {isWaiting && publicUrl && (
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <Clock size={16} className="text-blue-500 mt-0.5 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-blue-800 mb-1">
+                  En attente de réponse du client
+                </p>
+                <p className="text-xs text-blue-600 mb-3">
+                  {quote.status === 'viewed'
+                    ? 'Le client a consulté ce devis. Sa réponse apparaîtra ici automatiquement.'
+                    : quote.status === 'email_opened'
+                    ? "Le client a ouvert l'email. Sa réponse apparaîtra ici automatiquement."
+                    : "L'email a été envoyé. Sa réponse apparaîtra ici automatiquement."}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Link2 size={12} className="text-blue-400 flex-shrink-0" />
+                  <span className="text-xs text-blue-500 truncate font-mono">{publicUrl}</span>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(publicUrl);
+                    }}
+                    className="flex-shrink-0 text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 font-medium"
+                    title="Copier le lien"
+                  >
+                    <Copy size={12} /> Copier
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
