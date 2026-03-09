@@ -9,6 +9,9 @@ import Header from '@/components/layout/Header';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
+import { cn } from '@/lib/utils';
+import EmptyState from '@/components/ui/EmptyState';
+import { SkeletonTable } from '@/components/ui/Skeleton';
 import { Plus, Receipt, Trash2, Pencil, AlertTriangle, Camera, FileUp, Loader2 } from 'lucide-react';
 
 const fmt = (n) =>
@@ -220,17 +223,18 @@ export default function ExpensesPage() {
           </div>
           <button
             onClick={() => setAlertsOpen(true)}
-            className={`rounded-xl p-4 text-left border transition-colors ${
+            className={cn(
+              'rounded-xl p-4 text-left border transition-colors',
               openCount > 0
-                ? 'bg-yellow-50 border-yellow-200 hover:bg-yellow-100'
-                : 'bg-white border-gray-200'
-            }`}
+                ? 'bg-amber-50 border-amber-200 hover:bg-amber-100'
+                : 'bg-white border-gray-200 hover:bg-gray-50'
+            )}
           >
-            <p className={`text-xs uppercase font-medium mb-1 ${openCount > 0 ? 'text-yellow-600' : 'text-gray-500'}`}>
+            <p className={cn('text-xs uppercase font-medium mb-1', openCount > 0 ? 'text-amber-600' : 'text-gray-500')}>
               Alertes ouvertes
             </p>
             <div className="flex items-center gap-2">
-              <p className={`text-2xl font-bold ${openCount > 0 ? 'text-yellow-700' : 'text-gray-400'}`}>
+              <p className={cn('text-2xl font-bold', openCount > 0 ? 'text-amber-700' : 'text-gray-400')}>
                 {openCount}
               </p>
               {openCount > 0 && <AlertTriangle size={18} className="text-yellow-500" />}
@@ -265,18 +269,15 @@ export default function ExpensesPage() {
           </CardHeader>
           <CardBody className="p-0">
             {isLoading ? (
-              <div className="flex justify-center py-12">
-                <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-              </div>
+              <SkeletonTable rows={5} cols={7} />
             ) : expenses.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <Receipt size={40} className="text-gray-300 mb-3" />
-                <p className="text-gray-500 font-medium">Aucune dépense enregistrée</p>
-                <p className="text-gray-400 text-sm mt-1">Ajoutez vos dépenses pour suivre la TVA récupérable</p>
-                <Button size="sm" className="mt-4" onClick={() => setModalOpen(true)}>
-                  <Plus size={14} /> Ajouter une dépense
-                </Button>
-              </div>
+              <EmptyState
+                icon={Receipt}
+                title="Aucune dépense enregistrée"
+                description="Ajoutez vos dépenses pour suivre la TVA récupérable."
+                action={() => setModalOpen(true)}
+                actionLabel="Ajouter une dépense"
+              />
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
