@@ -146,6 +146,34 @@ export default function QuoteDetailPage() {
           </div>
         )}
 
+        {/* Bannière devis accepté → convertir en facture */}
+        {quote.status === 'accepted' && !quote.invoiceId && (
+          <div className="bg-green-50 border-2 border-green-300 rounded-xl p-5 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <FileText size={18} className="text-green-600" />
+              </div>
+              <div>
+                <p className="font-semibold text-green-800">Devis accepté par le client !</p>
+                <p className="text-sm text-green-600">Convertissez-le en facture pour déclencher le paiement.</p>
+              </div>
+            </div>
+            <Button onClick={handleConvert} loading={loading === 'convert'} className="flex-shrink-0">
+              <FileText size={14} /> Créer la facture
+            </Button>
+          </div>
+        )}
+
+        {/* Lien vers la facture si déjà converti */}
+        {quote.invoiceId && (
+          <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 flex items-center justify-between">
+            <p className="text-sm text-indigo-700 font-medium">Ce devis a été converti en facture.</p>
+            <Link href={`/invoices/${quote.invoiceId._id || quote.invoiceId}`} className="text-sm font-semibold text-indigo-600 hover:underline flex items-center gap-1">
+              Voir la facture <FileText size={14} />
+            </Link>
+          </div>
+        )}
+
         {/* Bandeau En attente de réponse client */}
         {isWaiting && publicUrl && (
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
