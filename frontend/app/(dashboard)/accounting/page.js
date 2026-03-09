@@ -7,16 +7,16 @@ import Header from '@/components/layout/Header';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
-import { Plus, TrendingUp, TrendingDown, BookOpen } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, BookOpen, X } from 'lucide-react';
 
 const fmt = (n) =>
   new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n ?? 0);
 
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('fr-FR') : '—');
+const fmtDateTime = (d) => (d ? new Date(d).toLocaleString('fr-FR') : '—');
 
 const SOURCE_LABELS = { invoice: 'Facture', expense: 'Dépense', payment: 'Paiement', manual: 'Manuel' };
 
-// Catégories correspondant exactement à l'enum du modèle AccountingEntry
 const CATEGORIES = [
   { value: 'revenue',   label: 'Revenus' },
   { value: 'marketing', label: 'Marketing' },
@@ -29,16 +29,24 @@ const CATEGORIES = [
 ];
 const CATEGORY_LABELS = Object.fromEntries(CATEGORIES.map((c) => [c.value, c.label]));
 
+const SOURCE_COLORS = {
+  invoice: 'bg-blue-100 text-blue-700',
+  expense: 'bg-red-100 text-red-700',
+  payment: 'bg-green-100 text-green-700',
+  manual:  'bg-gray-100 text-gray-600',
+};
+
 export default function AccountingPage() {
   const { entries, summary, isLoading, mutate } = useAccounting();
-  const [modalOpen, setModalOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [modalOpen,      setModalOpen]      = useState(false);
+  const [selectedEntry,  setSelectedEntry]  = useState(null);
+  const [saving,         setSaving]         = useState(false);
   const [form, setForm] = useState({
-    date: new Date().toISOString().split('T')[0],
+    date:        new Date().toISOString().split('T')[0],
     description: '',
-    category: 'revenue',
-    type: 'credit',
-    amount: '',
+    category:    'revenue',
+    type:        'credit',
+    amount:      '',
   });
 
   const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -60,6 +68,7 @@ export default function AccountingPage() {
     if (!confirm('Supprimer cette écriture manuelle ?')) return;
     await api.delete(`/api/accounting/${id}`);
     mutate();
+    setSelectedEntry(null);
   };
 
   const balance = (summary?.totalCredits ?? 0) - (summary?.totalDebits ?? 0);
@@ -128,17 +137,20 @@ export default function AccountingPage() {
                       <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Source</th>
                       <th className="text-right px-4 py-3 text-xs font-medium text-green-600 uppercase">Crédit</th>
                       <th className="text-right px-4 py-3 text-xs font-medium text-red-600 uppercase">Débit</th>
-                      <th className="px-4 py-3" />
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {entries.map((entry) => (
-                      <tr key={entry._id} className="hover:bg-gray-50">
+                      <tr
+                        key={entry._id}
+                        onClick={() => setSelectedEntry(entry)}
+                        className="hover:bg-indigo-50 cursor-pointer transition-colors"
+                      >
                         <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmtDate(entry.date)}</td>
-                        <td className="px-4 py-3 text-gray-900">{entry.description}</td>
+                        <td className="px-4 py-3 text-gray-900 font-medium">{entry.description}</td>
                         <td className="px-4 py-3 text-gray-500">{CATEGORY_LABELS[entry.category] || entry.category}</td>
                         <td className="px-4 py-3">
-                          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${SOURCE_COLORS[entry.source] || 'bg-gray-100 text-gray-600'}`}>
                             {SOURCE_LABELS[entry.source] || entry.source}
                           </span>
                         </td>
@@ -147,16 +159,6 @@ export default function AccountingPage() {
                         </td>
                         <td className="px-4 py-3 text-right font-semibold text-red-700">
                           {entry.type === 'debit' ? fmt(entry.amount) : ''}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          {entry.source === 'manual' && (
-                            <button
-                              onClick={() => handleDelete(entry._id)}
-                              className="text-gray-400 hover:text-red-500 text-xs"
-                            >
-                              Suppr.
-                            </button>
-                          )}
                         </td>
                       </tr>
                     ))}
@@ -168,6 +170,7 @@ export default function AccountingPage() {
         </Card>
       </div>
 
+      {/* Modal nouvelle écriture */}
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Nouvelle écriture manuelle">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -242,6 +245,100 @@ export default function AccountingPage() {
           </div>
         </form>
       </Modal>
+
+      {/* Panneau de détail d'une écriture */}
+      {selectedEntry && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4" onClick={() => setSelectedEntry(null)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div
+            className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className={`rounded-t-2xl px-6 py-5 ${selectedEntry.type === 'credit' ? 'bg-green-50 border-b border-green-100' : 'bg-red-50 border-b border-red-100'}`}>
+              <div className="flex items-start justify-between">
+                <div>
+                  <span className={`text-xs font-semibold uppercase tracking-wide ${selectedEntry.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>
+                    {selectedEntry.type === 'credit' ? 'Entrée (crédit)' : 'Sortie (débit)'}
+                  </span>
+                  <p className="text-xl font-bold text-gray-900 mt-1">
+                    {selectedEntry.type === 'credit' ? '+' : '-'}{fmt(selectedEntry.amount)}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setSelectedEntry(null)}
+                  className="text-gray-400 hover:text-gray-600 p-1 rounded-lg"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-5 space-y-4">
+              <div>
+                <p className="text-xs text-gray-400 uppercase font-medium mb-0.5">Description</p>
+                <p className="text-sm font-semibold text-gray-900">{selectedEntry.description}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-gray-400 uppercase font-medium mb-0.5">Date</p>
+                  <p className="text-sm text-gray-700">{fmtDate(selectedEntry.date)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 uppercase font-medium mb-0.5">Catégorie</p>
+                  <p className="text-sm text-gray-700">{CATEGORY_LABELS[selectedEntry.category] || selectedEntry.category}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-gray-400 uppercase font-medium mb-0.5">Source</p>
+                  <span className={`inline-flex text-xs px-2 py-0.5 rounded-full font-medium ${SOURCE_COLORS[selectedEntry.source] || 'bg-gray-100 text-gray-600'}`}>
+                    {SOURCE_LABELS[selectedEntry.source] || selectedEntry.source}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 uppercase font-medium mb-0.5">Créé le</p>
+                  <p className="text-sm text-gray-700">{fmtDateTime(selectedEntry.createdAt)}</p>
+                </div>
+              </div>
+
+              {selectedEntry.reference && (
+                <div>
+                  <p className="text-xs text-gray-400 uppercase font-medium mb-0.5">Référence</p>
+                  <p className="text-sm text-gray-700 font-mono">{selectedEntry.reference}</p>
+                </div>
+              )}
+
+              {selectedEntry.notes && (
+                <div>
+                  <p className="text-xs text-gray-400 uppercase font-medium mb-0.5">Notes</p>
+                  <p className="text-sm text-gray-600">{selectedEntry.notes}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 pb-5 flex justify-between items-center">
+              {selectedEntry.source === 'manual' ? (
+                <button
+                  onClick={() => handleDelete(selectedEntry._id)}
+                  className="text-sm text-red-500 hover:text-red-700 font-medium"
+                >
+                  Supprimer cette écriture
+                </button>
+              ) : (
+                <p className="text-xs text-gray-400">Écriture générée automatiquement</p>
+              )}
+              <Button size="sm" variant="secondary" onClick={() => setSelectedEntry(null)}>
+                Fermer
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

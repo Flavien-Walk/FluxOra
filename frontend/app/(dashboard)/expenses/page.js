@@ -9,7 +9,7 @@ import Header from '@/components/layout/Header';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
-import { Plus, Receipt, Trash2, AlertTriangle, CheckCircle, Camera, FileUp, Loader2 } from 'lucide-react';
+import { Plus, Receipt, Trash2, Pencil, AlertTriangle, Camera, FileUp, Loader2 } from 'lucide-react';
 
 const fmt = (n) =>
   new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n ?? 0);
@@ -65,15 +65,25 @@ export default function ExpensesPage() {
   const { expenses, isLoading, mutate } = useExpenses();
   const { alerts, openCount, mutate: mutateAlerts } = useAlerts('open');
   const { data: vatSummary } = useSWR('/api/expenses/vat-summary', fetcher, { revalidateOnFocus: false });
-  const [modalOpen,  setModalOpen]  = useState(false);
-  const [alertsOpen, setAlertsOpen] = useState(false);
-  const [saving,    setSaving]    = useState(false);
-  const [deleting,  setDeleting]  = useState('');
-  const [resolving, setResolving] = useState('');
-  const [form, setForm] = useState(EMPTY_FORM);
-  const [modalTab,  setModalTab]  = useState('manual'); // 'manual' | 'scan'
-  const [scanning,  setScanning]  = useState(false);
-  const [scanError, setScanError] = useState('');
+
+  const [modalOpen,      setModalOpen]      = useState(false);
+  const [alertsOpen,     setAlertsOpen]     = useState(false);
+  const [saving,         setSaving]         = useState(false);
+  const [deleting,       setDeleting]       = useState('');
+  const [resolving,      setResolving]      = useState('');
+  const [form,           setForm]           = useState(EMPTY_FORM);
+  const [editingExpense, setEditingExpense] = useState(null);
+  const [modalTab,       setModalTab]       = useState('manual');
+  const [scanning,       setScanning]       = useState(false);
+  const [scanError,      setScanError]      = useState('');
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setModalTab('manual');
+    setScanError('');
+    setEditingExpense(null);
+    setForm(EMPTY_FORM);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -82,6 +92,21 @@ export default function ExpensesPage() {
       if (name === 'category' && NON_DEDUCTIBLE.has(value)) next.vatRate = '0';
       return next;
     });
+  };
+
+  const openEdit = (exp) => {
+    setForm({
+      date:        exp.date ? new Date(exp.date).toISOString().split('T')[0] : EMPTY_FORM.date,
+      description: exp.description || '',
+      vendor:      exp.vendor || '',
+      category:    exp.category || 'software',
+      amountHT:    String(exp.amountHT ?? ''),
+      vatRate:     String(exp.vatRate ?? '20'),
+      notes:       exp.notes || '',
+    });
+    setEditingExpense(exp);
+    setModalTab('manual');
+    setModalOpen(true);
   };
 
   const amountHTNum = parseFloat(form.amountHT) || 0;
@@ -93,16 +118,20 @@ export default function ExpensesPage() {
     e.preventDefault();
     setSaving(true);
     try {
-      await api.post('/api/expenses', {
+      const payload = {
         ...form,
         amountHT: parseFloat(form.amountHT),
         vatRate:  parseFloat(form.vatRate),
         amount:   ttcPreview,
-      });
+      };
+      if (editingExpense) {
+        await api.put(`/api/expenses/${editingExpense._id}`, payload);
+      } else {
+        await api.post('/api/expenses', payload);
+      }
       mutate();
       mutateAlerts();
-      setModalOpen(false);
-      setForm(EMPTY_FORM);
+      closeModal();
     } catch (err) {
       alert(err.response?.data?.error || 'Erreur lors de l\'enregistrement.');
     } finally {
@@ -122,7 +151,6 @@ export default function ExpensesPage() {
     }
   };
 
-  // Scanner OCR : lit le fichier en base64 et envoie au backend
   const handleScan = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -137,7 +165,6 @@ export default function ExpensesPage() {
             image: base64,
             mimeType: file.type,
           });
-          // Pré-remplit le formulaire avec les données OCR
           setForm((f) => ({
             ...f,
             description: data.supplier   || f.description,
@@ -294,13 +321,23 @@ export default function ExpensesPage() {
                             </span>
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <button
-                              onClick={() => handleDelete(exp._id)}
-                              disabled={deleting === exp._id}
-                              className="text-gray-400 hover:text-red-500 p-1 rounded"
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                onClick={() => openEdit(exp)}
+                                className="text-gray-400 hover:text-indigo-500 p-1 rounded transition-colors"
+                                title="Modifier"
+                              >
+                                <Pencil size={14} />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(exp._id)}
+                                disabled={deleting === exp._id}
+                                className="text-gray-400 hover:text-red-500 p-1 rounded transition-colors"
+                                title="Supprimer"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -313,28 +350,34 @@ export default function ExpensesPage() {
         </Card>
       </div>
 
-      {/* Modal nouvelle dépense */}
-      <Modal open={modalOpen} onClose={() => { setModalOpen(false); setModalTab('manual'); setScanError(''); }} title="Nouvelle dépense">
-        {/* Onglets */}
-        <div className="flex border-b border-gray-200 mb-4 -mx-1">
-          {[{ id: 'manual', label: 'Saisie manuelle', Icon: Receipt }, { id: 'scan', label: 'Scanner un ticket', Icon: Camera }].map(({ id, label, Icon }) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setModalTab(id)}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                modalTab === id
-                  ? 'border-indigo-600 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <Icon size={14} /> {label}
-            </button>
-          ))}
-        </div>
+      {/* Modal dépense (création ou édition) */}
+      <Modal
+        open={modalOpen}
+        onClose={closeModal}
+        title={editingExpense ? 'Modifier la dépense' : 'Nouvelle dépense'}
+      >
+        {/* Onglets (masqués en mode édition) */}
+        {!editingExpense && (
+          <div className="flex border-b border-gray-200 mb-4 -mx-1">
+            {[{ id: 'manual', label: 'Saisie manuelle', Icon: Receipt }, { id: 'scan', label: 'Scanner un ticket', Icon: Camera }].map(({ id, label, Icon }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setModalTab(id)}
+                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  modalTab === id
+                    ? 'border-indigo-600 text-indigo-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <Icon size={14} /> {label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Onglet Scanner */}
-        {modalTab === 'scan' && (
+        {!editingExpense && modalTab === 'scan' && (
           <div className="space-y-4">
             <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
               {scanning ? (
@@ -376,7 +419,8 @@ export default function ExpensesPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className={`space-y-4 ${modalTab === 'scan' ? 'hidden' : ''}`}>
+        {/* Formulaire (manuel ou édition) */}
+        <form onSubmit={handleSubmit} className={`space-y-4 ${!editingExpense && modalTab === 'scan' ? 'hidden' : ''}`}>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
@@ -403,7 +447,6 @@ export default function ExpensesPage() {
               </select>
             </div>
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
             <input
@@ -412,11 +455,10 @@ export default function ExpensesPage() {
               value={form.description}
               onChange={handleChange}
               required
-              placeholder="Ex: Abonnement Notion, Vol Paris-Lyon..."
+              placeholder="Ex: Abonnement Notion, Achat bureau..."
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Fournisseur</label>
             <input
@@ -424,11 +466,10 @@ export default function ExpensesPage() {
               name="vendor"
               value={form.vendor}
               onChange={handleChange}
-              placeholder="Ex: Amazon, SNCF, Notion..."
+              placeholder="Ex: Amazon, Notion, SNCF..."
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Montant HT (€)</label>
@@ -445,13 +486,13 @@ export default function ExpensesPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Taux de TVA</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Taux TVA</label>
               <select
                 name="vatRate"
                 value={form.vatRate}
                 onChange={handleChange}
                 disabled={NON_DEDUCTIBLE.has(form.category)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-50 disabled:text-gray-400"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 disabled:text-gray-400"
               >
                 {VAT_RATES.map((r) => (
                   <option key={r.value} value={r.value}>{r.label}</option>
@@ -460,90 +501,78 @@ export default function ExpensesPage() {
             </div>
           </div>
 
+          {/* Preview TVA */}
           {amountHTNum > 0 && (
-            <div className="bg-indigo-50 rounded-lg px-4 py-3 grid grid-cols-3 gap-2">
-              <div>
-                <p className="text-xs text-indigo-500 font-medium">TVA</p>
-                <p className="text-sm font-semibold text-indigo-700">{fmt(vatPreview)}</p>
+            <div className="bg-gray-50 rounded-lg px-4 py-3 text-sm space-y-1 border border-gray-100">
+              <div className="flex justify-between text-gray-500">
+                <span>TVA ({form.vatRate}%)</span>
+                <span>{fmt(vatPreview)}</span>
               </div>
-              <div>
-                <p className="text-xs text-indigo-500 font-medium">Total TTC</p>
-                <p className="text-sm font-semibold text-indigo-700">{fmt(ttcPreview)}</p>
+              <div className="flex justify-between font-semibold text-gray-800">
+                <span>Total TTC</span>
+                <span>{fmt(ttcPreview)}</span>
               </div>
-              <div>
-                <p className="text-xs text-indigo-500 font-medium">TVA récup.</p>
-                <p className="text-sm font-semibold text-indigo-700">
-                  {NON_DEDUCTIBLE.has(form.category) ? '0,00 €' : fmt(vatPreview)}
-                </p>
-              </div>
+              {!NON_DEDUCTIBLE.has(form.category) && vatPreview > 0 && (
+                <div className="flex justify-between text-indigo-600 font-medium">
+                  <span>TVA récupérable</span>
+                  <span>{fmt(vatPreview)}</span>
+                </div>
+              )}
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optionnel)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
             <textarea
               name="notes"
               value={form.notes}
               onChange={handleChange}
               rows={2}
               placeholder="Informations complémentaires..."
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
-
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Annuler</Button>
-            <Button type="submit" loading={saving}>Enregistrer</Button>
+            <Button type="button" variant="secondary" onClick={closeModal}>Annuler</Button>
+            <Button type="submit" loading={saving}>
+              {editingExpense ? 'Enregistrer les modifications' : 'Ajouter la dépense'}
+            </Button>
           </div>
         </form>
       </Modal>
 
       {/* Panel alertes */}
-      <Modal open={alertsOpen} onClose={() => setAlertsOpen(false)} title={`Alertes (${openCount} ouvertes)`}>
-        <div className="space-y-3">
-          {alerts.length === 0 ? (
-            <div className="flex flex-col items-center py-8 text-center">
-              <CheckCircle size={32} className="text-green-400 mb-2" />
-              <p className="text-gray-500 font-medium">Aucune alerte ouverte</p>
-              <p className="text-gray-400 text-sm mt-1">Toutes vos dépenses sont validées.</p>
+      <Modal open={alertsOpen} onClose={() => setAlertsOpen(false)} title="Alertes TVA & justificatifs">
+        {alerts.length === 0 ? (
+          <div className="flex flex-col items-center py-10 text-center">
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-3">
+              <AlertTriangle size={20} className="text-green-600" />
             </div>
-          ) : (
-            alerts.map((alert) => {
-              const sev =
-                alert.severity === 'high'   ? 'border-red-200 bg-red-50' :
-                alert.severity === 'medium' ? 'border-yellow-200 bg-yellow-50' :
-                'border-gray-200 bg-gray-50';
-              return (
-                <div key={alert._id} className={`border rounded-lg p-3 ${sev}`}>
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1">
-                      <p className="text-xs font-semibold text-gray-600 uppercase mb-0.5">
-                        {ALERT_TYPE_LABELS[alert.type] || alert.type}
-                      </p>
-                      <p className="text-sm text-gray-800">{alert.message}</p>
-                      {alert.expenseId && (
-                        <p className="text-xs text-gray-400 mt-1">
-                          {fmtDate(alert.expenseId.date)} · {alert.expenseId.vendor || alert.expenseId.description}
-                        </p>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => handleResolveAlert(alert._id)}
-                      disabled={resolving === alert._id}
-                      className="text-xs text-gray-500 hover:text-green-600 flex items-center gap-1 whitespace-nowrap mt-0.5"
-                    >
-                      {resolving === alert._id
-                        ? <div className="w-3 h-3 border border-gray-400 border-t-transparent rounded-full animate-spin" />
-                        : <CheckCircle size={14} />
-                      }
-                      Résoudre
-                    </button>
-                  </div>
+            <p className="text-gray-500 font-medium">Aucune alerte ouverte</p>
+            <p className="text-gray-400 text-sm mt-1">Toutes vos dépenses sont conformes.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {alerts.map((alert) => (
+              <div key={alert._id} className="flex items-start gap-3 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <AlertTriangle size={16} className="text-yellow-500 mt-0.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-yellow-700 uppercase mb-0.5">
+                    {ALERT_TYPE_LABELS[alert.type] || alert.type}
+                  </p>
+                  <p className="text-sm text-yellow-800">{alert.message}</p>
                 </div>
-              );
-            })
-          )}
-        </div>
+                <button
+                  onClick={() => handleResolveAlert(alert._id)}
+                  disabled={resolving === alert._id}
+                  className="flex-shrink-0 text-xs font-medium text-yellow-700 hover:text-green-700 underline whitespace-nowrap"
+                >
+                  {resolving === alert._id ? '...' : 'Résoudre'}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </Modal>
     </>
   );
