@@ -112,6 +112,15 @@ export default function TransfersPage() {
       <Header title="Virements" />
       <div className="flex-1 p-6 space-y-6">
 
+        {/* Bannière simulation */}
+        <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-3 flex items-start gap-3">
+          <span className="text-amber-500 text-base mt-0.5">⚡</span>
+          <div className="text-sm text-amber-800">
+            <span className="font-semibold">Mode simulation</span> — Les virements sont simulés dans ce MVP.
+            En production, l'exécution des ordres de paiement sera déléguée à un <span className="font-medium">établissement de paiement agréé</span> (Stripe, Swan ou Treezor).
+          </div>
+        </div>
+
         {/* KPI */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-white border border-gray-200 rounded-xl p-4">

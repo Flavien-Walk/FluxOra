@@ -13,7 +13,7 @@ import {
   Zap,
   CreditCard,
   ArrowUpRight,
-  FileBarChart,
+  ArrowLeftRight,
 } from 'lucide-react';
 import { useAlerts } from '@/hooks/useAlerts';
 
@@ -23,9 +23,10 @@ const navItems = [
   { href: '/invoices',   label: 'Factures',         icon: FileText },
   { href: '/quotes',     label: 'Devis',            icon: ClipboardList },
   { href: '/expenses',   label: 'Dépenses',         icon: Receipt,       alertBadge: true },
-  { href: '/cards',      label: 'Cartes',           icon: CreditCard },
-  { href: '/transfers',  label: 'Virements',        icon: ArrowUpRight },
-  { href: '/accounting', label: 'Comptabilité',     icon: BookOpen },
+  { href: '/cards',        label: 'Cartes',         icon: CreditCard },
+  { href: '/transfers',    label: 'Virements',      icon: ArrowUpRight },
+  { href: '/accounting',   label: 'Comptabilité',   icon: BookOpen },
+  { href: '/transactions', label: 'Transactions',   icon: ArrowLeftRight },
 ];
 
 export default function Sidebar() {
