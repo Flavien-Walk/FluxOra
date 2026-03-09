@@ -15,7 +15,19 @@ const fmt = (n) =>
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('fr-FR') : '—');
 
 const SOURCE_LABELS = { invoice: 'Facture', expense: 'Dépense', payment: 'Paiement', manual: 'Manuel' };
-const CATEGORIES = ['revenue', 'expense', 'tax', 'salary', 'other'];
+
+// Catégories correspondant exactement à l'enum du modèle AccountingEntry
+const CATEGORIES = [
+  { value: 'revenue',   label: 'Revenus' },
+  { value: 'marketing', label: 'Marketing' },
+  { value: 'software',  label: 'Logiciels' },
+  { value: 'salaries',  label: 'Salaires' },
+  { value: 'suppliers', label: 'Fournisseurs' },
+  { value: 'taxes',     label: 'Taxes & impôts' },
+  { value: 'banking',   label: 'Frais bancaires' },
+  { value: 'other',     label: 'Autres' },
+];
+const CATEGORY_LABELS = Object.fromEntries(CATEGORIES.map((c) => [c.value, c.label]));
 
 export default function AccountingPage() {
   const { entries, summary, isLoading, mutate } = useAccounting();
@@ -124,7 +136,7 @@ export default function AccountingPage() {
                       <tr key={entry._id} className="hover:bg-gray-50">
                         <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmtDate(entry.date)}</td>
                         <td className="px-4 py-3 text-gray-900">{entry.description}</td>
-                        <td className="px-4 py-3 text-gray-500 capitalize">{entry.category}</td>
+                        <td className="px-4 py-3 text-gray-500">{CATEGORY_LABELS[entry.category] || entry.category}</td>
                         <td className="px-4 py-3">
                           <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
                             {SOURCE_LABELS[entry.source] || entry.source}
@@ -205,7 +217,7 @@ export default function AccountingPage() {
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
+                  <option key={c.value} value={c.value}>{c.label}</option>
                 ))}
               </select>
             </div>
