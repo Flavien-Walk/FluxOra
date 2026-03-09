@@ -7,6 +7,8 @@ import Header from '@/components/layout/Header';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
+import EmptyState from '@/components/ui/EmptyState';
+import { SkeletonTable } from '@/components/ui/Skeleton';
 import { Plus, TrendingUp, TrendingDown, BookOpen, X } from 'lucide-react';
 
 const fmt = (n) =>
@@ -94,12 +96,12 @@ export default function AccountingPage() {
             </div>
             <p className="text-2xl font-bold text-red-700">{fmt(summary?.totalDebits)}</p>
           </div>
-          <div className={`${balance >= 0 ? 'bg-indigo-50 border-indigo-100' : 'bg-orange-50 border-orange-100'} border rounded-xl p-4`}>
+          <div className={`${balance >= 0 ? 'bg-accent-50 border-accent-100' : 'bg-orange-50 border-orange-100'} border rounded-xl p-4`}>
             <div className="flex items-center gap-2 mb-1">
-              <BookOpen size={16} className={balance >= 0 ? 'text-indigo-600' : 'text-orange-600'} />
-              <span className={`text-xs font-medium uppercase ${balance >= 0 ? 'text-indigo-700' : 'text-orange-700'}`}>Solde net</span>
+              <BookOpen size={16} className={balance >= 0 ? 'text-accent-600' : 'text-orange-600'} />
+              <span className={`text-xs font-medium uppercase ${balance >= 0 ? 'text-accent-700' : 'text-orange-700'}`}>Solde net</span>
             </div>
-            <p className={`text-2xl font-bold ${balance >= 0 ? 'text-indigo-700' : 'text-orange-700'}`}>{fmt(balance)}</p>
+            <p className={`text-2xl font-bold ${balance >= 0 ? 'text-accent-700' : 'text-orange-700'}`}>{fmt(balance)}</p>
           </div>
         </div>
 
@@ -131,10 +133,10 @@ export default function AccountingPage() {
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 border-b border-gray-100">
                     <tr>
-                      <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Date</th>
-                      <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Description</th>
-                      <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Catégorie</th>
-                      <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Source</th>
+                      <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Date</th>
+                      <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Description</th>
+                      <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Catégorie</th>
+                      <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Source</th>
                       <th className="text-right px-4 py-3 text-xs font-medium text-green-600 uppercase">Crédit</th>
                       <th className="text-right px-4 py-3 text-xs font-medium text-red-600 uppercase">Débit</th>
                     </tr>
@@ -144,7 +146,7 @@ export default function AccountingPage() {
                       <tr
                         key={entry._id}
                         onClick={() => setSelectedEntry(entry)}
-                        className="hover:bg-indigo-50 cursor-pointer transition-colors"
+                        className="hover:bg-gray-50/70 cursor-pointer transition-colors"
                       >
                         <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{fmtDate(entry.date)}</td>
                         <td className="px-4 py-3 text-gray-900 font-medium">{entry.description}</td>
@@ -182,7 +184,7 @@ export default function AccountingPage() {
                 value={form.date}
                 onChange={handleChange}
                 required
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
               />
             </div>
             <div>
@@ -191,7 +193,7 @@ export default function AccountingPage() {
                 name="type"
                 value={form.type}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
               >
                 <option value="credit">Crédit (entrée)</option>
                 <option value="debit">Débit (sortie)</option>
@@ -207,7 +209,7 @@ export default function AccountingPage() {
               onChange={handleChange}
               required
               placeholder="Ex: Virement client, Achat matériel..."
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -217,7 +219,7 @@ export default function AccountingPage() {
                 name="category"
                 value={form.category}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
               >
                 {CATEGORIES.map((c) => (
                   <option key={c.value} value={c.value}>{c.label}</option>
@@ -235,7 +237,7 @@ export default function AccountingPage() {
                 min="0.01"
                 step="0.01"
                 placeholder="0.00"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
               />
             </div>
           </div>

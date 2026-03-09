@@ -14,11 +14,11 @@ const fetcher = (url) => api.get(url).then((r) => r.data);
 const PLAN_LABELS = { free: 'Gratuit', pro: 'Pro', enterprise: 'Enterprise' };
 const PLAN_COLORS = {
   free:       'bg-gray-100 text-gray-600',
-  pro:        'bg-indigo-100 text-indigo-700',
+  pro:        'bg-accent-100 text-accent-700',
   enterprise: 'bg-purple-100 text-purple-700',
 };
 
-const inputCls = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500';
+const inputCls = 'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-shadow';
 
 export default function SettingsPage() {
   const { user } = useUser();

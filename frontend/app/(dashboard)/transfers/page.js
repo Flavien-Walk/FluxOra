@@ -7,6 +7,8 @@ import Header from '@/components/layout/Header';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
+import EmptyState from '@/components/ui/EmptyState';
+import { SkeletonTable } from '@/components/ui/Skeleton';
 import { Plus, ArrowUpRight, Users, Trash2, CheckCircle, Clock, XCircle, Send } from 'lucide-react';
 
 const fmt = (n) =>
@@ -158,7 +160,7 @@ export default function TransfersPage() {
                   <p className="text-gray-400 text-sm">Aucun bénéficiaire enregistré</p>
                 </div>
               ) : (
-                <ul className="divide-y divide-gray-100">
+                <ul className="divide-y divide-gray-50">
                   {beneficiaries.map((b) => (
                     <li key={b._id} className="flex items-center gap-3 px-4 py-3">
                       <div className="flex-1 min-w-0">
@@ -216,7 +218,7 @@ export default function TransfersPage() {
                     {transfers.map((t) => {
                       const st = STATUS_CONFIG[t.status] || STATUS_CONFIG.processing;
                       return (
-                        <div key={t._id} className="flex items-center gap-4 px-4 py-3">
+                        <div key={t._id} className="flex items-center gap-4 px-4 py-3 hover:bg-gray-50/70 transition-colors">
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-gray-900 truncate">
                               {t.beneficiaryId?.name || 'Bénéficiaire inconnu'}
@@ -262,7 +264,7 @@ export default function TransfersPage() {
               value={form.beneficiaryId}
               onChange={handleChange}
               required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
             >
               <option value="">Sélectionner un bénéficiaire</option>
               {beneficiaries.map((b) => (
@@ -284,7 +286,7 @@ export default function TransfersPage() {
               min="0.01"
               step="0.01"
               placeholder="0.00"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
             />
           </div>
 
@@ -296,7 +298,7 @@ export default function TransfersPage() {
               value={form.reference}
               onChange={handleChange}
               placeholder="Ex: Facture #2026-031, Prestation..."
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
             />
           </div>
 
@@ -313,7 +315,7 @@ export default function TransfersPage() {
       <Modal open={confirmModal} onClose={() => setConfirmModal(false)} title="Confirmer le virement">
         {pendingTransfer && (
           <div className="space-y-4">
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-800">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800">
               Ce virement sera irréversible après confirmation.
             </div>
             <div className="space-y-2 text-sm bg-gray-50 rounded-lg p-4">
@@ -358,7 +360,7 @@ export default function TransfersPage() {
               onChange={handleBenefChange}
               required
               placeholder="Nom ou raison sociale"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
             />
           </div>
           <div>
@@ -370,7 +372,7 @@ export default function TransfersPage() {
               onChange={handleBenefChange}
               required
               placeholder="FR76 3000 6000 0112 3456 7890 189"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-accent-500"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -382,7 +384,7 @@ export default function TransfersPage() {
                 value={benefForm.bic}
                 onChange={handleBenefChange}
                 placeholder="BNPAFRPPXXX"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-accent-500"
               />
             </div>
             <div>
@@ -393,7 +395,7 @@ export default function TransfersPage() {
                 value={benefForm.email}
                 onChange={handleBenefChange}
                 placeholder="contact@..."
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
               />
             </div>
           </div>

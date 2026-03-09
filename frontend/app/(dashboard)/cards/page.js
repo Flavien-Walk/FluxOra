@@ -7,6 +7,7 @@ import Header from '@/components/layout/Header';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
+import EmptyState from '@/components/ui/EmptyState';
 import { Plus, CreditCard, Lock, Unlock, Trash2, ChevronLeft, ChevronRight, Zap } from 'lucide-react';
 
 const fmt = (n) =>
@@ -219,7 +220,7 @@ export default function CardsPage() {
                       key={i}
                       onClick={() => setSelected(i)}
                       className={`w-2 h-2 rounded-full transition-colors ${
-                        i === selected ? 'bg-indigo-600' : 'bg-gray-300'
+                        i === selected ? 'bg-accent-600' : 'bg-gray-200'
                       }`}
                     />
                   ))}
@@ -247,7 +248,7 @@ export default function CardsPage() {
                         className={`h-2 rounded-full transition-all ${
                           (activeCard.currentMonthSpend / activeCard.monthlyLimit) > 0.8
                             ? 'bg-red-500'
-                            : 'bg-indigo-500'
+                            : 'bg-accent-500'
                         }`}
                         style={{
                           width: `${Math.min(100, (activeCard.currentMonthSpend / activeCard.monthlyLimit) * 100)}%`,
@@ -327,7 +328,7 @@ export default function CardsPage() {
               onChange={handleChange}
               required
               placeholder="Ex: Abonnements SaaS, Publicité..."
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
             />
           </div>
 
@@ -338,7 +339,7 @@ export default function CardsPage() {
                 name="category"
                 value={form.category}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
               >
                 {CATEGORIES.map((c) => (
                   <option key={c.value} value={c.value}>{c.label}</option>
@@ -355,7 +356,7 @@ export default function CardsPage() {
                 required
                 min="1"
                 step="1"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
               />
             </div>
           </div>
@@ -368,7 +369,7 @@ export default function CardsPage() {
               value={form.linkedVendor}
               onChange={handleChange}
               placeholder="Ex: AWS, Google Ads..."
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
             />
           </div>
 
