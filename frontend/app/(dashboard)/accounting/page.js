@@ -252,8 +252,7 @@ export default function AccountingPage() {
                       <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Référence</th>
                       <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Catégorie</th>
                       <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Source</th>
-                      <th className="text-right px-5 py-3 text-[11px] font-semibold text-success-600 uppercase">Crédit</th>
-                      <th className="text-right px-5 py-3 text-[11px] font-semibold text-danger-600 uppercase">Débit</th>
+                      <th className="text-right px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Montant</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
@@ -263,9 +262,9 @@ export default function AccountingPage() {
                         onClick={() => setSelectedEntry(entry)}
                         className="row-accent hover:bg-slate-50/60 cursor-pointer transition-colors"
                       >
-                        <td className="px-5 py-3 text-slate-500 text-xs whitespace-nowrap">{fmtDate(entry.date)}</td>
-                        <td className="px-5 py-3 text-slate-900 font-medium max-w-[200px] truncate">{entry.description}</td>
-                        <td className="px-5 py-3">
+                        <td className="px-5 py-3.5 text-slate-500 text-xs whitespace-nowrap">{fmtDate(entry.date)}</td>
+                        <td className="px-5 py-3.5 text-slate-900 font-medium max-w-[200px] truncate">{entry.description}</td>
+                        <td className="px-5 py-3.5">
                           {entry.reference ? (
                             <span className="text-xs font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
                               {entry.reference}
@@ -274,15 +273,28 @@ export default function AccountingPage() {
                             <span className="text-slate-300">—</span>
                           )}
                         </td>
-                        <td className="px-5 py-3 text-slate-500 text-xs">{CATEGORY_LABELS[entry.category] || entry.category}</td>
-                        <td className="px-5 py-3">
+                        <td className="px-5 py-3.5 text-slate-500 text-xs">{CATEGORY_LABELS[entry.category] || entry.category}</td>
+                        <td className="px-5 py-3.5">
                           <SourceBadge source={entry.source} reference={entry.reference} />
                         </td>
-                        <td className="px-5 py-3 text-right font-semibold text-success-700 tabular-nums">
-                          {entry.type === 'credit' ? fmt(entry.amount) : ''}
-                        </td>
-                        <td className="px-5 py-3 text-right font-semibold text-danger-700 tabular-nums">
-                          {entry.type === 'debit' ? fmt(entry.amount) : ''}
+                        {/* Colonne montant unifiée avec badge Crédit/Débit */}
+                        <td className="px-5 py-3.5 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <span className={cn(
+                              'text-[10px] font-semibold px-1.5 py-0.5 rounded-full leading-none',
+                              entry.type === 'credit'
+                                ? 'bg-success-50 text-success-700'
+                                : 'bg-danger-50 text-danger-700'
+                            )}>
+                              {entry.type === 'credit' ? 'Crédit' : 'Débit'}
+                            </span>
+                            <span className={cn(
+                              'font-semibold tabular-nums text-sm',
+                              entry.type === 'credit' ? 'text-success-700' : 'text-danger-700'
+                            )}>
+                              {entry.type === 'credit' ? '+' : '-'}{fmt(entry.amount)}
+                            </span>
+                          </div>
                         </td>
                       </tr>
                     ))}

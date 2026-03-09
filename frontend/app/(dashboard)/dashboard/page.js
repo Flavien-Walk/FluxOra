@@ -12,10 +12,10 @@ import Badge from '@/components/ui/Badge';
 import ActivityTimeline, { buildActivityEvents } from '@/components/ui/ActivityTimeline';
 import {
   TrendingUp, Clock, AlertTriangle, Wallet,
-  TrendingDown, FileText, CheckCircle2,
+  Receipt, ClipboardList, CheckCircle2,
   ChevronRight, ArrowUpRight, Bell,
   Plus, UserPlus, ReceiptText, Send,
-  Sparkles, Calendar,
+  Sparkles, Calendar, CircleDollarSign,
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -199,7 +199,7 @@ export default function DashboardPage() {
             label="Chiffre d'affaires"
             value={sumLoading ? '…' : fmt(summary?.revenue?.total)}
             sub={`Ce mois : ${sumLoading ? '…' : fmt(summary?.revenue?.month)}`}
-            icon={TrendingUp}
+            icon={CircleDollarSign}
             color="green"
           />
           <StatCard
@@ -231,15 +231,15 @@ export default function DashboardPage() {
             label="Dépenses du mois"
             value={sumLoading ? '…' : fmt(summary?.expenses?.month)}
             sub="Mois en cours"
-            icon={TrendingDown}
-            color="red"
+            icon={Receipt}
+            color="purple"
           />
           <StatCard
             label="Devis en cours"
             value={sumLoading ? '…' : String(summary?.quotes?.pendingCount ?? 0)}
             sub={`Valeur : ${sumLoading ? '…' : fmt(summary?.quotes?.pendingTotal)}`}
-            icon={FileText}
-            color="indigo"
+            icon={ClipboardList}
+            color="blue"
           />
           <StatCard
             label="Devis acceptés"
