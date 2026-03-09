@@ -12,7 +12,7 @@ import Badge from '@/components/ui/Badge';
 import ActivityTimeline, { buildActivityEvents } from '@/components/ui/ActivityTimeline';
 import {
   TrendingUp, Clock, AlertTriangle, Wallet,
-  Receipt, ClipboardList, CheckCircle2,
+  Receipt, ClipboardList, CheckCircle2, FileText,
   ChevronRight, ArrowUpRight, Bell,
   Plus, UserPlus, ReceiptText, Send,
   Sparkles, Calendar, CircleDollarSign,
