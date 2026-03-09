@@ -11,19 +11,26 @@ import {
   BookOpen,
   Settings,
   Zap,
+  CreditCard,
+  ArrowUpRight,
+  FileBarChart,
 } from 'lucide-react';
+import { useAlerts } from '@/hooks/useAlerts';
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/clients', label: 'Clients', icon: Users },
-  { href: '/invoices', label: 'Factures', icon: FileText },
-  { href: '/quotes', label: 'Devis', icon: ClipboardList },
-  { href: '/expenses', label: 'Dépenses', icon: Receipt },
-  { href: '/accounting', label: 'Comptabilité', icon: BookOpen },
+  { href: '/dashboard',  label: 'Dashboard',       icon: LayoutDashboard },
+  { href: '/clients',    label: 'Clients',          icon: Users },
+  { href: '/invoices',   label: 'Factures',         icon: FileText },
+  { href: '/quotes',     label: 'Devis',            icon: ClipboardList },
+  { href: '/expenses',   label: 'Dépenses',         icon: Receipt,       alertBadge: true },
+  { href: '/cards',      label: 'Cartes',           icon: CreditCard },
+  { href: '/transfers',  label: 'Virements',        icon: ArrowUpRight },
+  { href: '/accounting', label: 'Comptabilité',     icon: BookOpen },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { openCount } = useAlerts('open');
 
   return (
     <aside className="w-64 min-h-screen bg-white border-r border-gray-200 flex flex-col">
@@ -37,8 +44,9 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1">
-        {navItems.map(({ href, label, icon: Icon }) => {
+        {navItems.map(({ href, label, icon: Icon, alertBadge }) => {
           const isActive = pathname === href || pathname.startsWith(href + '/');
+          const count = alertBadge ? openCount : 0;
           return (
             <Link
               key={href}
@@ -53,7 +61,12 @@ export default function Sidebar() {
               `}
             >
               <Icon size={18} />
-              {label}
+              <span className="flex-1">{label}</span>
+              {count > 0 && (
+                <span className="bg-yellow-400 text-yellow-900 text-xs font-bold px-1.5 py-0.5 rounded-full leading-none">
+                  {count}
+                </span>
+              )}
             </Link>
           );
         })}

@@ -9,26 +9,30 @@ const expenseSchema = new mongoose.Schema(
       index: true,
     },
     description: { type: String, required: true, trim: true },
-    amount: { type: Number, required: true },
-    currency: { type: String, default: 'EUR' },
+    vendor:  { type: String, trim: true },
+    date:    { type: Date, required: true, default: Date.now },
     category: {
       type: String,
-      enum: [
-        'marketing',
-        'software',
-        'salaries',
-        'suppliers',
-        'taxes',
-        'banking',
-        'travel',
-        'office',
-        'other',
-      ],
+      enum: ['marketing', 'software', 'salaries', 'suppliers', 'taxes', 'banking', 'travel', 'office', 'other'],
       required: true,
     },
-    date: { type: Date, required: true, default: Date.now },
-    receiptUrl: { type: String }, // URL du justificatif (S3, Cloudinary, etc.)
-    vendor: { type: String, trim: true },
+    // Montants
+    amountHT:       { type: Number, default: 0 },
+    vatRate:        { type: Number, enum: [0, 5.5, 10, 20], default: 20 },
+    vatAmount:      { type: Number, default: 0 },
+    vatRecoverable: { type: Number, default: 0 },
+    amount:         { type: Number, required: true }, // TTC
+    currency:       { type: String, default: 'EUR' },
+    // Statut de validation
+    status: {
+      type: String,
+      enum: ['validated', 'pending_review', 'non_eligible'],
+      default: 'validated',
+    },
+    // Justificatif
+    receiptUrl: { type: String },
+    // OCR
+    ocrConfidence: { type: Number }, // 0-1
     notes: { type: String, trim: true },
   },
   { timestamps: true }

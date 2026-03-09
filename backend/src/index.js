@@ -49,7 +49,10 @@ app.use('/api/quotes', require('./routes/quotes'));
 app.use('/api/expenses', require('./routes/expenses'));
 app.use('/api/accounting', require('./routes/accounting'));
 app.use('/api/dashboard', require('./routes/dashboard'));
-app.use('/api/webhooks', require('./routes/webhooks'));
+app.use('/api/alerts',    require('./routes/alerts'));
+app.use('/api/cards',     require('./routes/cards'));
+app.use('/api/transfers', require('./routes/transfers'));
+app.use('/api/webhooks',  require('./routes/webhooks'));
 
 // Gestion des erreurs globale
 app.use((err, req, res, next) => {
