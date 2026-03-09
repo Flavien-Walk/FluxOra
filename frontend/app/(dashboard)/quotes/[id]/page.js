@@ -11,7 +11,7 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Modal from '@/components/ui/Modal';
 import QuoteForm from '@/components/modules/QuoteForm';
-import { ArrowLeft, Pencil, Trash2, Send, FileText, Mail, Clock, Link2, Copy } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2, Send, FileText, Mail, Clock, Copy } from 'lucide-react';
 
 const EVENT_CONFIG = {
   created:      { label: 'Créé',               color: 'bg-gray-100 text-gray-500' },
@@ -162,19 +162,13 @@ export default function QuoteDetailPage() {
                     ? "Le client a ouvert l'email. Sa réponse apparaîtra ici automatiquement."
                     : "L'email a été envoyé. Sa réponse apparaîtra ici automatiquement."}
                 </p>
-                <div className="flex items-center gap-2">
-                  <Link2 size={12} className="text-blue-400 flex-shrink-0" />
-                  <span className="text-xs text-blue-500 truncate font-mono">{publicUrl}</span>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(publicUrl);
-                    }}
-                    className="flex-shrink-0 text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 font-medium"
-                    title="Copier le lien"
-                  >
-                    <Copy size={12} /> Copier
-                  </button>
-                </div>
+                <button
+                  onClick={() => navigator.clipboard.writeText(publicUrl)}
+                  className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 font-medium"
+                  title="Copier le lien client"
+                >
+                  <Copy size={12} /> Copier le lien client
+                </button>
               </div>
             </div>
           </div>
