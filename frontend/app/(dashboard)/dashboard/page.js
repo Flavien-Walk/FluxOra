@@ -232,7 +232,7 @@ export default function DashboardPage() {
             value={sumLoading ? '…' : fmt(summary?.expenses?.month)}
             sub="Mois en cours"
             icon={Receipt}
-            color="purple"
+            color="rose"
           />
           <StatCard
             label="Devis en cours"

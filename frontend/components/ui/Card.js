@@ -70,6 +70,12 @@ const STAT_THEMES = {
     trend:   'text-blue-700 bg-blue-50',
     value:   'text-slate-900',
   },
+  rose: {
+    icon:    'bg-rose-50 text-rose-600',
+    bar:     'bg-rose-500',
+    trend:   'text-rose-700 bg-rose-50',
+    value:   'text-slate-900',
+  },
 };
 
 /* Bar top colors for each theme */
@@ -80,6 +86,7 @@ const BAR_COLORS = {
   red:    '#EF4444',
   purple: '#9333EA',
   blue:   '#3B82F6',
+  rose:   '#F43F5E',
 };
 
 export function StatCard({ label, value, sub, icon: Icon, color = 'indigo', trend }) {
