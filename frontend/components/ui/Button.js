@@ -1,23 +1,27 @@
 'use client';
 
+import { cn } from '@/lib/utils';
+
 const variants = {
-  primary: 'bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500',
-  secondary: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-gray-400',
-  danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-  ghost: 'text-gray-600 hover:bg-gray-100 focus:ring-gray-400',
+  primary:   'bg-accent-500 text-white shadow-xs hover:bg-accent-600 active:bg-accent-700',
+  secondary: 'bg-white text-gray-700 border border-gray-200 shadow-xs hover:bg-gray-50 active:bg-gray-100',
+  danger:    'bg-red-500 text-white shadow-xs hover:bg-red-600 active:bg-red-700',
+  ghost:     'text-gray-600 hover:bg-gray-100 hover:text-gray-900 active:bg-gray-200',
+  outline:   'border border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50',
 };
 
 const sizes = {
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-4 py-2 text-sm',
-  lg: 'px-6 py-3 text-base',
+  xs: 'h-7 px-2.5 text-xs gap-1.5 rounded',
+  sm: 'h-8 px-3 text-sm gap-1.5 rounded-md',
+  md: 'h-9 px-4 text-sm gap-2 rounded-lg',
+  lg: 'h-10 px-5 text-base gap-2 rounded-lg',
 };
 
 export default function Button({
   children,
   variant = 'primary',
   size = 'md',
-  className = '',
+  className,
   disabled = false,
   loading = false,
   onClick,
@@ -29,18 +33,24 @@ export default function Button({
       type={type}
       onClick={onClick}
       disabled={disabled || loading}
-      className={`
-        inline-flex items-center justify-center gap-2 rounded-lg font-medium
-        transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1
-        disabled:opacity-50 disabled:cursor-not-allowed
-        ${variants[variant]} ${sizes[size]} ${className}
-      `}
+      className={cn(
+        'inline-flex items-center justify-center font-medium',
+        'transition-all duration-150 ease-in-out',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-1',
+        'disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none',
+        'active:scale-[0.98]',
+        variants[variant] ?? variants.primary,
+        sizes[size] ?? sizes.md,
+        className
+      )}
       {...props}
     >
-      {loading && (
-        <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-      )}
-      {children}
+      {loading ? (
+        <>
+          <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin flex-shrink-0" />
+          <span>{children}</span>
+        </>
+      ) : children}
     </button>
   );
 }
