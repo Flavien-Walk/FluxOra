@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Users, FileText, ClipboardList,
   Receipt, BookOpen, Zap,
-  CreditCard, ArrowUpRight, ArrowLeftRight, ShieldCheck,
+  CreditCard, ArrowUpRight, ArrowLeftRight,
 } from 'lucide-react';
 import { useAlerts } from '@/hooks/useAlerts';
 
@@ -38,7 +38,6 @@ const NAV_GROUPS = [
     label: 'Analyse',
     items: [
       { href: '/accounting', label: 'Comptabilité', icon: BookOpen },
-      { href: '/reviews', label: 'Contrôles', icon: ShieldCheck },
     ],
   },
 ];

@@ -1,65 +1,93 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, X, Send, RotateCcw, AlertCircle, Loader2, ChevronRight } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  AlertCircle,
+  ChevronRight,
+  Loader2,
+  RotateCcw,
+  Send,
+  Sparkles,
+  X,
+} from 'lucide-react';
 import api from '@/lib/api';
-import AssistantActions     from './AssistantActions';
-import AssistantEntityCard  from './AssistantEntityCard';
-import AssistantHubActions  from './AssistantHubActions';
+import AssistantActions from './AssistantActions';
 import AssistantClientPicker from './AssistantClientPicker';
+import AssistantEntityCard from './AssistantEntityCard';
+import AssistantHubActions from './AssistantHubActions';
+import AssistantJournal from './AssistantJournal';
+import AssistantModalHost from './AssistantModalHost';
+import AssistantObjectCard from './AssistantObjectCard';
+import AssistantSectionReport from './AssistantSectionReport';
+import { normalizeAssistantResponse } from '@/lib/assistant/normalizeAssistantResponse';
 
-/* ── Suggestions analytiques fallback ───────────────────────── */
 const FALLBACK_SUGGESTIONS = [
-  { text: 'Anticipe ma trésorerie sur 30 jours' },
-  { text: 'Quel est mon score de santé financière ?' },
-  { text: 'Analyse mes dépenses du mois' },
-  { text: 'Quels fournisseurs me coûtent le plus cher ?' },
-  { text: 'Propose une meilleure répartition budgétaire' },
+  { text: 'Anticipe ma tresorerie sur 30 jours' },
+  { text: 'Quel est mon score de sante financiere ?' },
+  { text: 'Analyse mes depenses du mois' },
+  { text: 'Quels fournisseurs me coutent le plus cher ?' },
+  { text: 'Propose une meilleure repartition budgetaire' },
   { text: 'Quel est mon bilan du mois ?' },
 ];
 
 const BADGE_STYLES = {
   warning: 'bg-amber-100 text-amber-700',
-  danger:  'bg-red-100 text-red-600',
-  info:    'bg-accent-100 text-accent-700',
+  danger: 'bg-red-100 text-red-600',
+  info: 'bg-accent-100 text-accent-700',
 };
 
-/* ── Rendu texte assistant ───────────────────────────────────── */
 function MsgText({ text }) {
+  if (!text) return null;
+
   return (
     <div className="space-y-2">
-      {text.split('\n\n').filter(Boolean).map((block, i) => {
-        if (block.startsWith('## ') || (block.startsWith('**') && block.endsWith('**'))) {
+      {text.split('\n\n').filter(Boolean).map((block, index) => {
+        if (block.startsWith('# ') || block.startsWith('## ')) {
           return (
-            <p key={i} className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mt-3 first:mt-0">
-              {block.replace(/^##\s*/, '').replace(/^\*\*|\*\*$/g, '')}
+            <p
+              key={index}
+              className="mt-3 text-[11px] font-bold uppercase tracking-widest text-slate-500 first:mt-0"
+            >
+              {block.replace(/^##?\s*/, '')}
             </p>
           );
         }
-        const lines = block.split('\n').filter(Boolean);
-        if (lines.some(l => l.startsWith('- ') || l.startsWith('• '))) {
+
+        if (block.startsWith('**') && block.endsWith('**')) {
           return (
-            <ul key={i} className="space-y-1.5">
-              {lines.map((line, j) => (
-                <li key={j} className="flex gap-2 text-[13px] text-slate-700 leading-relaxed">
-                  <span className="mt-2 w-1.5 h-1.5 rounded-full bg-accent-400 shrink-0" />
-                  <span>{line.replace(/^[-•]\s*/, '')}</span>
+            <p
+              key={index}
+              className="mt-3 text-[11px] font-bold uppercase tracking-widest text-slate-500 first:mt-0"
+            >
+              {block.replace(/^\*\*|\*\*$/g, '')}
+            </p>
+          );
+        }
+
+        const lines = block.split('\n').filter(Boolean);
+        if (lines.some((line) => line.startsWith('- ') || line.startsWith('* '))) {
+          return (
+            <ul key={index} className="space-y-1.5">
+              {lines.map((line, lineIndex) => (
+                <li key={lineIndex} className="flex gap-2 text-[13px] leading-relaxed text-slate-700">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-400" />
+                  <span>{line.replace(/^[-*]\s*/, '')}</span>
                 </li>
               ))}
             </ul>
           );
         }
-        // Inline bold (**text**)
+
         const parts = block.split(/(\*\*[^*]+\*\*)/g);
         return (
-          <p key={i} className="text-[13px] text-slate-700 leading-relaxed">
-            {parts.map((p, j) =>
-              p.startsWith('**') && p.endsWith('**')
-                ? <strong key={j}>{p.slice(2, -2)}</strong>
-                : p
-            )}
+          <p key={index} className="text-[13px] leading-relaxed text-slate-700">
+            {parts.map((part, partIndex) => (
+              part.startsWith('**') && part.endsWith('**')
+                ? <strong key={partIndex}>{part.slice(2, -2)}</strong>
+                : <span key={partIndex}>{part}</span>
+            ))}
           </p>
         );
       })}
@@ -67,350 +95,559 @@ function MsgText({ text }) {
   );
 }
 
-/* ── Composant principal ────────────────────────────────────── */
+function buildInlineModal(action) {
+  if (!action) return null;
+  if (action.modal && typeof action.modal === 'object') return action.modal;
+  if (!action.modalType) return null;
+
+  return {
+    type: action.modalType,
+    title: action.modalTitle || '',
+    description: action.description || '',
+    confirmedFields: action.confirmedFields || [],
+    missingFields: action.missingFields || [],
+    payload: action.payload || {},
+    submitLabel: action.submitLabel || '',
+    requiresConfirmation: !!action.requiresConfirmation,
+  };
+}
+
+function buildLocalAssistantMessage(message) {
+  return normalizeAssistantResponse({
+    reply: message.content,
+    error: message.error,
+    actions: message.actions,
+    entityCard: message.entityCard,
+    objectCards: message.objectCards,
+    sections: message.sections,
+    modal: message.modal,
+    requiresConfirmation: message.requiresConfirmation,
+    confidence: message.confidence,
+    journalEntry: message.journalEntry,
+    guided: message.guided,
+    mode: message.mode,
+  });
+}
+
 export default function AssistantPanel({ open, onClose }) {
   const router = useRouter();
-  const [messages,       setMessages]       = useState([]);
-  const [input,          setInput]          = useState('');
-  const [loading,        setLoading]        = useState(false);
-  const [suggestions,    setSuggestions]    = useState([]);
-  const [loadingSugg,    setLoadingSugg]    = useState(false);
-  const [executingAction, setExecutingAction] = useState(null);
   const bottomRef = useRef(null);
-  const inputRef  = useRef(null);
+  const inputRef = useRef(null);
+  const sendRef = useRef(null);
 
-  /* Focus à l'ouverture */
+  const [messages, setMessages] = useState([]);
+  const [journal, setJournal] = useState([]);
+  const [assistantContext, setAssistantContext] = useState({});
+  const [pendingModal, setPendingModal] = useState(null);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [loadingSugg, setLoadingSugg] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [executingAction, setExecutingAction] = useState(null);
+
   useEffect(() => {
-    if (open) setTimeout(() => inputRef.current?.focus(), 320);
+    if (open) {
+      window.setTimeout(() => inputRef.current?.focus(), 320);
+    }
   }, [open]);
 
-  /* Suggestions dynamiques (une seule fois par session) */
   useEffect(() => {
     if (!open || suggestions.length > 0) return;
+
     setLoadingSugg(true);
     api.get('/api/assistant/suggestions')
       .then(({ data }) => setSuggestions(data.suggestions?.length ? data.suggestions : FALLBACK_SUGGESTIONS))
       .catch(() => setSuggestions(FALLBACK_SUGGESTIONS))
       .finally(() => setLoadingSugg(false));
-  }, [open]);
+  }, [open, suggestions.length]);
 
-  /* Scroll to bottom */
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, loading]);
+  }, [messages, loading, pendingModal]);
 
-  /* ── Exécution / navigation depuis une action ─────────────── */
+  const pushJournalEntry = useCallback((entry) => {
+    if (!entry) return;
+    setJournal((current) => [
+      ...current,
+      {
+        status: entry.status || 'info',
+        type: entry.type || 'event',
+        label: entry.label || entry.type || 'Evenement',
+        at: entry.at || new Date().toISOString(),
+      },
+    ]);
+  }, []);
+
+  const appendAssistantMessage = useCallback((payload) => {
+    const normalized = buildLocalAssistantMessage(payload);
+    setMessages((current) => [...current, normalized]);
+    if (normalized.contextPatch) {
+      setAssistantContext((current) => ({ ...current, ...normalized.contextPatch }));
+    }
+    pushJournalEntry(normalized.journalEntry);
+  }, [pushJournalEntry]);
+
+  const openAssistantModal = useCallback((modal) => {
+    if (!modal?.type) return;
+    setPendingModal(modal);
+  }, []);
+
+  const executeAssistantAction = useCallback(async (type, payload) => {
+    const { data } = await api.post('/api/assistant/action', {
+      type,
+      payload: payload || {},
+    });
+    return data;
+  }, []);
+
   const handleAction = useCallback(async (action) => {
+    if (!action) return;
+
     if (action.type === 'redirect' && action.path) {
       onClose();
       router.push(action.path);
-    } else if (action.type === 'action') {
-      setExecutingAction(action.id);
-      try {
-        const { data } = await api.post('/api/assistant/action', {
-          type:    action.actionType,
-          payload: action.payload || {},
-        });
-        if (data.redirectTo) { onClose(); router.push(data.redirectTo); }
-      } catch (err) {
-        const errMsg = err.response?.data?.error || "Impossible d'exécuter cette action.";
-        setMessages(prev => [...prev, { role: 'assistant', content: null, error: errMsg }]);
-      } finally {
-        setExecutingAction(null);
-      }
+      return;
     }
-  }, [onClose, router]);
 
-  /* ── Client sélectionné depuis le picker guidé ─────────────── */
+    if (action.type === 'open_modal') {
+      openAssistantModal(buildInlineModal(action));
+      return;
+    }
+
+    if (action.type === 'fill_prompt') {
+      setInput(action.prompt || action.value || '');
+      inputRef.current?.focus();
+      return;
+    }
+
+    if (action.type === 'send_message') {
+      await sendRef.current?.(action.prompt || action.message || '');
+      return;
+    }
+
+    if (action.type !== 'action') return;
+
+    setExecutingAction(action.id);
+    try {
+      const data = await executeAssistantAction(action.actionType, action.payload || {});
+
+      if (data.redirectTo) {
+        onClose();
+        router.push(data.redirectTo);
+      }
+
+      if (data.message) {
+        appendAssistantMessage(data.message);
+      } else if (data.redirectTo) {
+        appendAssistantMessage({
+          content: 'Action executee. Vous pouvez verifier le resultat dans Fluxora.',
+          journalEntry: {
+            type: 'assistant_action',
+            label: action.label || 'Action executee',
+            status: 'success',
+          },
+        });
+      }
+    } catch (err) {
+      appendAssistantMessage({
+        content: '',
+        error: err.response?.data?.error || "Impossible d'executer cette action.",
+      });
+    } finally {
+      setExecutingAction(null);
+    }
+  }, [appendAssistantMessage, executeAssistantAction, onClose, openAssistantModal, router]);
+
   const handleSelectClient = useCallback(async (clientId, clientName, flow) => {
-    const actionType = flow === 'create_quote' ? 'create_draft_quote' : 'create_draft_invoice';
-    await handleAction({ id: `select_${clientId}`, type: 'action', actionType, payload: { clientId, clientName } });
-  }, [handleAction]);
+    const modalType = flow === 'create_quote' ? 'create_quote' : 'create_invoice';
+    openAssistantModal({
+      type: modalType,
+      title: flow === 'create_quote' ? 'Creer un devis' : 'Creer une facture',
+      confirmedFields: [`Client confirme : ${clientName}`],
+      missingFields: flow === 'create_quote' ? ['Prestations', 'Date de validite'] : ['Prestations', 'Date d echeance'],
+      payload: {
+        initialValues: { clientId },
+        client: { id: clientId, name: clientName },
+      },
+      requiresConfirmation: true,
+    });
+  }, [openAssistantModal]);
 
-  /* ── Hub action (Créer devis, Créer facture, redirect…) ──── */
-  const handleHubAction = useCallback((item) => {
+  const handleHubAction = useCallback(async (item) => {
     if (item.path) {
       onClose();
       router.push(item.path);
-    } else if (item.flow) {
-      const label = item.flow === 'create_quote' ? 'devis' : 'facture';
-      setMessages([{
-        role:    'assistant',
-        content: `Créons votre ${label}. Choisissez un client existant ou créez-en un nouveau :`,
-        guided:  { type: 'select_client', flow: item.flow },
-        actions: [],
-      }]);
+      return;
     }
-  }, [onClose, router]);
 
-  /* ── Chat ────────────────────────────────────────────────── */
+    if (item.prompt) {
+      await sendRef.current?.(item.prompt);
+      return;
+    }
+
+    if (item.modal) {
+      openAssistantModal(item.modal);
+      return;
+    }
+
+    if (item.flow === 'create_quote') {
+      openAssistantModal({
+        type: 'create_quote',
+        title: 'Creer un devis',
+        description: 'Preparez un devis dans le chat, puis validez manuellement avant envoi.',
+        missingFields: ['Client', 'Prestations', 'Date de validite'],
+        payload: { initialValues: {} },
+        requiresConfirmation: true,
+      });
+      return;
+    }
+
+    if (item.flow === 'create_invoice') {
+      openAssistantModal({
+        type: 'create_invoice',
+        title: 'Creer une facture',
+        description: 'Preparez une facture depuis le chat sans modifier automatiquement de statut.',
+        missingFields: ['Client', 'Prestations', 'Date d echeance'],
+        payload: { initialValues: {} },
+        requiresConfirmation: true,
+      });
+    }
+  }, [onClose, openAssistantModal, router]);
+
   const send = useCallback(async (text) => {
     const msg = (text || input).trim();
     if (!msg || loading) return;
-    setInput('');
 
-    const userMsg = { role: 'user', content: msg };
-    const next    = [...messages, userMsg];
-    setMessages(next);
+    setInput('');
+    setPendingModal(null);
+
+    const userMessage = { role: 'user', content: msg };
+    const nextMessages = [...messages, userMessage];
+    setMessages(nextMessages);
     setLoading(true);
 
     try {
       const { data } = await api.post('/api/assistant/chat', {
-        messages: next.map(m => ({ role: m.role, content: m.content })),
+        messages: nextMessages.map((message) => ({ role: message.role, content: message.content })),
+        context: assistantContext,
       });
-      setMessages(prev => [...prev, {
-        role:       'assistant',
-        content:    data.reply,
-        actions:    data.actions    || [],
-        entityCard: data.entityCard || null,
-      }]);
+
+      const normalized = normalizeAssistantResponse(data);
+      setMessages((current) => [...current, normalized]);
+
+      if (normalized.contextPatch) {
+        setAssistantContext((current) => ({ ...current, ...normalized.contextPatch }));
+      }
+
+      pushJournalEntry(normalized.journalEntry);
+
+      if (normalized.modal && normalized.modal.payload?.autoOpen !== false) {
+        setPendingModal(normalized.modal);
+      }
     } catch (err) {
-      const code   = err.response?.data?.code;
-      const errMsg = code === 'ASSISTANT_NO_CREDITS'
-        ? "Crédits IA épuisés — l'assistant est temporairement indisponible."
+      const code = err.response?.data?.code;
+      const errorMessage = code === 'ASSISTANT_NO_CREDITS'
+        ? "Credits IA epuises, l'assistant est temporairement indisponible."
         : code === 'ASSISTANT_INVALID_KEY'
-          ? "Assistant IA non configuré. Contactez l'administrateur."
+          ? "Assistant IA non configure. Contactez l'administrateur."
           : code === 'ASSISTANT_UNAVAILABLE'
-            ? 'Assistant temporairement indisponible. Réessayez dans quelques instants.'
-            : err.response?.data?.error || "Erreur de connexion à l'assistant.";
-      setMessages(prev => [...prev, { role: 'assistant', content: null, error: errMsg }]);
+            ? "Assistant temporairement indisponible. Reessayez dans quelques instants."
+            : err.response?.data?.error || "Erreur de connexion a l'assistant.";
+
+      setMessages((current) => [...current, { role: 'assistant', content: '', error: errorMessage }]);
+      pushJournalEntry({
+        type: 'assistant_error',
+        label: 'Erreur assistant',
+        status: 'error',
+      });
     } finally {
       setLoading(false);
     }
-  }, [input, messages, loading]);
+  }, [assistantContext, input, loading, messages, pushJournalEntry]);
 
-  const clear = () => { setMessages([]); setInput(''); };
-  const onKey = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } };
+  useEffect(() => {
+    sendRef.current = send;
+  }, [send]);
+
+  const clearConversation = () => {
+    setMessages([]);
+    setJournal([]);
+    setAssistantContext({});
+    setPendingModal(null);
+    setInput('');
+  };
+
+  const onKeyDown = (event) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      send();
+    }
+  };
 
   const displaySuggestions = suggestions.length ? suggestions : FALLBACK_SUGGESTIONS;
 
   return (
-    <AnimatePresence>
-      {open && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            key="backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.16 }}
-            className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-[2px]"
-            onClick={onClose}
-          />
+    <>
+      <AnimatePresence>
+        {open && (
+          <>
+            <motion.div
+              key="assistant-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.16 }}
+              className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-[2px]"
+              onClick={onClose}
+            />
 
-          {/* Drawer */}
-          <motion.aside
-            key="drawer"
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', stiffness: 340, damping: 36 }}
-            className="fixed top-0 right-0 bottom-0 z-50 flex flex-col bg-white border-l border-slate-200 shadow-2xl"
-            style={{ width: 'min(440px, 100vw)' }}
-            onClick={e => e.stopPropagation()}
-          >
-
-            {/* ── Header ─────────────────────────────────── */}
-            <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-100 shrink-0">
-              <div
-                className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent-500 to-accent-700 flex items-center justify-center"
-                style={{ boxShadow: '0 4px 12px rgba(28,110,242,0.35)' }}
-              >
-                <Sparkles size={16} strokeWidth={1.75} className="text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[14px] font-semibold text-slate-900">Assistant Fluxora</p>
-                <p className="text-[11px] text-slate-400">Copilote financier IA</p>
-              </div>
-              {messages.length > 0 && (
-                <button
-                  onClick={clear}
-                  title="Nouvelle conversation"
-                  className="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600"
+            <motion.aside
+              key="assistant-drawer"
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', stiffness: 340, damping: 36 }}
+              className="fixed bottom-0 right-0 top-0 z-50 flex flex-col border-l border-slate-200 bg-white shadow-2xl"
+              style={{ width: 'min(460px, 100vw)' }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-4 shrink-0">
+                <div
+                  className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-accent-500 to-accent-700"
+                  style={{ boxShadow: '0 4px 12px rgba(28,110,242,0.35)' }}
                 >
-                  <RotateCcw size={14} />
-                </button>
-              )}
-              <button
-                onClick={onClose}
-                className="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600"
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            {/* ── Messages ou Hub ─────────────────────────── */}
-            <div className="flex-1 overflow-y-auto">
-
-              {messages.length === 0 ? (
-
-                /* ── Hub d'accueil ───────────────────────── */
-                <div className="px-5 py-6 space-y-5">
-
-                  {/* Mini header */}
-                  <div className="flex flex-col items-center text-center">
-                    <div
-                      className="w-12 h-12 rounded-2xl bg-gradient-to-br from-accent-50 to-accent-100 flex items-center justify-center mb-3"
-                      style={{ boxShadow: '0 4px 16px rgba(28,110,242,0.10)' }}
-                    >
-                      <Sparkles size={22} className="text-accent-600" strokeWidth={1.5} />
-                    </div>
-                    <p className="text-[14px] font-semibold text-slate-900 mb-1">Comment puis-je vous aider ?</p>
-                    <p className="text-[11px] text-slate-400 max-w-[260px] leading-relaxed">
-                      Actions rapides · Analyses financières · Copilote métier
-                    </p>
-                  </div>
-
-                  {/* Hub actions */}
-                  <AssistantHubActions onAction={handleHubAction} />
-
-                  {/* Séparateur */}
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 h-px bg-slate-100" />
-                    <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-300">Suggestions</span>
-                    <div className="flex-1 h-px bg-slate-100" />
-                  </div>
-
-                  {/* Suggestions dynamiques */}
-                  {loadingSugg ? (
-                    <div className="flex items-center gap-2 text-slate-400 text-xs py-2">
-                      <Loader2 size={12} className="animate-spin" />
-                      <span>Chargement…</span>
-                    </div>
-                  ) : (
-                    <div className="space-y-1.5">
-                      {displaySuggestions.map((s, i) => (
-                        <button
-                          key={i}
-                          onClick={() => send(s.text)}
-                          className="w-full flex items-center justify-between text-left text-[12.5px] font-medium text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl px-4 py-2.5 transition-colors group"
-                        >
-                          <span>{s.text}</span>
-                          <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                            {s.badge && (
-                              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${BADGE_STYLES[s.badgeStyle] || BADGE_STYLES.info}`}>
-                                {s.badge}
-                              </span>
-                            )}
-                            <ChevronRight size={13} className="text-slate-300 group-hover:text-slate-500 transition-colors" />
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                  <Sparkles size={16} strokeWidth={1.75} className="text-white" />
                 </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[14px] font-semibold text-slate-900">Assistant Fluxora</p>
+                  <p className="text-[11px] text-slate-400">Agent metier interactif</p>
+                </div>
+                {messages.length > 0 && (
+                  <button
+                    onClick={clearConversation}
+                    title="Nouvelle conversation"
+                    className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                  >
+                    <RotateCcw size={14} />
+                  </button>
+                )}
+                <button
+                  onClick={onClose}
+                  className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                >
+                  <X size={16} />
+                </button>
+              </div>
 
-              ) : (
+              <div className="flex-1 overflow-y-auto">
+                {messages.length === 0 ? (
+                  <div className="space-y-5 px-5 py-6">
+                    <div className="flex flex-col items-center text-center">
+                      <div
+                        className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-accent-50 to-accent-100"
+                        style={{ boxShadow: '0 4px 16px rgba(28,110,242,0.10)' }}
+                      >
+                        <Sparkles size={22} className="text-accent-600" strokeWidth={1.5} />
+                      </div>
+                      <p className="mb-1 text-[14px] font-semibold text-slate-900">Comment puis-je vous aider ?</p>
+                      <p className="max-w-[260px] text-[11px] leading-relaxed text-slate-400">
+                        Analyse, brouillons, controles manuels et actions confirmees
+                      </p>
+                    </div>
 
-                /* ── Messages du chat ────────────────────── */
-                <div className="p-5 space-y-4">
-                  {messages.map((msg, i) => (
-                    <div key={i} className={`flex gap-2.5 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                      {msg.role === 'assistant' && (
-                        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-accent-500 to-accent-700 flex items-center justify-center shrink-0 mt-0.5">
+                    <AssistantHubActions onAction={handleHubAction} />
+
+                    <div className="flex items-center gap-3">
+                      <div className="h-px flex-1 bg-slate-100" />
+                      <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-300">
+                        Suggestions
+                      </span>
+                      <div className="h-px flex-1 bg-slate-100" />
+                    </div>
+
+                    {loadingSugg ? (
+                      <div className="flex items-center gap-2 py-2 text-xs text-slate-400">
+                        <Loader2 size={12} className="animate-spin" />
+                        <span>Chargement...</span>
+                      </div>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {displaySuggestions.map((suggestion, index) => (
+                          <button
+                            key={index}
+                            onClick={() => send(suggestion.text)}
+                            className="group flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-left text-[12.5px] font-medium text-slate-600 transition-colors hover:bg-slate-100"
+                          >
+                            <span>{suggestion.text}</span>
+                            <div className="ml-2 flex shrink-0 items-center gap-1.5">
+                              {suggestion.badge && (
+                                <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${BADGE_STYLES[suggestion.badgeStyle] || BADGE_STYLES.info}`}>
+                                  {suggestion.badge}
+                                </span>
+                              )}
+                              <ChevronRight size={13} className="text-slate-300 transition-colors group-hover:text-slate-500" />
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4 p-5">
+                    {messages.map((message, index) => (
+                      <div key={index} className={`flex gap-2.5 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                        {message.role === 'assistant' && (
+                          <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-accent-500 to-accent-700">
+                            <Sparkles size={12} strokeWidth={1.75} className="text-white" />
+                          </div>
+                        )}
+
+                        <div className="flex max-w-[88%] flex-col">
+                          {(message.content || message.error) && (
+                            <div
+                              className={
+                                message.role === 'user'
+                                  ? 'rounded-2xl rounded-tr-md bg-accent-600 px-4 py-2.5 text-white'
+                                  : message.error
+                                    ? 'rounded-2xl rounded-tl-md border border-red-100 bg-red-50 px-4 py-3'
+                                    : 'rounded-2xl rounded-tl-md border border-slate-100 bg-slate-50 px-4 py-3'
+                              }
+                            >
+                              {message.role === 'user' ? (
+                                <p className="text-[13px] leading-relaxed">{message.content}</p>
+                              ) : message.error ? (
+                                <div className="flex items-center gap-2 text-[13px] text-red-600">
+                                  <AlertCircle size={14} className="shrink-0" />
+                                  <p>{message.error}</p>
+                                </div>
+                              ) : (
+                                <div className="space-y-2">
+                                  <MsgText text={message.content} />
+                                  {(message.confidence?.label || message.requiresConfirmation) && (
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {message.confidence?.label && (
+                                        <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-500">
+                                          Confiance {message.confidence.label.toLowerCase()}
+                                        </span>
+                                      )}
+                                      {message.requiresConfirmation && (
+                                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                                          Validation requise
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {message.role === 'assistant' && !message.error && message.guided?.type === 'select_client' && (
+                            <AssistantClientPicker
+                              flow={message.guided.flow}
+                              onSelectClient={(clientId, clientName) => handleSelectClient(clientId, clientName, message.guided.flow)}
+                              onNewClient={() => openAssistantModal({
+                                type: 'create_client',
+                                title: 'Creer un client',
+                                missingFields: ['Nom du client'],
+                                payload: {
+                                  initialValues: {},
+                                  nextModal: {
+                                    type: message.guided.flow === 'create_quote' ? 'create_quote' : 'create_invoice',
+                                    title: message.guided.flow === 'create_quote' ? 'Creer un devis' : 'Creer une facture',
+                                    payload: { initialValues: {} },
+                                  },
+                                },
+                              })}
+                            />
+                          )}
+
+                          {message.role === 'assistant' && !message.error && message.entityCard && (
+                            <AssistantEntityCard entityCard={message.entityCard} />
+                          )}
+
+                          {message.role === 'assistant' && !message.error && message.sections && (
+                            <AssistantSectionReport sections={message.sections} />
+                          )}
+
+                          {message.role === 'assistant' && !message.error && message.objectCards?.length > 0 && (
+                            <div className="mt-2">
+                              {message.objectCards.map((card) => (
+                                <AssistantObjectCard key={card.id} card={card} />
+                              ))}
+                            </div>
+                          )}
+
+                          {message.role === 'assistant' && !message.error && message.actions?.length > 0 && (
+                            <AssistantActions
+                              actions={message.actions}
+                              onAction={handleAction}
+                              executingActionId={executingAction}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    ))}
+
+                    {loading && (
+                      <div className="flex gap-2.5">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-accent-500 to-accent-700">
                           <Sparkles size={12} strokeWidth={1.75} className="text-white" />
                         </div>
-                      )}
-
-                      <div className="max-w-[86%] flex flex-col">
-                        {/* Bulle de message */}
-                        {(msg.content || msg.error) && (
-                          <div className={`${
-                            msg.role === 'user'
-                              ? 'bg-accent-600 text-white rounded-2xl rounded-tr-md px-4 py-2.5'
-                              : msg.error
-                                ? 'bg-red-50 border border-red-100 rounded-2xl rounded-tl-md px-4 py-3'
-                                : 'bg-slate-50 border border-slate-100 rounded-2xl rounded-tl-md px-4 py-3'
-                          }`}>
-                            {msg.role === 'user' ? (
-                              <p className="text-[13px] leading-relaxed">{msg.content}</p>
-                            ) : msg.error ? (
-                              <div className="flex items-center gap-2 text-red-600 text-[13px]">
-                                <AlertCircle size={14} className="shrink-0" />
-                                <p>{msg.error}</p>
-                              </div>
-                            ) : (
-                              <MsgText text={msg.content} />
-                            )}
-                          </div>
-                        )}
-
-                        {/* Guided flow — sélecteur client */}
-                        {msg.role === 'assistant' && !msg.error && msg.guided?.type === 'select_client' && (
-                          <AssistantClientPicker
-                            flow={msg.guided.flow}
-                            onSelectClient={(clientId, clientName) =>
-                              handleSelectClient(clientId, clientName, msg.guided.flow)
-                            }
-                            onNewClient={() => { onClose(); router.push('/clients'); }}
-                          />
-                        )}
-
-                        {/* Carte entité — client trouvé / introuvable */}
-                        {msg.role === 'assistant' && !msg.error && msg.entityCard && (
-                          <AssistantEntityCard entityCard={msg.entityCard} />
-                        )}
-
-                        {/* Actions suggérées */}
-                        {msg.role === 'assistant' && !msg.error && msg.actions?.length > 0 && (
-                          <AssistantActions
-                            actions={msg.actions}
-                            onAction={handleAction}
-                            executingActionId={executingAction}
-                          />
-                        )}
+                        <div className="flex items-center gap-2 rounded-2xl rounded-tl-md border border-slate-100 bg-slate-50 px-4 py-3">
+                          <Loader2 size={13} className="animate-spin text-slate-400" />
+                          <span className="text-[13px] text-slate-400">Analyse en cours...</span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    )}
 
-                  {loading && (
-                    <div className="flex gap-2.5">
-                      <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-accent-500 to-accent-700 flex items-center justify-center shrink-0">
-                        <Sparkles size={12} strokeWidth={1.75} className="text-white" />
-                      </div>
-                      <div className="bg-slate-50 border border-slate-100 rounded-2xl rounded-tl-md px-4 py-3 flex items-center gap-2">
-                        <Loader2 size={13} className="animate-spin text-slate-400" />
-                        <span className="text-[13px] text-slate-400">Analyse en cours…</span>
-                      </div>
-                    </div>
-                  )}
-
-                  <div ref={bottomRef} />
-                </div>
-              )}
-            </div>
-
-            {/* ── Input ──────────────────────────────────── */}
-            <div className="border-t border-slate-100 p-4 shrink-0">
-              <div className="flex gap-2 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 focus-within:border-accent-300 focus-within:ring-2 focus-within:ring-accent-100 transition-all">
-                <textarea
-                  ref={inputRef}
-                  rows={1}
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  onKeyDown={onKey}
-                  placeholder="Posez votre question financière…"
-                  disabled={loading}
-                  className="flex-1 bg-transparent text-[13px] text-slate-800 placeholder:text-slate-400 resize-none outline-none leading-relaxed"
-                  style={{ maxHeight: '88px' }}
-                />
-                <button
-                  onClick={() => send()}
-                  disabled={!input.trim() || loading}
-                  className="self-end w-8 h-8 rounded-xl bg-accent-600 hover:bg-accent-700 disabled:bg-slate-200 text-white disabled:text-slate-400 flex items-center justify-center transition-colors shrink-0"
-                >
-                  <Send size={13} strokeWidth={2} />
-                </button>
+                    <div ref={bottomRef} />
+                  </div>
+                )}
               </div>
-              <p className="text-[10px] text-slate-400 text-center mt-2">
-                Données en temps réel · Les actions vous redirigent dans Fluxora
-              </p>
-            </div>
 
-          </motion.aside>
-        </>
-      )}
-    </AnimatePresence>
+              <AssistantJournal entries={journal} />
+
+              <div className="border-t border-slate-100 p-4 shrink-0">
+                <div className="flex gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 transition-all focus-within:border-accent-300 focus-within:ring-2 focus-within:ring-accent-100">
+                  <textarea
+                    ref={inputRef}
+                    rows={1}
+                    value={input}
+                    onChange={(event) => setInput(event.target.value)}
+                    onKeyDown={onKeyDown}
+                    placeholder="Posez votre question financiere..."
+                    disabled={loading}
+                    className="flex-1 resize-none bg-transparent text-[13px] leading-relaxed text-slate-800 outline-none placeholder:text-slate-400"
+                    style={{ maxHeight: '88px' }}
+                  />
+                  <button
+                    onClick={() => send()}
+                    disabled={!input.trim() || loading}
+                    className="self-end flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-accent-600 text-white transition-colors hover:bg-accent-700 disabled:bg-slate-200 disabled:text-slate-400"
+                  >
+                    <Send size={13} strokeWidth={2} />
+                  </button>
+                </div>
+                <p className="mt-2 text-center text-[10px] text-slate-400">
+                  Lecture, analyse, brouillons et actions confirmees uniquement
+                </p>
+              </div>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
+      <AssistantModalHost
+        key={pendingModal ? `${pendingModal.type}-${pendingModal.title || ''}` : 'assistant-modal'}
+        open={!!pendingModal}
+        modal={pendingModal}
+        onClose={() => setPendingModal(null)}
+        onAppendAssistantMessage={appendAssistantMessage}
+        onSendFollowUp={send}
+        onOpenModal={openAssistantModal}
+        onExecuteAssistantAction={executeAssistantAction}
+      />
+    </>
   );
 }

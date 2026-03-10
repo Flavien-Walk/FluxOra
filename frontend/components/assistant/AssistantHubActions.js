@@ -19,10 +19,10 @@ const HUB = [
   },
   {
     id: 'hub_review',
-    label: 'Contrôle prudent',
+    label: 'Contrôle facturation',
     icon: ShieldCheck,
     color: 'from-emerald-50 to-emerald-100 border-emerald-100 text-emerald-700 hover:border-emerald-300',
-    path: '/reviews',
+    prompt: "J'ai reçu un paiement et je veux analyser un incident de facturation sans rien modifier automatiquement.",
   },
   {
     id: 'hub_accounting',
@@ -36,7 +36,13 @@ const HUB = [
     label: 'Créer un client',
     icon: UserPlus,
     color: 'from-amber-50 to-amber-100 border-amber-100 text-amber-700 hover:border-amber-300',
-    path: '/clients',
+    modal: {
+      type: 'create_client',
+      title: 'Créer un client',
+      missingFields: ['Nom du client'],
+      payload: { initialValues: {} },
+      requiresConfirmation: true,
+    },
   },
   {
     id: 'hub_transfer',
@@ -57,7 +63,7 @@ const HUB = [
 export default function AssistantHubActions({ onAction }) {
   return (
     <div className="w-full">
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-2.5">Actions rapides</p>
+      <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400">Actions rapides</p>
       <div className="grid grid-cols-3 gap-2">
         {HUB.map((item) => {
           const Icon = item.icon;
@@ -65,7 +71,7 @@ export default function AssistantHubActions({ onAction }) {
             <button
               key={item.id}
               onClick={() => onAction(item)}
-              className={`flex flex-col items-center gap-2 rounded-xl border bg-gradient-to-b p-3.5 text-center transition-all hover:shadow-sm active:scale-95 ${item.color}`}
+              className={`flex flex-col items-center gap-2 rounded-xl border bg-gradient-to-b p-3.5 text-center transition-all active:scale-95 hover:shadow-sm ${item.color}`}
             >
               <Icon size={17} />
               <span className="text-[11px] font-semibold leading-tight">{item.label}</span>

@@ -13,18 +13,35 @@ const calcLine = (l) => {
   return { ht, tva: ht * (l.vatRate / 100), ttc: ht * (1 + l.vatRate / 100) };
 };
 
-export default function InvoiceForm({ invoice, onSuccess, onCancel }) {
+function buildInitialState(invoice, initialValues) {
+  const source = invoice || initialValues || {};
+  return {
+    clientId: source?.clientId?._id || source?.clientId || '',
+    lines: source?.lines?.length ? source.lines : [{ ...EMPTY_LINE }],
+    dueDate: source?.dueDate ? source.dueDate.slice(0, 10) : '',
+    notes: source?.notes || '',
+  };
+}
+
+export default function InvoiceForm({ invoice, initialValues, onSuccess, onCancel }) {
   const { clients } = useClients();
   const isEdit = !!invoice;
+  const initialState = buildInitialState(invoice, initialValues);
 
-  const [clientId, setClientId] = useState(invoice?.clientId?._id || invoice?.clientId || '');
-  const [lines, setLines] = useState(invoice?.lines?.length ? invoice.lines : [{ ...EMPTY_LINE }]);
-  const [dueDate, setDueDate] = useState(
-    invoice?.dueDate ? invoice.dueDate.slice(0, 10) : ''
-  );
-  const [notes, setNotes] = useState(invoice?.notes || '');
+  const [clientId, setClientId] = useState(initialState.clientId);
+  const [lines, setLines] = useState(initialState.lines);
+  const [dueDate, setDueDate] = useState(initialState.dueDate);
+  const [notes, setNotes] = useState(initialState.notes);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const next = buildInitialState(invoice, initialValues);
+    setClientId(next.clientId);
+    setLines(next.lines);
+    setDueDate(next.dueDate);
+    setNotes(next.notes);
+  }, [invoice, initialValues]);
 
   // Totaux calculés côté client (miroir du pre-save Mongoose)
   const totals = lines.reduce(
@@ -61,12 +78,13 @@ export default function InvoiceForm({ invoice, onSuccess, onCancel }) {
     setError('');
     try {
       const payload = { clientId, lines, dueDate: dueDate || undefined, notes };
+      let response;
       if (isEdit) {
-        await api.put(`/api/invoices/${invoice._id}`, payload);
+        response = await api.put(`/api/invoices/${invoice._id}`, payload);
       } else {
-        await api.post('/api/invoices', payload);
+        response = await api.post('/api/invoices', payload);
       }
-      onSuccess?.();
+      onSuccess?.(response?.data);
     } catch (err) {
       setError(err.response?.data?.error || 'Erreur lors de la sauvegarde.');
     } finally {
@@ -98,7 +116,7 @@ export default function InvoiceForm({ invoice, onSuccess, onCancel }) {
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Date d'échéance
+            Date d&apos;échéance
           </label>
           <input
             type="date"

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { useClients } from '@/hooks/useClients';
 import Button from '@/components/ui/Button';
@@ -13,18 +13,35 @@ const calcLine = (l) => {
   return { ht, tva: ht * (l.vatRate / 100), ttc: ht * (1 + l.vatRate / 100) };
 };
 
-export default function QuoteForm({ quote, onSuccess, onCancel }) {
+function buildInitialState(quote, initialValues) {
+  const source = quote || initialValues || {};
+  return {
+    clientId: source?.clientId?._id || source?.clientId || '',
+    lines: source?.lines?.length ? source.lines : [{ ...EMPTY_LINE }],
+    expiryDate: source?.expiryDate ? source.expiryDate.slice(0, 10) : '',
+    notes: source?.notes || '',
+  };
+}
+
+export default function QuoteForm({ quote, initialValues, onSuccess, onCancel }) {
   const { clients } = useClients();
   const isEdit = !!quote;
 
-  const [clientId, setClientId] = useState(quote?.clientId?._id || quote?.clientId || '');
-  const [lines, setLines] = useState(quote?.lines?.length ? quote.lines : [{ ...EMPTY_LINE }]);
-  const [expiryDate, setExpiryDate] = useState(
-    quote?.expiryDate ? quote.expiryDate.slice(0, 10) : ''
-  );
-  const [notes, setNotes] = useState(quote?.notes || '');
+  const initialState = buildInitialState(quote, initialValues);
+  const [clientId, setClientId] = useState(initialState.clientId);
+  const [lines, setLines] = useState(initialState.lines);
+  const [expiryDate, setExpiryDate] = useState(initialState.expiryDate);
+  const [notes, setNotes] = useState(initialState.notes);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const next = buildInitialState(quote, initialValues);
+    setClientId(next.clientId);
+    setLines(next.lines);
+    setExpiryDate(next.expiryDate);
+    setNotes(next.notes);
+  }, [quote, initialValues]);
 
   const totals = lines.reduce(
     (acc, l) => {
@@ -53,12 +70,13 @@ export default function QuoteForm({ quote, onSuccess, onCancel }) {
     setError('');
     try {
       const payload = { clientId, lines, expiryDate: expiryDate || undefined, notes };
+      let response;
       if (isEdit) {
-        await api.put(`/api/quotes/${quote._id}`, payload);
+        response = await api.put(`/api/quotes/${quote._id}`, payload);
       } else {
-        await api.post('/api/quotes', payload);
+        response = await api.post('/api/quotes', payload);
       }
-      onSuccess?.();
+      onSuccess?.(response?.data);
     } catch (err) {
       setError(err.response?.data?.error || 'Erreur lors de la sauvegarde.');
     } finally {
@@ -86,7 +104,7 @@ export default function QuoteForm({ quote, onSuccess, onCancel }) {
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Valable jusqu'au</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Valable jusqu&apos;au</label>
           <input
             type="date"
             value={expiryDate}

@@ -9,15 +9,23 @@ const EMPTY = {
   address: '', city: '', country: 'France', vatNumber: '', notes: '',
 };
 
-export default function ClientForm({ client, onSuccess, onCancel }) {
+export default function ClientForm({ client, initialValues, onSuccess, onCancel }) {
   const [form, setForm] = useState(EMPTY);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const isEdit = !!client;
 
   useEffect(() => {
-    if (client) setForm({ ...EMPTY, ...client });
-  }, [client]);
+    if (client) {
+      setForm({ ...EMPTY, ...client });
+      return;
+    }
+    if (initialValues) {
+      setForm({ ...EMPTY, ...initialValues });
+      return;
+    }
+    setForm(EMPTY);
+  }, [client, initialValues]);
 
   const set = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
@@ -26,12 +34,13 @@ export default function ClientForm({ client, onSuccess, onCancel }) {
     setLoading(true);
     setError('');
     try {
+      let response;
       if (isEdit) {
-        await api.put(`/api/clients/${client._id}`, form);
+        response = await api.put(`/api/clients/${client._id}`, form);
       } else {
-        await api.post('/api/clients', form);
+        response = await api.post('/api/clients', form);
       }
-      onSuccess?.();
+      onSuccess?.(response?.data);
     } catch (err) {
       setError(err.response?.data?.error || 'Erreur lors de la sauvegarde.');
     } finally {
