@@ -174,9 +174,11 @@ export default function CardsPage() {
             </Button>
           </div>
         ) : (
-          <div className="space-y-5">
-            {/* Section header */}
-            <div className="flex items-center justify-between">
+          /* ── Single white surface — no floating cards on gray bg ── */
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-card overflow-hidden">
+
+            {/* Header row */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
               <div>
                 <h2 className="text-sm font-semibold text-slate-800">Vos cartes</h2>
                 <p className="text-xs text-slate-400 mt-0.5">Cliquez sur une carte pour voir les détails</p>
@@ -186,68 +188,60 @@ export default function CardsPage() {
               </Button>
             </div>
 
-            {/* Carousel — full width, no gray zone */}
-            <div className="flex gap-5 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
-              {cards.map((card, i) => (
-                <InteractiveCard3D
-                  key={card._id}
-                  card={card}
-                  isSelected={i === selected}
-                  onClick={() => openDetail(card, i)}
-                />
-              ))}
+            {/* Cards rail — inside white surface */}
+            <div className="px-6 pt-5 pb-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+              <div className="flex gap-5" style={{ minWidth: 'max-content' }}>
+                {cards.map((card, i) => (
+                  <InteractiveCard3D
+                    key={card._id}
+                    card={card}
+                    isSelected={i === selected}
+                    onClick={() => openDetail(card, i)}
+                  />
+                ))}
+              </div>
             </div>
 
-            {/* Dot navigation */}
+            {/* Dots */}
             {cards.length > 1 && (
-              <div className="flex justify-center gap-1.5">
+              <div className="flex justify-center gap-1.5 py-3">
                 {cards.map((_, i) => (
                   <button
                     key={i}
                     onClick={() => setSelected(i)}
                     className={`rounded-full transition-all duration-200 ${
-                      i === selected
-                        ? 'w-5 h-2 bg-accent-600'
-                        : 'w-2 h-2 bg-slate-200 hover:bg-slate-300'
+                      i === selected ? 'w-5 h-2 bg-accent-600' : 'w-2 h-2 bg-slate-200 hover:bg-slate-300'
                     }`}
                   />
                 ))}
               </div>
             )}
 
-            {/* Quick stats for selected card */}
+            {/* Quick summary — inside the same white surface, no gap */}
             {cards[selected] && (
-              <Card>
-                <CardBody>
-                  <div className="flex items-center justify-between gap-6 flex-wrap">
-                    <div className="flex items-center gap-4 min-w-0">
-                      <div className="text-sm">
-                        <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-0.5">Carte active</p>
-                        <p className="font-semibold text-slate-800 truncate">{cards[selected].name}</p>
-                      </div>
-                      <div className="w-px h-8 bg-slate-100" />
-                      <div className="text-sm tabular-nums">
-                        <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-0.5">Numéro</p>
-                        <p className="font-mono text-slate-600">•••• {cards[selected].last4}</p>
-                      </div>
-                      <div className="w-px h-8 bg-slate-100" />
-                      <div className="text-sm">
-                        <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-0.5">Budget restant</p>
-                        <p className="font-semibold text-slate-800 tabular-nums">
-                          {fmt(cards[selected].monthlyLimit - cards[selected].currentMonthSpend)}
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => openDetail(cards[selected], selected)}
-                    >
-                      Voir les détails →
-                    </Button>
+              <div className="mx-6 mb-5 rounded-xl bg-slate-50 border border-slate-100 px-5 py-3.5 flex items-center justify-between gap-4 flex-wrap">
+                <div className="flex items-center gap-5 min-w-0 flex-wrap">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-0.5">Carte sélectionnée</p>
+                    <p className="text-sm font-semibold text-slate-800 truncate">{cards[selected].name}</p>
                   </div>
-                </CardBody>
-              </Card>
+                  <div className="hidden sm:block w-px h-7 bg-slate-200" />
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-0.5">Numéro</p>
+                    <p className="text-sm font-mono text-slate-600">•••• {cards[selected].last4}</p>
+                  </div>
+                  <div className="hidden sm:block w-px h-7 bg-slate-200" />
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-0.5">Budget restant</p>
+                    <p className="text-sm font-semibold text-slate-800 tabular-nums">
+                      {fmt(cards[selected].monthlyLimit - cards[selected].currentMonthSpend)}
+                    </p>
+                  </div>
+                </div>
+                <Button size="sm" variant="secondary" onClick={() => openDetail(cards[selected], selected)}>
+                  Détails →
+                </Button>
+              </div>
             )}
           </div>
         )}
