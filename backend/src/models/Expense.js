@@ -16,7 +16,8 @@ const expenseSchema = new mongoose.Schema(
       enum: ['marketing', 'software', 'salaries', 'suppliers', 'taxes', 'banking', 'travel', 'office', 'other'],
       required: true,
     },
-    assetCategory:  { type: Boolean, default: false }, // Pour distinguer les immobilisations (TVA Ligne 19)
+    assetCategory: { type: Boolean, default: false }, // Pour distinguer les immobilisations
+
     // Montants
     amountHT:       { type: Number, default: 0 },
     vatRate:        { type: Number, enum: [0, 5.5, 10, 20], default: 20 },
