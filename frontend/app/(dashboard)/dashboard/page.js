@@ -263,10 +263,12 @@ export default function DashboardPage() {
             color="green"
           />
           {/* Taux acceptation */}
-          <div className="bg-white rounded-xl shadow-card overflow-hidden border border-[rgba(148,163,184,0.3)]">
-            <div className="h-[3px] bg-accent-500" />
+          <div className="bg-white rounded-xl border border-slate-200 shadow-card relative group hover:shadow-card-hover transition-shadow duration-200">
             <div className="p-5">
-              <div className="w-10 h-10 rounded-xl bg-accent-50 text-accent-600 flex items-center justify-center mb-4">
+              <div
+                className="w-10 h-10 rounded-xl bg-slate-900 text-accent-400 flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110"
+                style={{ boxShadow: '0 0 0 1px rgba(28,110,242,0.12), 0 4px 14px rgba(28,110,242,0.22)' }}
+              >
                 <Send size={18} strokeWidth={1.75} />
               </div>
               <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1">

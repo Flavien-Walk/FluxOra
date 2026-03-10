@@ -14,8 +14,8 @@
   --warning:        #F59E0B;
   --danger:         #EF4444;
 
-  --app-bg:         #E8EDF7;
-  --app-surface:    #F0F4FA;
+  --app-bg:         #F1F4F9;
+  --app-surface:    #F8FAFC;
 
   --sidebar-bg:     #0F172A;
   --sidebar-border: #1E293B;
@@ -35,8 +35,8 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  /* Fond bleu-teinté : cartes blanches ressortent avec clarté */
-  background: #E8EDF7;
+  /* Fond neutre premium : cartes blanches ressortent avec profondeur */
+  background: #F1F4F9;
 }
 
 body {

@@ -57,8 +57,8 @@ module.exports = {
         },
         /* ─── App surfaces ──────────────────────────────────────────── */
         app: {
-          bg:      '#E8EDF7',
-          surface: '#F0F4FA',
+          bg:      '#F1F4F9',
+          surface: '#F8FAFC',
         },
       },
       boxShadow: {

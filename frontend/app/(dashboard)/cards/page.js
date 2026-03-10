@@ -161,19 +161,43 @@ export default function CardsPage() {
 
         {/* KPI */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <p className="text-xs text-gray-500 uppercase font-medium mb-1">Cartes actives</p>
-            <p className="text-2xl font-bold text-gray-900">
+          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-card group hover:shadow-card-hover transition-shadow duration-200 relative">
+            <div className="flex items-start justify-between mb-4">
+              <div
+                className="w-10 h-10 rounded-xl bg-slate-900 text-accent-400 flex items-center justify-center transition-transform duration-300 group-hover:scale-110"
+                style={{ boxShadow: '0 0 0 1px rgba(28,110,242,0.12), 0 4px 14px rgba(28,110,242,0.22)' }}
+              >
+                <CreditCard size={18} strokeWidth={1.75} />
+              </div>
+            </div>
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Cartes actives</p>
+            <p className="text-2xl font-bold text-slate-900 tabular-nums">
               {cards.filter((c) => c.status === 'active').length}
             </p>
           </div>
-          <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <p className="text-xs text-gray-500 uppercase font-medium mb-1">Budget total / mois</p>
-            <p className="text-2xl font-bold text-gray-900">{fmt(totalBudget)}</p>
+          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-card group hover:shadow-card-hover transition-shadow duration-200 relative">
+            <div className="flex items-start justify-between mb-4">
+              <div
+                className="w-10 h-10 rounded-xl bg-slate-900 text-emerald-400 flex items-center justify-center transition-transform duration-300 group-hover:scale-110"
+                style={{ boxShadow: '0 0 0 1px rgba(16,185,129,0.12), 0 4px 14px rgba(16,185,129,0.22)' }}
+              >
+                <Zap size={18} strokeWidth={1.75} />
+              </div>
+            </div>
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Budget total / mois</p>
+            <p className="text-2xl font-bold text-slate-900 tabular-nums">{fmt(totalBudget)}</p>
           </div>
-          <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <p className="text-xs text-gray-500 uppercase font-medium mb-1">Dépensé ce mois</p>
-            <p className="text-2xl font-bold text-gray-900">{fmt(totalSpend)}</p>
+          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-card group hover:shadow-card-hover transition-shadow duration-200 relative">
+            <div className="flex items-start justify-between mb-4">
+              <div
+                className="w-10 h-10 rounded-xl bg-slate-900 text-rose-400 flex items-center justify-center transition-transform duration-300 group-hover:scale-110"
+                style={{ boxShadow: '0 0 0 1px rgba(244,63,94,0.12), 0 4px 14px rgba(244,63,94,0.22)' }}
+              >
+                <Lock size={18} strokeWidth={1.75} />
+              </div>
+            </div>
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Dépensé ce mois</p>
+            <p className="text-2xl font-bold text-slate-900 tabular-nums">{fmt(totalSpend)}</p>
           </div>
         </div>
 
@@ -183,9 +207,11 @@ export default function CardsPage() {
           </div>
         ) : cards.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <CreditCard size={48} className="text-gray-300 mb-3" />
-            <p className="text-gray-500 font-medium text-lg">Aucune carte virtuelle</p>
-            <p className="text-gray-400 text-sm mt-1 mb-4">
+            <div className="w-16 h-16 rounded-2xl bg-slate-900 text-slate-400 flex items-center justify-center mb-4" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
+              <CreditCard size={28} strokeWidth={1.5} />
+            </div>
+            <p className="text-slate-700 font-semibold text-base mb-1">Aucune carte virtuelle</p>
+            <p className="text-slate-400 text-sm mt-1 mb-5 max-w-xs">
               Créez des cartes dédiées par poste de dépense pour mieux contrôler votre budget
             </p>
             <Button onClick={() => setModalOpen(true)}>
@@ -197,7 +223,7 @@ export default function CardsPage() {
             {/* Carrousel */}
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-semibold text-gray-700">Vos cartes</h2>
+                <h2 className="text-sm font-semibold text-slate-800">Vos cartes</h2>
                 <Button size="sm" onClick={() => setModalOpen(true)}>
                   <Plus size={14} /> Nouvelle carte
                 </Button>
@@ -220,7 +246,7 @@ export default function CardsPage() {
                       key={i}
                       onClick={() => setSelected(i)}
                       className={`w-2 h-2 rounded-full transition-colors ${
-                        i === selected ? 'bg-accent-600' : 'bg-gray-200'
+                        i === selected ? 'bg-accent-600' : 'bg-slate-200'
                       }`}
                     />
                   ))}
@@ -232,22 +258,22 @@ export default function CardsPage() {
             {activeCard && (
               <Card>
                 <CardHeader>
-                  <h3 className="text-sm font-semibold text-gray-700">{activeCard.name}</h3>
+                  <h3 className="text-sm font-semibold text-slate-800">{activeCard.name}</h3>
                 </CardHeader>
                 <CardBody className="space-y-4">
                   {/* Budget */}
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-500">Budget mensuel</span>
-                      <span className="font-medium">
+                      <span className="text-slate-500">Budget mensuel</span>
+                      <span className="font-medium tabular-nums">
                         {fmt(activeCard.currentMonthSpend)} / {fmt(activeCard.monthlyLimit)}
                       </span>
                     </div>
-                    <div className="w-full bg-gray-100 rounded-full h-2">
+                    <div className="w-full bg-slate-100 rounded-full h-2">
                       <div
                         className={`h-2 rounded-full transition-all ${
                           (activeCard.currentMonthSpend / activeCard.monthlyLimit) > 0.8
-                            ? 'bg-red-500'
+                            ? 'bg-danger-500'
                             : 'bg-accent-500'
                         }`}
                         style={{
@@ -255,7 +281,7 @@ export default function CardsPage() {
                         }}
                       />
                     </div>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-slate-400 mt-1 tabular-nums">
                       {fmt(activeCard.monthlyLimit - activeCard.currentMonthSpend)} restants ce mois
                     </p>
                   </div>
@@ -263,31 +289,31 @@ export default function CardsPage() {
                   {/* Infos */}
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Catégorie</span>
-                      <span className="font-medium">
+                      <span className="text-slate-500">Catégorie</span>
+                      <span className="font-medium text-slate-800">
                         {CATEGORIES.find((c) => c.value === activeCard.category)?.label || activeCard.category}
                       </span>
                     </div>
                     {activeCard.linkedVendor && (
                       <div className="flex justify-between">
-                        <span className="text-gray-500">Fournisseur lié</span>
-                        <span className="font-medium">{activeCard.linkedVendor}</span>
+                        <span className="text-slate-500">Fournisseur lié</span>
+                        <span className="font-medium text-slate-800">{activeCard.linkedVendor}</span>
                       </div>
                     )}
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Numéro</span>
-                      <span className="font-mono">•••• {activeCard.last4}</span>
+                      <span className="text-slate-500">Numéro</span>
+                      <span className="font-mono text-slate-700">•••• {activeCard.last4}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Expiration</span>
-                      <span className="font-mono">
+                      <span className="text-slate-500">Expiration</span>
+                      <span className="font-mono text-slate-700">
                         {String(activeCard.expiryMonth).padStart(2, '0')}/{activeCard.expiryYear}
                       </span>
                     </div>
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-2 pt-2 border-t border-gray-100">
+                  <div className="flex gap-2 pt-2 border-t border-slate-100">
                     <Button
                       size="sm"
                       variant="secondary"
@@ -320,7 +346,7 @@ export default function CardsPage() {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Nouvelle carte virtuelle">
         <form onSubmit={handleCreate} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nom de la carte</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Nom de la carte</label>
             <input
               type="text"
               name="name"
@@ -328,18 +354,18 @@ export default function CardsPage() {
               onChange={handleChange}
               required
               placeholder="Ex: Abonnements SaaS, Publicité..."
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 text-slate-900 placeholder:text-slate-400"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Catégorie</label>
               <select
                 name="category"
                 value={form.category}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 text-slate-900 placeholder:text-slate-400"
               >
                 {CATEGORIES.map((c) => (
                   <option key={c.value} value={c.value}>{c.label}</option>
@@ -347,7 +373,7 @@ export default function CardsPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Plafond mensuel (€)</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Plafond mensuel (€)</label>
               <input
                 type="number"
                 name="monthlyLimit"
@@ -356,25 +382,25 @@ export default function CardsPage() {
                 required
                 min="1"
                 step="1"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 text-slate-900 placeholder:text-slate-400"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Fournisseur associé (optionnel)</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Fournisseur associé (optionnel)</label>
             <input
               type="text"
               name="linkedVendor"
               value={form.linkedVendor}
               onChange={handleChange}
               placeholder="Ex: AWS, Google Ads..."
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 text-slate-900 placeholder:text-slate-400"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Couleur</label>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Couleur</label>
             <div className="flex gap-2">
               {COLORS.map((c) => (
                 <button
@@ -382,7 +408,7 @@ export default function CardsPage() {
                   type="button"
                   onClick={() => setForm((f) => ({ ...f, color: c.value }))}
                   className={`w-8 h-8 rounded-full bg-gradient-to-br ${c.bg} transition-transform ${
-                    form.color === c.value ? 'scale-125 ring-2 ring-offset-2 ring-gray-400' : 'hover:scale-110'
+                    form.color === c.value ? 'scale-125 ring-2 ring-offset-2 ring-slate-400' : 'hover:scale-110'
                   }`}
                 />
               ))}
