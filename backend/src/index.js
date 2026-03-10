@@ -52,17 +52,14 @@ app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/alerts',    require('./routes/alerts'));
 app.use('/api/cards',     require('./routes/cards'));
 app.use('/api/transfers',    require('./routes/transfers'));
+app.use('/api/vat',          require('./routes/vat'));
 app.use('/api/transactions', require('./routes/transactions'));
 app.use('/api/webhooks',     require('./routes/webhooks'));
 
 // Gestion des erreurs globale
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(err.status || 500).json({
-    error: err.message || 'Erreur serveur interne',
-  });
-});
-
-app.listen(PORT, () => {
-  console.log(`Fluxora API démarrée sur http://localhost:${PORT}`);
+  const statusCode = err.status || 500;
+  const message = err.message || 'Erreur interne du serveur.';
+  res.status(statusCode).json({ error: message });
 });
