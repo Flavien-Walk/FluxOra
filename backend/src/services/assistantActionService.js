@@ -37,7 +37,7 @@ async function generateInvoiceNumber(orgId) {
  * @param {string} userId  - Clerk userId
  * @param {string} type    - type d'action
  * @param {object} payload - données de l'action
- * @returns {{ entityType, entityId, redirectTo, clientCreated? }}
+ * @returns {{ entityType, entityId, number?, redirectTo, clientCreated? }}
  */
 async function executeAction(userId, type, payload) {
   const org = await getUserOrg(userId);
@@ -45,6 +45,64 @@ async function executeAction(userId, type, payload) {
   const orgId = org._id;
 
   switch (type) {
+
+    /* ── Workflow agentique complet (client + document) ──────── */
+    case 'confirm_agent_workflow': {
+      const { workflow } = payload || {};
+      if (!workflow) throw Object.assign(new Error('Workflow introuvable.'), { status: 400 });
+      if (!workflow.client?.name) throw Object.assign(new Error('Nom du client requis.'), { status: 400 });
+
+      // Effacer le workflow de la mémoire
+      try {
+        const { clearPendingWorkflow } = require('../agents/agentMemory');
+        clearPendingWorkflow(userId);
+      } catch (_) { /* non bloquant */ }
+
+      // Résoudre le client
+      let clientId;
+      if (workflow.client.exists && workflow.client.id) {
+        clientId = workflow.client.id;
+      } else {
+        const client = await Client.create({
+          organizationId: orgId,
+          name:    workflow.client.name,
+          email:   workflow.client.email   || '',
+          phone:   workflow.client.phone   || '',
+          company: workflow.client.company || '',
+        });
+        clientId = client._id;
+      }
+
+      // Normaliser les lignes (unitPrice = snake ou camel)
+      const lines = (workflow.lines || []).map(l => ({
+        description: l.description || 'Prestation',
+        quantity:    Number(l.quantity  || l.qty)       || 1,
+        unitPrice:   Number(l.unitPrice || l.unit_price) || 0,
+        vatRate:     Number(l.vatRate   || l.vat_rate)   || 20,
+      }));
+
+      if (workflow.type === 'create_invoice') {
+        const number  = await generateInvoiceNumber(orgId);
+        const invoice = await Invoice.create({ organizationId: orgId, clientId, number, status: 'draft', lines });
+        return {
+          entityType:    'invoice',
+          entityId:      invoice._id.toString(),
+          number:        invoice.number,
+          redirectTo:    `/invoices/${invoice._id}`,
+          clientCreated: !workflow.client.exists,
+        };
+      } else {
+        const number = await generateQuoteNumber(orgId);
+        const quote  = await Quote.create({ organizationId: orgId, clientId, number, status: 'draft', lines });
+        return {
+          entityType:    'quote',
+          entityId:      quote._id.toString(),
+          number:        quote.number,
+          redirectTo:    `/quotes/${quote._id}`,
+          clientCreated: !workflow.client.exists,
+        };
+      }
+    }
 
     /* ── Brouillon devis (client déjà existant) ──────────────── */
     case 'create_draft_quote': {
@@ -55,7 +113,7 @@ async function executeAction(userId, type, payload) {
       const resolvedClientId = clientId || (await Client.create({ organizationId: orgId, name: clientName }))._id;
       const number = await generateQuoteNumber(orgId);
       const quote  = await Quote.create({ organizationId: orgId, clientId: resolvedClientId, number, status: 'draft', lines: [] });
-      return { entityType: 'quote', entityId: quote._id.toString(), redirectTo: `/quotes/${quote._id}` };
+      return { entityType: 'quote', entityId: quote._id.toString(), number: quote.number, redirectTo: `/quotes/${quote._id}` };
     }
 
     /* ── Brouillon facture (client déjà existant) ─────────────── */
@@ -67,7 +125,7 @@ async function executeAction(userId, type, payload) {
       const resolvedClientId = clientId || (await Client.create({ organizationId: orgId, name: clientName }))._id;
       const number  = await generateInvoiceNumber(orgId);
       const invoice = await Invoice.create({ organizationId: orgId, clientId: resolvedClientId, number, status: 'draft', lines: [] });
-      return { entityType: 'invoice', entityId: invoice._id.toString(), redirectTo: `/invoices/${invoice._id}` };
+      return { entityType: 'invoice', entityId: invoice._id.toString(), number: invoice.number, redirectTo: `/invoices/${invoice._id}` };
     }
 
     /* ── Créer client + brouillon devis (enchaîné) ───────────── */
@@ -77,7 +135,7 @@ async function executeAction(userId, type, payload) {
       const client = await Client.create({ organizationId: orgId, name: clientName });
       const number = await generateQuoteNumber(orgId);
       const quote  = await Quote.create({ organizationId: orgId, clientId: client._id, number, status: 'draft', lines: [] });
-      return { entityType: 'quote', entityId: quote._id.toString(), redirectTo: `/quotes/${quote._id}`, clientCreated: true };
+      return { entityType: 'quote', entityId: quote._id.toString(), number: quote.number, redirectTo: `/quotes/${quote._id}`, clientCreated: true };
     }
 
     /* ── Créer client + brouillon facture (enchaîné) ──────────── */
@@ -87,7 +145,7 @@ async function executeAction(userId, type, payload) {
       const client  = await Client.create({ organizationId: orgId, name: clientName });
       const number  = await generateInvoiceNumber(orgId);
       const invoice = await Invoice.create({ organizationId: orgId, clientId: client._id, number, status: 'draft', lines: [] });
-      return { entityType: 'invoice', entityId: invoice._id.toString(), redirectTo: `/invoices/${invoice._id}`, clientCreated: true };
+      return { entityType: 'invoice', entityId: invoice._id.toString(), number: invoice.number, redirectTo: `/invoices/${invoice._id}`, clientCreated: true };
     }
 
     /* ── Créer client seul ───────────────────────────────────── */

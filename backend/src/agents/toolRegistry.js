@@ -1,8 +1,11 @@
 /**
  * toolRegistry.js
  * Registre des outils disponibles pour l'agent Fluxora.
- * Format Anthropic tool_use — tous les outils sont en LECTURE seule.
- * Les actions d'écriture passent par confirmation utilisateur (modales).
+ * Format Anthropic tool_use.
+ * Outils de lecture : search_clients, search_invoices, search_expenses,
+ *                     get_client_history, check_draft_duplicate,
+ *                     list_late_invoices, get_expense_categories
+ * Outil de préparation : prepare_workflow (stocke en mémoire pour confirmation)
  */
 
 const Client  = require('../models/Client');
@@ -97,6 +100,59 @@ const TOOL_DEFINITIONS = [
     input_schema: {
       type: 'object',
       properties: {},
+    },
+  },
+  {
+    name: 'prepare_workflow',
+    description: 'Prépare un workflow de création (client + devis ou client + facture) pour confirmation utilisateur. Appelle cet outil APRÈS search_clients quand tu as extrait suffisamment de données du message (au minimum : nom client et au moins une ligne de prestation). Ne demande pas de confirmation textuelle après — l\'interface affiche un bouton dédié.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        document_type: {
+          type: 'string',
+          enum: ['quote', 'invoice'],
+          description: 'Type de document à créer',
+        },
+        client_exists: {
+          type: 'boolean',
+          description: 'true si le client existe déjà en base (trouvé par search_clients)',
+        },
+        client_id: {
+          type: 'string',
+          description: 'ID MongoDB du client si client_exists = true',
+        },
+        client_name: {
+          type: 'string',
+          description: 'Nom complet du client',
+        },
+        client_email: {
+          type: 'string',
+          description: 'Email du client (si fourni dans le message)',
+        },
+        client_phone: {
+          type: 'string',
+          description: 'Téléphone du client (si fourni dans le message)',
+        },
+        client_company: {
+          type: 'string',
+          description: 'Société du client (si fourni dans le message)',
+        },
+        lines: {
+          type: 'array',
+          description: 'Lignes du document. Minimum 1 ligne requise.',
+          items: {
+            type: 'object',
+            properties: {
+              description: { type: 'string', description: 'Intitulé de la prestation' },
+              quantity:    { type: 'number', description: 'Quantité (défaut : 1)' },
+              unit_price:  { type: 'number', description: 'Prix unitaire HT en euros' },
+              vat_rate:    { type: 'number', description: 'Taux de TVA en % (défaut : 20)' },
+            },
+            required: ['description', 'unit_price'],
+          },
+        },
+      },
+      required: ['document_type', 'client_name', 'lines'],
     },
   },
 ];
@@ -254,18 +310,70 @@ async function exec_get_expense_categories(input, orgId) {
   };
 }
 
+/**
+ * Prépare un workflow en mémoire et retourne un résumé.
+ * Synchrone — pas d'accès DB.
+ */
+function exec_prepare_workflow(input, orgId, userId) {
+  const { setPendingWorkflow } = require('./agentMemory');
+
+  const lines = (input.lines || []).map(l => ({
+    description: l.description || 'Prestation',
+    quantity:    Number(l.quantity)   || 1,
+    unitPrice:   Number(l.unit_price) || 0,
+    vatRate:     Number(l.vat_rate)   || 20,
+  }));
+
+  const subtotal  = lines.reduce((s, l) => s + l.quantity * l.unitPrice, 0);
+  const vatAmount = lines.reduce((s, l) => s + l.quantity * l.unitPrice * (l.vatRate / 100), 0);
+  const total     = subtotal + vatAmount;
+
+  const workflow = {
+    type: input.document_type === 'invoice' ? 'create_invoice' : 'create_quote',
+    client: {
+      exists:  !!input.client_exists,
+      id:      input.client_id    || null,
+      name:    input.client_name  || '',
+      email:   input.client_email || '',
+      phone:   input.client_phone || '',
+      company: input.client_company || '',
+    },
+    lines,
+    totals: {
+      subtotal:  Math.round(subtotal  * 100) / 100,
+      vatAmount: Math.round(vatAmount * 100) / 100,
+      total:     Math.round(total     * 100) / 100,
+    },
+    savedAt: Date.now(),
+  };
+
+  setPendingWorkflow(userId, workflow);
+
+  const docLabel = input.document_type === 'invoice' ? 'facture' : 'devis';
+  const clientLabel = input.client_exists
+    ? `client existant "${input.client_name}"`
+    : `nouveau client "${input.client_name}"`;
+
+  return {
+    ok: true,
+    workflow,
+    summary: `Workflow prêt : ${clientLabel} + ${docLabel} · ${workflow.totals.subtotal}€ HT / ${workflow.totals.total}€ TTC`,
+  };
+}
+
 /* ── Dispatch central ────────────────────────────────────────── */
-async function executeTool(name, input, orgId) {
+async function executeTool(name, input, orgId, userId) {
   const t0 = Date.now();
   let result;
   switch (name) {
-    case 'search_clients':        result = await exec_search_clients(input, orgId);        break;
-    case 'search_invoices':       result = await exec_search_invoices(input, orgId);       break;
-    case 'search_expenses':       result = await exec_search_expenses(input, orgId);       break;
-    case 'get_client_history':    result = await exec_get_client_history(input, orgId);    break;
-    case 'check_draft_duplicate': result = await exec_check_draft_duplicate(input, orgId); break;
-    case 'list_late_invoices':    result = await exec_list_late_invoices(input, orgId);    break;
-    case 'get_expense_categories':result = await exec_get_expense_categories(input, orgId);break;
+    case 'search_clients':         result = await exec_search_clients(input, orgId);          break;
+    case 'search_invoices':        result = await exec_search_invoices(input, orgId);         break;
+    case 'search_expenses':        result = await exec_search_expenses(input, orgId);         break;
+    case 'get_client_history':     result = await exec_get_client_history(input, orgId);      break;
+    case 'check_draft_duplicate':  result = await exec_check_draft_duplicate(input, orgId);   break;
+    case 'list_late_invoices':     result = await exec_list_late_invoices(input, orgId);      break;
+    case 'get_expense_categories': result = await exec_get_expense_categories(input, orgId);  break;
+    case 'prepare_workflow':       result =       exec_prepare_workflow(input, orgId, userId); break;
     default: result = { error: `Outil inconnu : ${name}` };
   }
   result._durationMs = Date.now() - t0;
@@ -277,13 +385,14 @@ function summarizeResult(toolName, result) {
   if (!result) return 'Aucun résultat';
   if (result.error) return `Erreur : ${result.error}`;
   switch (toolName) {
-    case 'search_clients':        return result.found ? `${result.count} client(s) trouvé(s)` : 'Aucun client trouvé';
-    case 'search_invoices':       return result.found ? `${result.count} facture(s) trouvée(s)` : 'Aucune facture trouvée';
-    case 'search_expenses':       return result.found ? `${result.count} dépense(s) trouvée(s)` : 'Aucune dépense trouvée';
-    case 'get_client_history':    return result.found ? `${result.summary?.invoiceCount || 0} fact., ${result.summary?.quoteCount || 0} devis` : 'Client introuvable';
-    case 'check_draft_duplicate': return result.hasDuplicate ? `Doublon : ${result.draft?.number}` : 'Aucun doublon';
-    case 'list_late_invoices':    return `${result.count} facture(s) en retard`;
-    case 'get_expense_categories':return `${result.categories?.length || 0} catégorie(s)`;
+    case 'search_clients':         return result.found ? `${result.count} client(s) trouvé(s)` : 'Aucun client trouvé';
+    case 'search_invoices':        return result.found ? `${result.count} facture(s) trouvée(s)` : 'Aucune facture trouvée';
+    case 'search_expenses':        return result.found ? `${result.count} dépense(s) trouvée(s)` : 'Aucune dépense trouvée';
+    case 'get_client_history':     return result.found ? `${result.summary?.invoiceCount || 0} fact., ${result.summary?.quoteCount || 0} devis` : 'Client introuvable';
+    case 'check_draft_duplicate':  return result.hasDuplicate ? `Doublon : ${result.draft?.number}` : 'Aucun doublon';
+    case 'list_late_invoices':     return `${result.count} facture(s) en retard`;
+    case 'get_expense_categories': return `${result.categories?.length || 0} catégorie(s)`;
+    case 'prepare_workflow':       return result.ok ? result.summary : 'Workflow non préparé';
     default: return JSON.stringify(result).slice(0, 80);
   }
 }
