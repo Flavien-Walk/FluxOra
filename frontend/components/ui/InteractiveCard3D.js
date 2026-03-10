@@ -27,10 +27,11 @@ export default function InteractiveCard3D({ card, isSelected, onClick }) {
     ([x, y]) => `radial-gradient(circle at ${x * 100}% ${y * 100}%, rgba(255,255,255,0.22) 0%, transparent 65%)`,
   );
 
-  /* Reactive selection — no whileTap conflict */
+  /* Reactive selection — stop animations on unmount to avoid promise rejections */
   useEffect(() => {
-    animate(scaleV, isSelected ? 1.05 : 1, { type: 'spring', stiffness: 320, damping: 28 });
-    animate(yV,     isSelected ? -6   : 0, { type: 'spring', stiffness: 320, damping: 28 });
+    const a1 = animate(scaleV, isSelected ? 1.05 : 1, { type: 'spring', stiffness: 320, damping: 28 });
+    const a2 = animate(yV,     isSelected ? -6   : 0, { type: 'spring', stiffness: 320, damping: 28 });
+    return () => { a1.stop(); a2.stop(); };
   }, [isSelected]);
 
   /* Press feedback via motion value — avoids whileTap/style conflict */

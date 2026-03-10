@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useCards } from '@/hooks/useCards';
 import api from '@/lib/api';
 import Header from '@/components/layout/Header';
-import { Card, CardBody } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import InteractiveCard3D from '@/components/ui/InteractiveCard3D';

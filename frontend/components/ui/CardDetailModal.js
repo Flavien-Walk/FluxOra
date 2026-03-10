@@ -39,7 +39,11 @@ function fakeCVC(last4) {
 function CopyBtn({ value }) {
   const [copied, setCopied] = useState(false);
   const handle = async () => {
-    try { await navigator.clipboard.writeText(value); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch {}
+    try {
+      if (navigator.clipboard) await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {}
   };
   return (
     <button onClick={handle} className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 hover:text-emerald-600 transition-colors">
