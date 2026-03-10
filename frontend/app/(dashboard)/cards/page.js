@@ -180,7 +180,7 @@ export default function CardsPage() {
               </div>
 
               {/* Cards scroll */}
-              <div className="flex gap-4 overflow-x-auto pb-4 snap-x" style={{ perspective: '900px' }}>
+              <div className="flex gap-4 overflow-x-auto pb-6 snap-x">
                 {cards.map((card, i) => (
                   <InteractiveCard3D key={card._id} card={card} isSelected={i === selected} onClick={() => setSelected(i)} />
                 ))}

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { Zap } from 'lucide-react';
 
@@ -13,36 +14,50 @@ const COLOR_MAP = {
 };
 
 const SHADOW_MAP = {
-  indigo:  { idle: '0 8px 24px rgba(99,102,241,0.3), 0 2px 8px rgba(0,0,0,0.2)',  selected: '0 20px 50px rgba(99,102,241,0.55), 0 6px 20px rgba(0,0,0,0.25)'  },
-  violet:  { idle: '0 8px 24px rgba(139,92,246,0.3), 0 2px 8px rgba(0,0,0,0.2)', selected: '0 20px 50px rgba(139,92,246,0.55), 0 6px 20px rgba(0,0,0,0.25)' },
-  emerald: { idle: '0 8px 24px rgba(16,185,129,0.3), 0 2px 8px rgba(0,0,0,0.2)', selected: '0 20px 50px rgba(16,185,129,0.55), 0 6px 20px rgba(0,0,0,0.25)' },
-  rose:    { idle: '0 8px 24px rgba(244,63,94,0.3), 0 2px 8px rgba(0,0,0,0.2)',   selected: '0 20px 50px rgba(244,63,94,0.55), 0 6px 20px rgba(0,0,0,0.25)'   },
-  amber:   { idle: '0 8px 24px rgba(245,158,11,0.28), 0 2px 8px rgba(0,0,0,0.2)', selected: '0 20px 50px rgba(245,158,11,0.5), 0 6px 20px rgba(0,0,0,0.25)'  },
-  sky:     { idle: '0 8px 24px rgba(14,165,233,0.3), 0 2px 8px rgba(0,0,0,0.2)',  selected: '0 20px 50px rgba(14,165,233,0.55), 0 6px 20px rgba(0,0,0,0.25)'  },
+  indigo:  { idle: '0 6px 20px rgba(99,102,241,0.28), 0 2px 6px rgba(0,0,0,0.15)',  selected: '0 16px 44px rgba(99,102,241,0.5), 0 4px 16px rgba(0,0,0,0.2)'  },
+  violet:  { idle: '0 6px 20px rgba(139,92,246,0.28), 0 2px 6px rgba(0,0,0,0.15)', selected: '0 16px 44px rgba(139,92,246,0.5), 0 4px 16px rgba(0,0,0,0.2)' },
+  emerald: { idle: '0 6px 20px rgba(16,185,129,0.28), 0 2px 6px rgba(0,0,0,0.15)', selected: '0 16px 44px rgba(16,185,129,0.5), 0 4px 16px rgba(0,0,0,0.2)' },
+  rose:    { idle: '0 6px 20px rgba(244,63,94,0.28), 0 2px 6px rgba(0,0,0,0.15)',   selected: '0 16px 44px rgba(244,63,94,0.5), 0 4px 16px rgba(0,0,0,0.2)'   },
+  amber:   { idle: '0 6px 20px rgba(245,158,11,0.24), 0 2px 6px rgba(0,0,0,0.15)', selected: '0 16px 44px rgba(245,158,11,0.45), 0 4px 16px rgba(0,0,0,0.2)' },
+  sky:     { idle: '0 6px 20px rgba(14,165,233,0.28), 0 2px 6px rgba(0,0,0,0.15)', selected: '0 16px 44px rgba(14,165,233,0.5), 0 4px 16px rgba(0,0,0,0.2)'  },
+};
+
+const GLOW_COLOR = {
+  indigo:  'rgba(99,102,241,0.4)',
+  violet:  'rgba(139,92,246,0.4)',
+  emerald: 'rgba(16,185,129,0.4)',
+  rose:    'rgba(244,63,94,0.4)',
+  amber:   'rgba(245,158,11,0.35)',
+  sky:     'rgba(14,165,233,0.4)',
 };
 
 export default function InteractiveCard3D({ card, isSelected, onClick }) {
+  const [isPressed, setIsPressed] = useState(false);
+
   const mouseX = useMotionValue(0.5);
   const mouseY = useMotionValue(0.5);
 
   const rotateX = useSpring(
-    useTransform(mouseY, [0, 1], [14, -14]),
-    { stiffness: 200, damping: 26 }
+    useTransform(mouseY, [0, 1], [12, -12]),
+    { stiffness: 220, damping: 28 }
   );
   const rotateY = useSpring(
-    useTransform(mouseX, [0, 1], [-16, 16]),
-    { stiffness: 200, damping: 26 }
+    useTransform(mouseX, [0, 1], [-14, 14]),
+    { stiffness: 220, damping: 28 }
   );
 
-  /* Shine highlight follows mouse */
   const shineBackground = useTransform(
     [mouseX, mouseY],
     ([x, y]) =>
-      `radial-gradient(circle at ${x * 100}% ${y * 100}%, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.06) 40%, transparent 70%)`,
+      `radial-gradient(circle at ${x * 100}% ${y * 100}%, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.05) 45%, transparent 70%)`,
   );
 
-  const gradient = COLOR_MAP[card.color] || COLOR_MAP.indigo;
-  const shadows  = SHADOW_MAP[card.color] || SHADOW_MAP.indigo;
+  const gradient  = COLOR_MAP[card.color]  || COLOR_MAP.indigo;
+  const shadows   = SHADOW_MAP[card.color] || SHADOW_MAP.indigo;
+  const glowColor = GLOW_COLOR[card.color] || GLOW_COLOR.indigo;
+
+  const scaleVal = isPressed ? 0.95 : isSelected ? 1.04 : 1;
+  const yVal     = isPressed ? 3    : isSelected ? -6   : 0;
 
   const usePct = card.monthlyLimit > 0
     ? Math.min(100, Math.round((card.currentMonthSpend / card.monthlyLimit) * 100))
@@ -57,49 +72,57 @@ export default function InteractiveCard3D({ card, isSelected, onClick }) {
   const handleMouseLeave = () => {
     mouseX.set(0.5);
     mouseY.set(0.5);
+    setIsPressed(false);
   };
 
   return (
+    /* perspective wrapper — bg transparent, overflow visible for glow */
     <div
-      style={{ perspective: '900px' }}
-      className="relative w-72 flex-shrink-0 snap-start"
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
+      className="relative flex-shrink-0 snap-start"
+      style={{ width: '288px', perspective: '900px' }}
     >
-      {/* Selected glow halo */}
-      <motion.div
-        className="absolute -inset-3 rounded-3xl pointer-events-none blur-xl"
-        style={{ background: `${COLOR_MAP[card.color] || COLOR_MAP.indigo}`.includes('indigo') ? 'rgba(99,102,241,0.35)' : 'rgba(16,185,129,0.35)' }}
-        animate={{ opacity: isSelected ? 1 : 0 }}
-        transition={{ duration: 0.3 }}
-      />
+      {/* Selected glow halo — only rendered when selected */}
+      {isSelected && (
+        <div
+          className="absolute -inset-4 rounded-3xl blur-2xl pointer-events-none"
+          style={{ background: glowColor, opacity: 0.7 }}
+        />
+      )}
 
       <motion.button
         onClick={onClick}
-        variants={{
-          normal:   { scale: 1,    y: 0  },
-          selected: { scale: 1.05, y: -6 },
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        onPointerDown={() => setIsPressed(true)}
+        onPointerUp={() => { setIsPressed(false); }}
+        animate={{
+          scale: scaleVal,
+          y: yVal,
+          boxShadow: isPressed
+            ? '0 2px 8px rgba(0,0,0,0.2)'
+            : isSelected
+              ? shadows.selected
+              : shadows.idle,
         }}
-        animate={isSelected ? 'selected' : 'normal'}
-        whileTap={{ scale: 0.955, rotateX: 0, rotateY: 0, y: 2 }}
-        transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+        transition={{ type: 'spring', stiffness: 340, damping: 28 }}
         style={{
           rotateX,
           rotateY,
           transformStyle: 'preserve-3d',
-          boxShadow: isSelected ? shadows.selected : shadows.idle,
+          width: '100%',
+          height: '176px',
         }}
-        className={`relative w-full h-44 rounded-2xl bg-gradient-to-br ${gradient} text-white p-5 text-left overflow-hidden ${
+        className={`relative rounded-2xl bg-gradient-to-br ${gradient} text-white p-5 text-left overflow-hidden ${
           card.status === 'blocked' ? 'opacity-55' : ''
         }`}
       >
-        {/* Shine layer */}
+        {/* Shine overlay */}
         <motion.div
           className="absolute inset-0 rounded-2xl pointer-events-none"
           style={{ background: shineBackground }}
         />
 
-        {/* Subtle dot pattern */}
+        {/* Dot pattern */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
@@ -109,9 +132,9 @@ export default function InteractiveCard3D({ card, isSelected, onClick }) {
           }}
         />
 
-        {/* Card content */}
+        {/* Content */}
         <div className="relative z-10 h-full flex flex-col justify-between">
-          {/* Top row */}
+          {/* Top */}
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-1.5">
               <Zap size={13} className="text-white/75" fill="currentColor" />
@@ -122,13 +145,12 @@ export default function InteractiveCard3D({ card, isSelected, onClick }) {
                 Bloquée
               </span>
             ) : (
-              /* Chip visual */
               <div className="w-8 h-6 rounded-sm bg-white/20 backdrop-blur-sm border border-white/10" />
             )}
           </div>
 
           {/* Card number */}
-          <p className="text-[15px] font-mono tracking-[0.22em] text-white/80">
+          <p className="text-[15px] font-mono tracking-[0.2em] text-white/80">
             •••• •••• •••• {card.last4}
           </p>
 
