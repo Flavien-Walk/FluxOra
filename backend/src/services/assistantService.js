@@ -576,4 +576,4 @@ async function chat(userId, messages) {
   return { reply, intent, actions };
 }
 
-module.exports = { chat, getSuggestions, getRecentClients, buildContext, computeHealthScore };
+module.exports = { chat, getSuggestions, getRecentClients, buildContext, computeHealthScore, buildSystemPrompt };
