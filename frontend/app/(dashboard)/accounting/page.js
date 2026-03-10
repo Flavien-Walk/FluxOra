@@ -131,52 +131,77 @@ export default function AccountingPage() {
 
         {/* KPI solde */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-white border border-[rgba(148,163,184,0.3)] rounded-xl shadow-card overflow-hidden">
+
+          {/* Entrées */}
+          <div className="bg-white border border-[rgba(148,163,184,0.3)] rounded-xl shadow-card overflow-hidden group">
             <div className="h-[3px] bg-success-500" />
-            <div className="p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-7 h-7 rounded-lg bg-success-50 flex items-center justify-center">
-                  <TrendingUp size={14} className="text-success-600" />
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-10 h-10 rounded-xl bg-success-50 flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
+                  <TrendingUp size={18} className="text-success-600" strokeWidth={1.75} />
                 </div>
-                <span className="text-xs font-semibold text-success-700 uppercase tracking-wide">Entrées (crédits)</span>
+                <span className="text-[10px] font-bold text-success-600 uppercase tracking-widest px-2 py-1 bg-success-50 rounded-full">
+                  Recettes
+                </span>
               </div>
-              <p className="text-2xl font-bold text-success-700 tabular-nums">{fmt(summary?.totalCredits)}</p>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-1">
+                Entrées (crédits)
+              </p>
+              <p className="text-2xl font-bold text-slate-900 tabular-nums">{fmt(summary?.totalCredits)}</p>
+              <p className="text-xs text-slate-400 mt-1.5">Factures payées · paiements reçus</p>
             </div>
           </div>
 
-          <div className="bg-white border border-[rgba(148,163,184,0.3)] rounded-xl shadow-card overflow-hidden">
+          {/* Sorties */}
+          <div className="bg-white border border-[rgba(148,163,184,0.3)] rounded-xl shadow-card overflow-hidden group">
             <div className="h-[3px] bg-danger-500" />
-            <div className="p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-7 h-7 rounded-lg bg-danger-50 flex items-center justify-center">
-                  <TrendingDown size={14} className="text-danger-600" />
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-10 h-10 rounded-xl bg-danger-50 flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
+                  <TrendingDown size={18} className="text-danger-600" strokeWidth={1.75} />
                 </div>
-                <span className="text-xs font-semibold text-danger-700 uppercase tracking-wide">Sorties (débits)</span>
+                <span className="text-[10px] font-bold text-danger-600 uppercase tracking-widest px-2 py-1 bg-danger-50 rounded-full">
+                  Charges
+                </span>
               </div>
-              <p className="text-2xl font-bold text-danger-700 tabular-nums">{fmt(summary?.totalDebits)}</p>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-1">
+                Sorties (débits)
+              </p>
+              <p className="text-2xl font-bold text-slate-900 tabular-nums">{fmt(summary?.totalDebits)}</p>
+              <p className="text-xs text-slate-400 mt-1.5">Dépenses · charges enregistrées</p>
             </div>
           </div>
 
+          {/* Solde net */}
           <div className={cn(
-            'bg-white border rounded-xl shadow-card overflow-hidden',
+            'bg-white border rounded-xl shadow-card overflow-hidden group',
             balance >= 0 ? 'border-accent-100' : 'border-warning-100'
           )}>
             <div className={cn('h-[3px]', balance >= 0 ? 'bg-accent-500' : 'bg-warning-500')} />
-            <div className="p-4">
-              <div className="flex items-center gap-2 mb-2">
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-4">
                 <div className={cn(
-                  'w-7 h-7 rounded-lg flex items-center justify-center',
+                  'w-10 h-10 rounded-xl flex items-center justify-center transition-transform duration-200 group-hover:scale-110',
                   balance >= 0 ? 'bg-accent-50' : 'bg-warning-50'
                 )}>
-                  <BookOpen size={14} className={balance >= 0 ? 'text-accent-600' : 'text-warning-600'} />
+                  <BookOpen size={18} className={balance >= 0 ? 'text-accent-600' : 'text-warning-600'} strokeWidth={1.75} />
                 </div>
-                <span className={cn('text-xs font-semibold uppercase tracking-wide', balance >= 0 ? 'text-accent-700' : 'text-warning-700')}>
-                  Solde net
+                <span className={cn(
+                  'text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full',
+                  balance >= 0
+                    ? 'text-accent-600 bg-accent-50'
+                    : 'text-warning-700 bg-warning-50'
+                )}>
+                  {balance >= 0 ? 'Positif ✓' : 'Déficit'}
                 </span>
               </div>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-1">
+                Solde net
+              </p>
               <p className={cn('text-2xl font-bold tabular-nums', balance >= 0 ? 'text-accent-700' : 'text-warning-700')}>
                 {balance >= 0 ? '+' : ''}{fmt(balance)}
               </p>
+              <p className="text-xs text-slate-400 mt-1.5">Entrées − Sorties</p>
             </div>
           </div>
         </div>

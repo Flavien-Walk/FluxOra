@@ -324,7 +324,11 @@ export default function ExpensesPage() {
                       const cat = CATEGORIES.find((c) => c.value === exp.category);
                       const st  = STATUS_CONFIG[exp.status] || STATUS_CONFIG.validated;
                       return (
-                        <tr key={exp._id} className="row-accent hover:bg-slate-50/60 transition-colors">
+                        <tr
+                          key={exp._id}
+                          onClick={() => openEdit(exp)}
+                          className="row-accent hover:bg-slate-50/60 transition-colors cursor-pointer"
+                        >
                           <td className="px-4 py-3 text-slate-500 text-xs whitespace-nowrap">{fmtDate(exp.date)}</td>
                           <td className="px-4 py-3 text-slate-900 font-medium">
                             <div>{exp.description}</div>
@@ -350,14 +354,14 @@ export default function ExpensesPage() {
                           <td className="px-4 py-3 text-right">
                             <div className="flex items-center justify-end gap-1">
                               <button
-                                onClick={() => openEdit(exp)}
+                                onClick={(e) => { e.stopPropagation(); openEdit(exp); }}
                                 className="text-slate-400 hover:text-accent-500 p-1 rounded transition-colors"
                                 title="Modifier"
                               >
                                 <Pencil size={14} />
                               </button>
                               <button
-                                onClick={() => handleDelete(exp._id)}
+                                onClick={(e) => { e.stopPropagation(); handleDelete(exp._id); }}
                                 disabled={deleting === exp._id}
                                 className="text-slate-400 hover:text-danger-500 p-1 rounded transition-colors"
                                 title="Supprimer"
