@@ -1,7 +1,7 @@
 const express      = require('express');
 const router       = express.Router();
 const { requireAuth } = require('../middleware/auth');
-const { chat }     = require('../services/assistantService');
+const { chat, getSuggestions } = require('../services/assistantService');
 
 /* ── Rate limit simple en mémoire (10 req/min par user) ─────── */
 const rateMap = new Map();
@@ -17,11 +17,21 @@ function isAllowed(userId) {
   return entry.n <= LIMIT;
 }
 
-// Purge périodique pour ne pas garder la map en mémoire indéfiniment
 setInterval(() => {
   const now = Date.now();
   for (const [k, v] of rateMap) { if (now > v.reset) rateMap.delete(k); }
 }, 5 * 60_000);
+
+/* ── GET /api/assistant/suggestions — suggestions dynamiques (0 token IA) */
+router.get('/suggestions', requireAuth, async (req, res) => {
+  try {
+    const suggestions = await getSuggestions(req.userId);
+    res.json({ suggestions });
+  } catch (err) {
+    console.error('suggestions error:', err.message);
+    res.json({ suggestions: [] }); // fallback silencieux
+  }
+});
 
 /* ── POST /api/assistant/chat ────────────────────────────────── */
 router.post('/chat', requireAuth, async (req, res) => {
@@ -32,23 +42,21 @@ router.post('/chat', requireAuth, async (req, res) => {
   }
 
   if (!isAllowed(req.userId)) {
-    return res.status(429).json({ error: 'Trop de requêtes. Réessayez dans une minute.' });
+    return res.status(429).json({ error: 'Trop de requêtes. Réessayez dans une minute.', code: 'RATE_LIMIT' });
   }
 
-  // Timeout 45s pour ne pas laisser une requête pendante
   const timeout = setTimeout(() => {
-    if (!res.headersSent) res.status(504).json({ error: 'Délai dépassé. Réessayez.' });
+    if (!res.headersSent) res.status(504).json({ error: 'Délai dépassé. Réessayez.', code: 'ASSISTANT_TIMEOUT' });
   }, 45_000);
 
   try {
-    const reply = await chat(req.userId, messages);
+    const result = await chat(req.userId, messages);
     clearTimeout(timeout);
-    if (!res.headersSent) res.json({ reply });
+    if (!res.headersSent) res.json({ reply: result.reply, actions: result.actions, intent: result.intent });
   } catch (err) {
     clearTimeout(timeout);
     if (!res.headersSent) {
-      const status = err.status || 500;
-      res.status(status).json({ error: err.message || 'Erreur assistant.', code: err.code || 'ASSISTANT_ERROR' });
+      res.status(err.status || 500).json({ error: err.message || 'Erreur assistant.', code: err.code || 'ASSISTANT_ERROR' });
     }
   }
 });
