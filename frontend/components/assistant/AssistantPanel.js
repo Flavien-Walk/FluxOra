@@ -22,6 +22,7 @@ import AssistantModalHost from './AssistantModalHost';
 import AssistantObjectCard from './AssistantObjectCard';
 import AssistantSectionReport from './AssistantSectionReport';
 import { normalizeAssistantResponse } from '@/lib/assistant/normalizeAssistantResponse';
+import AssistantAgentLog from './AssistantAgentLog';
 
 const FALLBACK_SUGGESTIONS = [
   { text: 'Anticipe ma tresorerie sur 30 jours' },
@@ -327,7 +328,7 @@ export default function AssistantPanel({ open, onClose }) {
     setLoading(true);
 
     try {
-      const { data } = await api.post('/api/assistant/chat', {
+      const { data } = await api.post('/api/assistant/agent', {
         messages: nextMessages.map((message) => ({ role: message.role, content: message.content })),
         context: assistantContext,
       });
@@ -375,6 +376,7 @@ export default function AssistantPanel({ open, onClose }) {
     setAssistantContext({});
     setPendingModal(null);
     setInput('');
+    api.post('/api/assistant/reset-context').catch(() => {});
   };
 
   const onKeyDown = (event) => {
@@ -576,6 +578,10 @@ export default function AssistantPanel({ open, onClose }) {
                                 <AssistantObjectCard key={card.id} card={card} />
                               ))}
                             </div>
+                          )}
+
+                          {message.role === 'assistant' && !message.error && message.agentLog?.length > 0 && (
+                            <AssistantAgentLog entries={message.agentLog} />
                           )}
 
                           {message.role === 'assistant' && !message.error && message.actions?.length > 0 && (
