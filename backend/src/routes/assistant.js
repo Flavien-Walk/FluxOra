@@ -48,7 +48,7 @@ router.post('/chat', requireAuth, async (req, res) => {
     clearTimeout(timeout);
     if (!res.headersSent) {
       const status = err.status || 500;
-      res.status(status).json({ error: err.message || 'Erreur assistant.' });
+      res.status(status).json({ error: err.message || 'Erreur assistant.', code: err.code || 'ASSISTANT_ERROR' });
     }
   }
 });

@@ -260,12 +260,29 @@ async function chat(userId, messages) {
     .slice(-10)
     .map(m => ({ role: m.role, content: m.content.slice(0, 4000) }));
 
-  const response = await getClient().messages.create({
-    model:      'claude-haiku-4-5-20251001', // rapide + économique
-    max_tokens: 900,
-    system:     systemPrompt,
-    messages:   safeMessages,
-  });
+  let response;
+  try {
+    response = await getClient().messages.create({
+      model:      'claude-haiku-4-5-20251001', // rapide + économique
+      max_tokens: 900,
+      system:     systemPrompt,
+      messages:   safeMessages,
+    });
+  } catch (err) {
+    // Reset client si la clé est invalide (force re-init au prochain appel)
+    if (err.status === 401) {
+      _client = null;
+      throw Object.assign(new Error('Clé API invalide. Vérifiez la variable ANTHROPIC_API_KEY.'), { status: 503, code: 'ASSISTANT_INVALID_KEY' });
+    }
+    if (err.status === 400 && err.message?.includes('credit')) {
+      throw Object.assign(new Error('Crédits IA épuisés. Rechargez le compte Anthropic.'), { status: 402, code: 'ASSISTANT_NO_CREDITS' });
+    }
+    if (err.status === 529 || err.status === 503 || err.status === 502) {
+      throw Object.assign(new Error('L\'IA est temporairement indisponible. Réessayez dans quelques instants.'), { status: 503, code: 'ASSISTANT_UNAVAILABLE' });
+    }
+    // Autres erreurs Anthropic
+    throw Object.assign(new Error('Erreur du provider IA.'), { status: 500, code: 'ASSISTANT_ERROR' });
+  }
 
   return response.content[0]?.text || 'Réponse vide.';
 }
