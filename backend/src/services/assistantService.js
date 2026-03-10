@@ -311,14 +311,28 @@ async function getSuggestions(userId) {
   if (pendingCount > 0) list.push({ text: `Anticiper mes ${pendingCount} encaissement(s) à venir`, badge: pendingCount, badgeStyle: 'info'    });
   if (quoteData > 0)    list.push({ text: `Suivre mes ${quoteData} devis envoyé(s)`,              badge: quoteData,    badgeStyle: 'info'    });
 
+  // Suggestions analytiques — les actions CRUD sont dans le hub de l'assistant
   list.push({ text: 'Anticipe ma trésorerie sur 30 jours' });
   list.push({ text: 'Quel est mon score de santé financière ?' });
   list.push({ text: 'Analyse mes dépenses du mois' });
   list.push({ text: 'Quels fournisseurs me coûtent le plus cher ?' });
-  list.push({ text: 'Crée un devis pour un client' });
-  list.push({ text: 'Crée une facture' });
+  list.push({ text: 'Propose une meilleure répartition budgétaire' });
+  list.push({ text: 'Quel est mon bilan du mois ?' });
 
   return list.slice(0, 6);
+}
+
+/* ─── Clients récents pour le sélecteur du hub ─────────────── */
+async function getRecentClients(userId) {
+  const org = await Organization.findOne({
+    $or: [{ clerkOwnerId: userId }, { 'members.clerkUserId': userId }],
+  }).lean();
+  if (!org) return [];
+  return Client.find({ organizationId: org._id })
+    .sort({ updatedAt: -1 })
+    .limit(8)
+    .select('name email company')
+    .lean();
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -386,4 +400,4 @@ async function chat(userId, messages) {
   return { reply, intent, actions, entityCard };
 }
 
-module.exports = { chat, getSuggestions, buildContext, computeHealthScore };
+module.exports = { chat, getSuggestions, getRecentClients, buildContext, computeHealthScore };

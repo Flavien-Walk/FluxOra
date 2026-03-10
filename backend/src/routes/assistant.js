@@ -1,7 +1,7 @@
 const express      = require('express');
 const router       = express.Router();
 const { requireAuth }   = require('../middleware/auth');
-const { chat, getSuggestions } = require('../services/assistantService');
+const { chat, getSuggestions, getRecentClients } = require('../services/assistantService');
 const { executeAction }        = require('../services/assistantActionService');
 
 /* ── Rate limit simple en mémoire (10 req/min par user) ─────── */
@@ -22,6 +22,16 @@ setInterval(() => {
   const now = Date.now();
   for (const [k, v] of rateMap) { if (now > v.reset) rateMap.delete(k); }
 }, 5 * 60_000);
+
+/* ── GET /api/assistant/clients — sélecteur client du hub ────── */
+router.get('/clients', requireAuth, async (req, res) => {
+  try {
+    const clients = await getRecentClients(req.userId);
+    res.json({ clients });
+  } catch (err) {
+    res.json({ clients: [] });
+  }
+});
 
 /* ── GET /api/assistant/suggestions ─────────────────────────── */
 router.get('/suggestions', requireAuth, async (req, res) => {
