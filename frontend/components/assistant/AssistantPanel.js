@@ -79,7 +79,14 @@ export default function AssistantPanel({ open, onClose }) {
       });
       setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
     } catch (err) {
-      const errMsg = err.response?.data?.error || 'Erreur de connexion à l\'assistant.';
+      const code = err.response?.data?.code;
+      const errMsg = code === 'ASSISTANT_NO_CREDITS'
+        ? 'Crédits IA épuisés — l\'assistant est temporairement indisponible.'
+        : code === 'ASSISTANT_INVALID_KEY'
+          ? 'Assistant IA non configuré. Contactez l\'administrateur.'
+          : code === 'ASSISTANT_UNAVAILABLE'
+            ? 'Assistant temporairement indisponible. Réessayez dans quelques instants.'
+            : err.response?.data?.error || 'Erreur de connexion à l\'assistant.';
       setMessages(prev => [...prev, { role: 'assistant', content: null, error: errMsg }]);
     } finally {
       setLoading(false);
