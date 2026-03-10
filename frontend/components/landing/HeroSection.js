@@ -1,9 +1,38 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, TrendingUp, Clock, CheckCircle2, CircleDollarSign } from 'lucide-react';
+import { ArrowRight, CheckCircle2, TrendingUp, ShieldCheck, Zap } from 'lucide-react';
+import { motion } from 'framer-motion';
 
-/* ─── Mini KPI Card for mockup ─── */
+/* ─── Animation variants ─── */
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  show:   { opacity: 1, y: 0 },
+};
+const stagger = {
+  hidden: {},
+  show:   { transition: { staggerChildren: 0.12 } },
+};
+
+/* ─── Floating transaction badge ─── */
+function FloatingBadge({ children, className, delay = 0 }) {
+  return (
+    <motion.div
+      className={`absolute ${className}`}
+      initial={{ opacity: 0, scale: 0.85, y: 10 }}
+      animate={{ opacity: 1, scale: 1, y: [0, -6, 0] }}
+      transition={{
+        opacity: { duration: 0.5, delay },
+        scale:   { duration: 0.5, delay },
+        y: { duration: 3.5, delay: delay + 0.5, repeat: Infinity, ease: 'easeInOut' },
+      }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/* ─── Mini KPI ─── */
 function MockKPI({ label, value, color, sub }) {
   const colorMap = {
     green:  { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-400' },
@@ -24,41 +53,49 @@ function MockKPI({ label, value, color, sub }) {
   );
 }
 
-/* ─── Mockup dashboard card ─── */
+/* ─── Dashboard mockup ─── */
 function DashboardMockup() {
   return (
     <div className="relative w-full max-w-lg mx-auto lg:mx-0">
       {/* Outer glow */}
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-3xl blur-xl scale-105" />
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/15 to-indigo-500/15 rounded-3xl blur-2xl scale-110" />
 
       {/* Main card */}
-      <div className="relative bg-[#111827]/90 border border-white/10 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.5)] overflow-hidden backdrop-blur-sm">
-
-        {/* Header bar */}
-        <div className="flex items-center gap-1.5 px-4 py-3 border-b border-white/5">
+      <motion.div
+        className="relative bg-[#0D1526]/95 border border-white/10 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] overflow-hidden backdrop-blur-sm"
+        initial={{ opacity: 0, y: 30, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.7, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      >
+        {/* Mac-style header */}
+        <div className="flex items-center gap-1.5 px-4 py-3 border-b border-white/5 bg-white/[0.02]">
           <span className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
           <span className="w-2.5 h-2.5 rounded-full bg-amber-500/70" />
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/70" />
-          <span className="ml-3 text-[11px] text-slate-500 font-medium">Fluxora — Dashboard</span>
+          <div className="flex-1 flex justify-center">
+            <span className="text-[11px] text-slate-500 font-medium px-3 py-0.5 bg-slate-800/60 rounded-md">
+              fluxora.io/dashboard
+            </span>
+          </div>
         </div>
 
         {/* Content */}
         <div className="p-5 space-y-4">
-          {/* Hero banner mini */}
+          {/* Header banner */}
           <div className="rounded-xl px-4 py-3 bg-gradient-to-r from-slate-900 to-[#1A2744] border border-white/5 flex items-center justify-between">
             <div>
-              <p className="text-[10px] text-slate-500 uppercase tracking-widest">Bonjour</p>
+              <p className="text-[10px] text-slate-500 uppercase tracking-widest">Bonjour 👋</p>
               <p className="text-white text-sm font-bold">Acme Studio</p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-5">
               <div className="text-right">
                 <p className="text-[10px] text-slate-500">CA total</p>
-                <p className="text-sm font-bold text-white">84 200 €</p>
+                <p className="text-sm font-bold text-white tabular-nums">84 200 €</p>
               </div>
               <div className="w-px h-6 bg-slate-700" />
               <div className="text-right">
                 <p className="text-[10px] text-slate-500">Cashflow</p>
-                <p className="text-sm font-bold text-emerald-400">+12 400 €</p>
+                <p className="text-sm font-bold text-emerald-400 tabular-nums">+12 400 €</p>
               </div>
             </div>
           </div>
@@ -66,22 +103,29 @@ function DashboardMockup() {
           {/* KPI grid */}
           <div className="grid grid-cols-2 gap-2.5">
             <MockKPI label="Chiffre d'affaires" value="84 200 €" color="green" sub="CA total" />
-            <MockKPI label="En attente" value="6 800 €" color="yellow" sub="3 factures" />
-            <MockKPI label="Dépenses" value="5 320 €" color="indigo" sub="Ce mois" />
-            <MockKPI label="Devis en cours" value="4" color="blue" sub="Valeur : 28 000 €" />
+            <MockKPI label="En attente"         value="6 800 €"  color="yellow" sub="3 factures" />
+            <MockKPI label="Dépenses"           value="5 320 €"  color="indigo" sub="Ce mois" />
+            <MockKPI label="Devis en cours"     value="4"        color="blue" sub="Valeur : 28 000 €" />
           </div>
 
-          {/* Mini chart bars */}
+          {/* Mini chart */}
           <div className="rounded-xl bg-slate-900/60 border border-white/5 p-4">
-            <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-3">CA — 6 derniers mois</p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[10px] text-slate-500 uppercase tracking-widest">CA — 6 derniers mois</p>
+              <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
+                <TrendingUp size={10} /> +18%
+              </span>
+            </div>
             <div className="flex items-end gap-1.5 h-12">
               {[35, 55, 40, 70, 60, 90].map((h, i) => (
-                <div key={i} className="flex-1 rounded-t-sm" style={{
-                  height: `${h}%`,
-                  background: i === 5
-                    ? 'linear-gradient(to top, #1C6EF2, #818cf8)'
-                    : 'rgba(148, 163, 184, 0.12)',
-                }} />
+                <motion.div
+                  key={i}
+                  className="flex-1 rounded-t-sm"
+                  style={{ background: i === 5 ? 'linear-gradient(to top, #1C6EF2, #818cf8)' : 'rgba(148,163,184,0.12)' }}
+                  initial={{ height: 0 }}
+                  animate={{ height: `${h}%` }}
+                  transition={{ duration: 0.6, delay: 0.8 + i * 0.07, ease: 'easeOut' }}
+                />
               ))}
             </div>
             <div className="flex justify-between mt-1.5">
@@ -91,18 +135,42 @@ function DashboardMockup() {
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Floating badge */}
-      <div className="absolute -top-3 -right-3 bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-[0_0_16px_rgba(16,185,129,0.5)]">
-        Cashflow +
-      </div>
-      <div className="absolute -bottom-3 -left-3 bg-[#111827] border border-white/10 rounded-xl px-3 py-1.5 shadow-lg">
-        <div className="flex items-center gap-1.5">
-          <CheckCircle2 size={12} className="text-emerald-400" />
-          <span className="text-[10px] text-slate-300 font-medium">2 devis acceptés</span>
+      {/* Floating badges */}
+      <FloatingBadge
+        className="-top-4 -right-4"
+        delay={1.0}
+      >
+        <div className="bg-emerald-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.6)] flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+          Cashflow positif
         </div>
-      </div>
+      </FloatingBadge>
+
+      <FloatingBadge
+        className="-bottom-4 -left-4"
+        delay={1.3}
+      >
+        <div className="bg-[#111827] border border-white/10 rounded-xl px-3 py-2 shadow-xl backdrop-blur-sm">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={13} className="text-emerald-400" />
+            <span className="text-[11px] text-slate-300 font-medium">2 devis acceptés</span>
+          </div>
+        </div>
+      </FloatingBadge>
+
+      <FloatingBadge
+        className="top-1/2 -right-12 hidden lg:block"
+        delay={1.6}
+      >
+        <div className="bg-[#111827] border border-blue-500/30 rounded-xl px-3 py-2 shadow-xl backdrop-blur-sm">
+          <div className="flex items-center gap-2">
+            <Zap size={11} className="text-blue-400" fill="currentColor" />
+            <span className="text-[11px] text-blue-300 font-medium">Facture envoyée</span>
+          </div>
+        </div>
+      </FloatingBadge>
     </div>
   );
 }
@@ -113,51 +181,65 @@ export default function HeroSection({ isConnected }) {
 
       {/* Background gradients */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/3 w-[600px] h-[600px] rounded-full bg-indigo-500/20 blur-[120px]" />
-        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full bg-blue-500/15 blur-[100px]" />
-        <div className="absolute top-1/2 left-1/4 w-[300px] h-[300px] rounded-full bg-violet-600/10 blur-[80px]" />
+        <div className="absolute top-1/4 left-1/3 w-[700px] h-[700px] rounded-full bg-indigo-500/20 blur-[140px]" />
+        <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] rounded-full bg-blue-500/15 blur-[120px]" />
+        <div className="absolute top-1/2 left-1/4 w-[350px] h-[350px] rounded-full bg-violet-600/10 blur-[100px]" />
       </div>
 
-      {/* Grid overlay */}
+      {/* Subtle grid */}
       <div
-        className="absolute inset-0 opacity-[0.03]"
+        className="absolute inset-0 opacity-[0.025]"
         style={{
-          backgroundImage: 'linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)',
-          backgroundSize: '50px 50px',
+          backgroundImage:
+            'linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)',
+          backgroundSize: '60px 60px',
         }}
       />
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 pt-24 pb-20 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
 
-          {/* Left: copy */}
-          <div>
+          {/* ─── Left: copy ─── */}
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            animate="show"
+          >
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold px-4 py-1.5 rounded-full mb-8">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
-              Cockpit financier tout-en-un
-            </div>
+            <motion.div variants={fadeUp}>
+              <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold px-4 py-1.5 rounded-full mb-8">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                Cockpit financier tout-en-un
+              </div>
+            </motion.div>
 
             {/* Headline */}
-            <h1 className="text-5xl lg:text-7xl font-bold tracking-tight text-white leading-[1.06] mb-6">
-              Gérez vos{' '}
-              <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+            <motion.h1
+              variants={fadeUp}
+              className="text-5xl lg:text-7xl font-bold tracking-tight text-white leading-[1.06] mb-6"
+            >
+              Pilotez vos{' '}
+              <span className="bg-gradient-to-r from-blue-400 via-indigo-400 to-violet-400 bg-clip-text text-transparent">
                 finances
               </span>
-              {' '}en un coup d&apos;œil
-            </h1>
+              <br />
+              comme un pro
+            </motion.h1>
 
             {/* Subtitle */}
-            <p className="text-lg text-slate-400 leading-relaxed mb-10 max-w-lg">
+            <motion.p
+              variants={fadeUp}
+              className="text-lg text-slate-400 leading-relaxed mb-10 max-w-lg"
+            >
               Fluxora centralise vos factures, devis, dépenses et comptabilité.
-              Pensé pour les freelances et PME qui veulent gagner du temps.
-            </p>
+              Un seul outil pour remplacer cinq. Pensé pour les freelances et PME.
+            </motion.p>
 
             {/* CTAs */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-12">
+            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 mb-12">
               <Link
                 href={isConnected ? '/dashboard' : '/sign-up'}
-                className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-[0_0_30px_rgba(79,70,229,0.4)] hover:shadow-[0_0_45px_rgba(79,70,229,0.6)] transition-all duration-200"
+                className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-[0_0_30px_rgba(79,70,229,0.45)] hover:shadow-[0_0_50px_rgba(79,70,229,0.65)] transition-all duration-200"
               >
                 {isConnected ? 'Accéder au dashboard' : 'Commencer gratuitement'}
                 <ArrowRight size={16} />
@@ -165,38 +247,39 @@ export default function HeroSection({ isConnected }) {
               {!isConnected && (
                 <Link
                   href="/sign-in"
-                  className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-white/70 border border-white/20 hover:border-white/40 hover:text-white hover:bg-white/5 transition-all duration-200"
+                  className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-white/70 border border-white/15 hover:border-white/35 hover:text-white hover:bg-white/5 transition-all duration-200"
                 >
                   Se connecter
                 </Link>
               )}
-            </div>
+            </motion.div>
 
-            {/* Social proof */}
-            <div className="flex items-center gap-6 text-sm text-slate-500">
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 size={14} className="text-emerald-500" />
-                <span>Gratuit pour démarrer</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 size={14} className="text-emerald-500" />
-                <span>Sans CB requise</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 size={14} className="text-emerald-500" />
-                <span>Données sécurisées</span>
-              </div>
-            </div>
-          </div>
+            {/* Trust signals */}
+            <motion.div
+              variants={fadeUp}
+              className="flex flex-wrap items-center gap-5 text-sm text-slate-500"
+            >
+              {[
+                { icon: CheckCircle2, label: 'Gratuit pour démarrer' },
+                { icon: ShieldCheck,  label: 'Données sécurisées RGPD' },
+                { icon: Zap,          label: 'Opérationnel en 5 min' },
+              ].map(({ icon: Icon, label }) => (
+                <div key={label} className="flex items-center gap-1.5">
+                  <Icon size={14} className="text-emerald-500" />
+                  <span>{label}</span>
+                </div>
+              ))}
+            </motion.div>
+          </motion.div>
 
-          {/* Right: mockup */}
-          <div className="lg:flex lg:justify-end">
+          {/* ─── Right: mockup ─── */}
+          <div className="lg:flex lg:justify-end lg:pr-8">
             <DashboardMockup />
           </div>
         </div>
       </div>
 
-      {/* Bottom fade */}
+      {/* Bottom fade to white */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent" />
     </section>
   );

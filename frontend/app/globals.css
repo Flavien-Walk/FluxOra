@@ -106,3 +106,63 @@ body {
 /* ─── Hero glows ─────────────────────────────────────── */
 .hero-glow-blue   { background: radial-gradient(circle, rgba(28,110,242,0.3) 0%, transparent 70%); }
 .hero-glow-purple { background: radial-gradient(circle, rgba(139,92,246,0.2) 0%, transparent 70%); }
+
+/* ─── Keyframes ─────────────────────────────────────── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(30px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+/* ─── Animation utilities ────────────────────────────── */
+@layer utilities {
+  .animate-fade-up   { animation: fade-up   0.5s ease forwards; }
+  .animate-fade-in   { animation: fade-in   0.4s ease forwards; }
+  .animate-count-up  { animation: count-up  0.45s ease forwards; }
+  .animate-slide-in-right { animation: slide-in-right 0.55s ease forwards; }
+
+  /* Stagger delays for lists */
+  .delay-75  { animation-delay: 75ms; }
+  .delay-150 { animation-delay: 150ms; }
+  .delay-225 { animation-delay: 225ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-375 { animation-delay: 375ms; }
+
+  /* Premium shimmer skeleton */
+  .skeleton-shimmer {
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+  }
+}
+
+/* ─── StatCard value reveal ──────────────────────────── */
+.stat-value-enter {
+  animation: count-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ─── Landing section transitions ───────────────────── */
+.section-enter {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.section-enter.visible {
+  opacity: 1;
+  transform: translateY(0);
+}

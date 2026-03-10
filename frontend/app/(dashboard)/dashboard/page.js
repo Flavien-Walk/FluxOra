@@ -198,6 +198,8 @@ export default function DashboardPage() {
           <StatCard
             label="Chiffre d'affaires"
             value={sumLoading ? '…' : fmt(summary?.revenue?.total)}
+            numericValue={sumLoading ? null : (summary?.revenue?.total ?? 0)}
+            formatter={fmt}
             sub={`Ce mois : ${sumLoading ? '…' : fmt(summary?.revenue?.month)}`}
             icon={CircleDollarSign}
             color="green"
@@ -205,6 +207,8 @@ export default function DashboardPage() {
           <StatCard
             label="Cashflow net"
             value={sumLoading ? '…' : fmt(summary?.cashflowNet)}
+            numericValue={sumLoading ? null : (summary?.cashflowNet ?? 0)}
+            formatter={fmt}
             sub={cashflowPositive ? 'Solde positif ✓' : 'Solde négatif'}
             icon={Wallet}
             color={cashflowPositive ? 'indigo' : 'red'}
@@ -212,6 +216,8 @@ export default function DashboardPage() {
           <StatCard
             label="Factures en attente"
             value={sumLoading ? '…' : fmt(summary?.pending?.total)}
+            numericValue={sumLoading ? null : (summary?.pending?.total ?? 0)}
+            formatter={fmt}
             sub={`${summary?.pending?.count ?? 0} facture(s)`}
             icon={Clock}
             color="yellow"
@@ -219,7 +225,9 @@ export default function DashboardPage() {
           <StatCard
             label="En retard"
             value={sumLoading ? '…' : String(lateCount)}
-            sub={lateCount > 0 ? 'À relancer d\'urgence' : 'Aucune en retard ✓'}
+            numericValue={sumLoading ? null : lateCount}
+            formatter={(n) => String(Math.round(n))}
+            sub={lateCount > 0 ? "À relancer d'urgence" : 'Aucune en retard ✓'}
             icon={AlertTriangle}
             color={lateCount > 0 ? 'red' : 'green'}
           />
@@ -230,6 +238,8 @@ export default function DashboardPage() {
           <StatCard
             label="Dépenses du mois"
             value={sumLoading ? '…' : fmt(summary?.expenses?.month)}
+            numericValue={sumLoading ? null : (summary?.expenses?.month ?? 0)}
+            formatter={fmt}
             sub="Mois en cours"
             icon={Receipt}
             color="rose"
@@ -237,6 +247,8 @@ export default function DashboardPage() {
           <StatCard
             label="Devis en cours"
             value={sumLoading ? '…' : String(summary?.quotes?.pendingCount ?? 0)}
+            numericValue={sumLoading ? null : (summary?.quotes?.pendingCount ?? 0)}
+            formatter={(n) => String(Math.round(n))}
             sub={`Valeur : ${sumLoading ? '…' : fmt(summary?.quotes?.pendingTotal)}`}
             icon={ClipboardList}
             color="blue"
@@ -244,6 +256,8 @@ export default function DashboardPage() {
           <StatCard
             label="Devis acceptés"
             value={sumLoading ? '…' : String(summary?.quotes?.acceptedCount ?? 0)}
+            numericValue={sumLoading ? null : (summary?.quotes?.acceptedCount ?? 0)}
+            formatter={(n) => String(Math.round(n))}
             sub="Depuis le début"
             icon={CheckCircle2}
             color="green"

@@ -1,5 +1,8 @@
+'use client';
+
 import { cn } from '@/lib/utils';
 import { TrendingUp, TrendingDown } from 'lucide-react';
+import { useCountUp } from '@/hooks/useCountUp';
 
 export function Card({ children, className, hover = false }) {
   return (
@@ -89,15 +92,32 @@ const BAR_COLORS = {
   rose:   '#F43F5E',
 };
 
-export function StatCard({ label, value, sub, icon: Icon, color = 'indigo', trend }) {
+/**
+ * StatCard — Carte KPI premium avec animation de compteur optionnelle.
+ *
+ * Props:
+ *  - value       : string  — valeur déjà formatée (affichage statique)
+ *  - numericValue: number  — valeur numérique brute (active l'animation countUp)
+ *  - formatter   : fn      — (n) => string   (par défaut: arrondi entier)
+ */
+export function StatCard({ label, value, sub, icon: Icon, color = 'indigo', trend, numericValue, formatter }) {
   const t = STAT_THEMES[color] ?? STAT_THEMES.indigo;
   const barColor = BAR_COLORS[color] ?? BAR_COLORS.indigo;
   const trendPositive = trend == null ? null : trend >= 0;
 
+  const defaultFmt = (n) => Math.round(n).toLocaleString('fr-FR');
+  const animated = useCountUp(
+    numericValue != null ? numericValue : null,
+    formatter ?? defaultFmt,
+    800,
+  );
+
+  const displayValue = numericValue != null ? (animated ?? '…') : value;
+
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-card overflow-hidden relative">
+    <div className="bg-white rounded-xl border border-slate-200 shadow-card overflow-hidden relative group">
       {/* Accent bar top */}
-      <div className="h-[3px]" style={{ background: barColor }} />
+      <div className="h-[3px] transition-all duration-300" style={{ background: barColor }} />
 
       <div className="p-5">
         {/* Top row: icon + trend badge */}
@@ -105,6 +125,7 @@ export function StatCard({ label, value, sub, icon: Icon, color = 'indigo', tren
           {Icon && (
             <div className={cn(
               'w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0',
+              'transition-transform duration-300 group-hover:scale-110',
               t.icon
             )}>
               <Icon size={18} strokeWidth={1.75} />
@@ -131,8 +152,8 @@ export function StatCard({ label, value, sub, icon: Icon, color = 'indigo', tren
         </p>
 
         {/* Value */}
-        <p className={cn('text-2xl font-bold tabular-nums leading-tight', t.value)}>
-          {value}
+        <p className={cn('text-2xl font-bold tabular-nums leading-tight stat-value-enter', t.value)}>
+          {displayValue}
         </p>
 
         {/* Sub text */}

@@ -117,8 +117,8 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Settings */}
-      <div className="px-2 pb-4 pt-3 flex-shrink-0"
+      {/* Settings + landing link */}
+      <div className="px-2 pb-4 pt-3 flex-shrink-0 space-y-0.5"
         style={{ borderTop: '1px solid var(--sidebar-border)' }}>
         <NavItem
           href="/settings"
@@ -127,6 +127,16 @@ export default function Sidebar() {
           isActive={pathname === '/settings'}
           badge={0}
         />
+        {/* Lien discret vers la landing page */}
+        <a
+          href="/?preview=1"
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] text-slate-600 hover:text-slate-400 hover:bg-white/[0.04] transition-all duration-150"
+        >
+          <span className="w-1 h-1 rounded-full bg-slate-600 flex-shrink-0" />
+          Découvrir Fluxora
+        </a>
       </div>
     </aside>
   );

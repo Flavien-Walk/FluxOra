@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
 import LandingNav from '@/components/landing/LandingNav';
 import HeroSection from '@/components/landing/HeroSection';
 import FeaturesGrid from '@/components/landing/FeaturesGrid';
@@ -13,17 +14,23 @@ export const metadata = {
     'Gérez vos factures, devis, dépenses et comptabilité depuis un seul outil. Pensé pour les freelances et PME.',
 };
 
-export default async function Home() {
+export default async function Home({ searchParams }) {
   const { userId } = await auth();
-  const isConnected = !!userId;
+
+  // Utilisateur connecté → redirection directe vers le dashboard
+  // sauf si ?preview=1 (lien "Découvrir Fluxora" depuis la sidebar)
+  const params = await searchParams;
+  if (userId && params?.preview !== '1') {
+    redirect('/dashboard');
+  }
 
   return (
     <main>
-      <LandingNav isConnected={isConnected} />
-      <HeroSection isConnected={isConnected} />
+      <LandingNav isConnected={false} />
+      <HeroSection isConnected={false} />
       <FeaturesGrid />
       <HowItWorks />
-      <PricingSection isConnected={isConnected} />
+      <PricingSection isConnected={false} />
       <FAQSection />
       <LandingFooter />
     </main>
