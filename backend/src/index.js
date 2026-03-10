@@ -64,3 +64,7 @@ app.use((err, req, res, next) => {
   const message = err.message || 'Erreur interne du serveur.';
   res.status(statusCode).json({ error: message });
 });
+
+app.listen(PORT, () => {
+  console.log(`Fluxora API démarrée sur http://localhost:${PORT}`);
+});
