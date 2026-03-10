@@ -1,0 +1,262 @@
+'use client';
+
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Sparkles, X, Send, RotateCcw, AlertCircle, Loader2, ChevronRight } from 'lucide-react';
+import api from '@/lib/api';
+
+/* ── Prompts rapides ─────────────────────────────────────────── */
+const QUICK = [
+  'Analyse mes dépenses du mois',
+  'Quel est mon score de santé financière ?',
+  'Anticipe ma trésorerie sur 30 jours',
+  'Quels fournisseurs me coûtent le plus cher ?',
+  'Propose une meilleure répartition budgétaire',
+];
+
+/* ── Rendu texte assistant (formatage minimal) ───────────────── */
+function MsgText({ text }) {
+  return (
+    <div className="space-y-2">
+      {text.split('\n\n').filter(Boolean).map((block, i) => {
+        if (block.startsWith('## ') || block.startsWith('**') && block.endsWith('**')) {
+          return (
+            <p key={i} className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mt-3 first:mt-0">
+              {block.replace(/^##\s*/, '').replace(/^\*\*|\*\*$/g, '')}
+            </p>
+          );
+        }
+        const lines = block.split('\n').filter(Boolean);
+        if (lines.some(l => l.startsWith('- ') || l.startsWith('• '))) {
+          return (
+            <ul key={i} className="space-y-1.5">
+              {lines.map((line, j) => (
+                <li key={j} className="flex gap-2 text-[13px] text-slate-700 leading-relaxed">
+                  <span className="mt-2 w-1.5 h-1.5 rounded-full bg-accent-400 shrink-0" />
+                  <span>{line.replace(/^[-•]\s*/, '')}</span>
+                </li>
+              ))}
+            </ul>
+          );
+        }
+        return <p key={i} className="text-[13px] text-slate-700 leading-relaxed">{block}</p>;
+      })}
+    </div>
+  );
+}
+
+/* ── Composant principal ────────────────────────────────────── */
+export default function AssistantPanel({ open, onClose }) {
+  const [messages, setMessages] = useState([]);
+  const [input,    setInput]    = useState('');
+  const [loading,  setLoading]  = useState(false);
+  const bottomRef  = useRef(null);
+  const inputRef   = useRef(null);
+
+  /* Focus input à l'ouverture */
+  useEffect(() => {
+    if (open) setTimeout(() => inputRef.current?.focus(), 320);
+  }, [open]);
+
+  /* Scroll to bottom */
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, loading]);
+
+  const send = useCallback(async (text) => {
+    const msg = (text || input).trim();
+    if (!msg || loading) return;
+    setInput('');
+
+    const userMsg   = { role: 'user', content: msg };
+    const next      = [...messages, userMsg];
+    setMessages(next);
+    setLoading(true);
+
+    try {
+      const { data } = await api.post('/api/assistant/chat', {
+        messages: next.map(m => ({ role: m.role, content: m.content })),
+      });
+      setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
+    } catch (err) {
+      const errMsg = err.response?.data?.error || 'Erreur de connexion à l\'assistant.';
+      setMessages(prev => [...prev, { role: 'assistant', content: null, error: errMsg }]);
+    } finally {
+      setLoading(false);
+    }
+  }, [input, messages, loading]);
+
+  const clear = () => { setMessages([]); setInput(''); };
+
+  const onKey = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+  };
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            key="backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.16 }}
+            className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-[2px]"
+            onClick={onClose}
+          />
+
+          {/* Drawer */}
+          <motion.aside
+            key="drawer"
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', stiffness: 340, damping: 36 }}
+            className="fixed top-0 right-0 bottom-0 z-50 flex flex-col bg-white border-l border-slate-200 shadow-2xl"
+            style={{ width: 'min(440px, 100vw)' }}
+            onClick={e => e.stopPropagation()}
+          >
+
+            {/* ── Header ─────────────────────────────────── */}
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-100 shrink-0">
+              <div
+                className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent-500 to-accent-700 flex items-center justify-center"
+                style={{ boxShadow: '0 4px 12px rgba(28,110,242,0.35)' }}
+              >
+                <Sparkles size={16} strokeWidth={1.75} className="text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-semibold text-slate-900">Assistant Fluxora</p>
+                <p className="text-[11px] text-slate-400">Conseiller financier IA</p>
+              </div>
+              {messages.length > 0 && (
+                <button
+                  onClick={clear}
+                  title="Nouvelle conversation"
+                  className="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600"
+                >
+                  <RotateCcw size={14} />
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* ── Messages ───────────────────────────────── */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+              {messages.length === 0 ? (
+
+                /* Empty state */
+                <div className="h-full flex flex-col items-center justify-center text-center px-4">
+                  <div
+                    className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent-50 to-accent-100 flex items-center justify-center mb-4"
+                    style={{ boxShadow: '0 4px 20px rgba(28,110,242,0.12)' }}
+                  >
+                    <Sparkles size={26} className="text-accent-600" strokeWidth={1.5} />
+                  </div>
+                  <p className="text-sm font-semibold text-slate-800 mb-1.5">Comment puis-je vous aider ?</p>
+                  <p className="text-xs text-slate-400 mb-6 max-w-[270px] leading-relaxed">
+                    Analysez vos finances, anticipez votre trésorerie et identifiez les risques en temps réel.
+                  </p>
+                  <div className="w-full space-y-2">
+                    {QUICK.map((q, i) => (
+                      <button
+                        key={i}
+                        onClick={() => send(q)}
+                        className="w-full flex items-center justify-between text-left text-[12.5px] font-medium text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl px-4 py-2.5 transition-colors group"
+                      >
+                        <span>{q}</span>
+                        <ChevronRight size={13} className="text-slate-300 group-hover:text-slate-500 shrink-0 ml-2 transition-colors" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+              ) : (
+
+                /* Chat messages */
+                <>
+                  {messages.map((msg, i) => (
+                    <div key={i} className={`flex gap-2.5 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                      {msg.role === 'assistant' && (
+                        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-accent-500 to-accent-700 flex items-center justify-center shrink-0 mt-0.5">
+                          <Sparkles size={12} strokeWidth={1.75} className="text-white" />
+                        </div>
+                      )}
+                      <div className={`max-w-[86%] ${
+                        msg.role === 'user'
+                          ? 'bg-accent-600 text-white rounded-2xl rounded-tr-md px-4 py-2.5'
+                          : msg.error
+                            ? 'bg-red-50 border border-red-100 rounded-2xl rounded-tl-md px-4 py-3'
+                            : 'bg-slate-50 border border-slate-100 rounded-2xl rounded-tl-md px-4 py-3'
+                      }`}>
+                        {msg.role === 'user' ? (
+                          <p className="text-[13px] leading-relaxed">{msg.content}</p>
+                        ) : msg.error ? (
+                          <div className="flex items-center gap-2 text-red-600 text-[13px]">
+                            <AlertCircle size={14} className="shrink-0" />
+                            <p>{msg.error}</p>
+                          </div>
+                        ) : (
+                          <MsgText text={msg.content} />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                  {loading && (
+                    <div className="flex gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-accent-500 to-accent-700 flex items-center justify-center shrink-0">
+                        <Sparkles size={12} strokeWidth={1.75} className="text-white" />
+                      </div>
+                      <div className="bg-slate-50 border border-slate-100 rounded-2xl rounded-tl-md px-4 py-3 flex items-center gap-2">
+                        <Loader2 size={13} className="animate-spin text-slate-400" />
+                        <span className="text-[13px] text-slate-400">Analyse en cours…</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div ref={bottomRef} />
+                </>
+              )}
+            </div>
+
+            {/* ── Input ──────────────────────────────────── */}
+            <div className="border-t border-slate-100 p-4 shrink-0">
+              <div className="flex gap-2 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 focus-within:border-accent-300 focus-within:ring-2 focus-within:ring-accent-100 transition-all">
+                <textarea
+                  ref={inputRef}
+                  rows={1}
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={onKey}
+                  placeholder="Posez votre question financière…"
+                  disabled={loading}
+                  className="flex-1 bg-transparent text-[13px] text-slate-800 placeholder:text-slate-400 resize-none outline-none leading-relaxed"
+                  style={{ maxHeight: '88px' }}
+                />
+                <button
+                  onClick={() => send()}
+                  disabled={!input.trim() || loading}
+                  className="self-end w-8 h-8 rounded-xl bg-accent-600 hover:bg-accent-700 disabled:bg-slate-200 text-white disabled:text-slate-400 flex items-center justify-center transition-colors shrink-0"
+                >
+                  <Send size={13} strokeWidth={2} />
+                </button>
+              </div>
+              <p className="text-[10px] text-slate-400 text-center mt-2">
+                Données en temps réel · Recommandations à confirmer avant toute action
+              </p>
+            </div>
+
+          </motion.aside>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
