@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, X, Send, RotateCcw, AlertCircle, Loader2, ChevronRight } from 'lucide-react';
 import api from '@/lib/api';
 import AssistantActions from './AssistantActions';
+import AssistantEntityCard from './AssistantEntityCard';
 
 /* ── Suggestions statiques fallback ─────────────────────────── */
 const FALLBACK_SUGGESTIONS = [
@@ -60,8 +61,9 @@ export default function AssistantPanel({ open, onClose }) {
   const [messages,    setMessages]    = useState([]);
   const [input,       setInput]       = useState('');
   const [loading,     setLoading]     = useState(false);
-  const [suggestions, setSuggestions] = useState([]);
-  const [loadingSugg, setLoadingSugg] = useState(false);
+  const [suggestions,      setSuggestions]      = useState([]);
+  const [loadingSugg,      setLoadingSugg]      = useState(false);
+  const [executingAction,  setExecutingAction]  = useState(null);
   const bottomRef = useRef(null);
   const inputRef  = useRef(null);
 
@@ -85,11 +87,25 @@ export default function AssistantPanel({ open, onClose }) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  /* Navigation depuis une action — ferme le panel puis redirige */
-  const handleAction = useCallback((action) => {
+  /* Exécution / navigation depuis une action ─────────────────── */
+  const handleAction = useCallback(async (action) => {
     if (action.type === 'redirect' && action.path) {
       onClose();
       router.push(action.path);
+    } else if (action.type === 'action') {
+      setExecutingAction(action.id);
+      try {
+        const { data } = await api.post('/api/assistant/action', {
+          type:    action.actionType,
+          payload: action.payload || {},
+        });
+        if (data.redirectTo) { onClose(); router.push(data.redirectTo); }
+      } catch (err) {
+        const errMsg = err.response?.data?.error || "Impossible d'exécuter cette action.";
+        setMessages(prev => [...prev, { role: 'assistant', content: null, error: errMsg }]);
+      } finally {
+        setExecutingAction(null);
+      }
     }
   }, [onClose, router]);
 
@@ -108,9 +124,10 @@ export default function AssistantPanel({ open, onClose }) {
         messages: next.map(m => ({ role: m.role, content: m.content })),
       });
       setMessages(prev => [...prev, {
-        role:    'assistant',
-        content: data.reply,
-        actions: data.actions || [],
+        role:       'assistant',
+        content:    data.reply,
+        actions:    data.actions    || [],
+        entityCard: data.entityCard || null,
       }]);
     } catch (err) {
       const code   = err.response?.data?.code;
@@ -266,9 +283,18 @@ export default function AssistantPanel({ open, onClose }) {
                           )}
                         </div>
 
+                        {/* Carte entité — client trouvé / introuvable */}
+                        {msg.role === 'assistant' && !msg.error && msg.entityCard && (
+                          <AssistantEntityCard entityCard={msg.entityCard} />
+                        )}
+
                         {/* Actions suggérées — s'affichent sous la bulle */}
                         {msg.role === 'assistant' && !msg.error && msg.actions?.length > 0 && (
-                          <AssistantActions actions={msg.actions} onAction={handleAction} />
+                          <AssistantActions
+                            actions={msg.actions}
+                            onAction={handleAction}
+                            executingActionId={executingAction}
+                          />
                         )}
                       </div>
                     </div>
