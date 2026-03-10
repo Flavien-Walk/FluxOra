@@ -205,32 +205,9 @@ const updateExpense = async (req, res) => {
   const org = await getUserOrg(req.userId);
   if (!org) return res.status(404).json({ error: 'Organisation introuvable.' });
 
-  const updates = { ...req.body };
-  const { amountHT, amount, vatRate, category } = updates;
-
-  // Recalculer la TVA si un montant ou un taux change
-  if (amountHT !== undefined || vatRate !== undefined || category !== undefined) {
-    const originalExpense = await Expense.findById(req.params.id);
-    const newAmountHT = Number(amountHT ?? originalExpense.amountHT);
-    const newVatRate = Number(vatRate ?? originalExpense.vatRate);
-    const newCategory = category ?? originalExpense.category;
-
-    if (amountHT != null && amountHT > 0) {
-      const calc = calcVat(newAmountHT, newVatRate, newCategory);
-      updates.vatAmount = calc.vatAmount;
-      updates.vatRecoverable = calc.vatRecoverable;
-      updates.amount = calc.amountTTC;
-    } else if (amount != null && newVatRate > 0) {
-      updates.amountHT = Math.round(Number(amount) / (1 + newVatRate / 100) * 100) / 100;
-      updates.vatAmount = Math.round((Number(amount) - updates.amountHT) * 100) / 100;
-      const deductibility = VAT_DEDUCTIBILITY[newCategory] ?? 1.0;
-      updates.vatRecoverable = Math.round(updates.vatAmount * deductibility * 100) / 100;
-    }
-  }
-
   const expense = await Expense.findOneAndUpdate(
     { _id: req.params.id, organizationId: org._id },
-    updates,
+    req.body,
     { new: true, runValidators: true }
   );
   if (!expense) return res.status(404).json({ error: 'Dépense introuvable.' });
