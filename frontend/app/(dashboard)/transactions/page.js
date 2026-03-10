@@ -66,56 +66,75 @@ export default function TransactionsPage() {
 
         {/* KPI */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-success-50 border border-success-100 rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-7 h-7 rounded-lg bg-success-100 flex items-center justify-center">
-                <TrendingUp size={14} className="text-success-600" />
+          {/* Encaissements */}
+          <div className="bg-white rounded-xl border border-slate-100 shadow-card p-5 relative group transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5">
+            <div className="flex items-start justify-between mb-4">
+              <div
+                className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-white flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110"
+                style={{ boxShadow: '0 4px 14px rgba(16,185,129,0.5)' }}
+              >
+                <ArrowDownLeft size={18} strokeWidth={2} />
               </div>
-              <span className="text-xs font-semibold text-success-700 uppercase tracking-wide">Encaissements</span>
             </div>
-            <p className="text-2xl font-bold text-success-700 tabular-nums">{fmt(totalRevenue)}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Encaissements</p>
+            <p className="text-2xl font-bold text-slate-900 tabular-nums">{fmt(totalRevenue)}</p>
+            <p className="text-xs text-success-600 font-medium mt-1.5">Recettes reçues</p>
           </div>
-          <div className="bg-danger-50 border border-danger-100 rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-7 h-7 rounded-lg bg-danger-100 flex items-center justify-center">
-                <TrendingDown size={14} className="text-danger-600" />
+
+          {/* Dépenses */}
+          <div className="bg-white rounded-xl border border-slate-100 shadow-card p-5 relative group transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5">
+            <div className="flex items-start justify-between mb-4">
+              <div
+                className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-rose-700 text-white flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110"
+                style={{ boxShadow: '0 4px 14px rgba(244,63,94,0.5)' }}
+              >
+                <TrendingDown size={18} strokeWidth={2} />
               </div>
-              <span className="text-xs font-semibold text-danger-700 uppercase tracking-wide">Dépenses</span>
             </div>
-            <p className="text-2xl font-bold text-danger-700 tabular-nums">{fmt(totalExpenses)}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Dépenses</p>
+            <p className="text-2xl font-bold text-slate-900 tabular-nums">{fmt(totalExpenses)}</p>
+            <p className="text-xs text-danger-600 font-medium mt-1.5">Charges enregistrées</p>
           </div>
-          <div className="bg-accent-50 border border-accent-100 rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-7 h-7 rounded-lg bg-accent-100 flex items-center justify-center">
-                <ArrowUpRight size={14} className="text-accent-600" />
+
+          {/* Virements */}
+          <div className="bg-white rounded-xl border border-slate-100 shadow-card p-5 relative group transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5">
+            <div className="flex items-start justify-between mb-4">
+              <div
+                className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent-500 to-accent-700 text-white flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110"
+                style={{ boxShadow: '0 4px 14px rgba(28,110,242,0.5)' }}
+              >
+                <ArrowUpRight size={18} strokeWidth={2} />
               </div>
-              <span className="text-xs font-semibold text-accent-700 uppercase tracking-wide">Virements</span>
             </div>
-            <p className="text-2xl font-bold text-accent-700 tabular-nums">{fmt(totalTransfer)}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Virements</p>
+            <p className="text-2xl font-bold text-slate-900 tabular-nums">{fmt(totalTransfer)}</p>
+            <p className="text-xs text-accent-600 font-medium mt-1.5">Sorties bancaires</p>
           </div>
-          <div className={cn(
-            'border rounded-xl p-4',
-            cashflow >= 0 ? 'bg-slate-50 border-slate-200' : 'bg-warning-50 border-warning-100'
-          )}>
-            <div className="flex items-center gap-2 mb-2">
-              <div className={cn(
-                'w-7 h-7 rounded-lg flex items-center justify-center',
-                cashflow >= 0 ? 'bg-slate-100' : 'bg-warning-100'
-              )}>
-                <Minus size={14} className={cashflow >= 0 ? 'text-slate-600' : 'text-warning-600'} />
+
+          {/* Flux net */}
+          <div className="bg-white rounded-xl border border-slate-100 shadow-card p-5 relative group transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5">
+            <div className="flex items-start justify-between mb-4">
+              <div
+                className={`w-10 h-10 rounded-xl text-white flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110 bg-gradient-to-br ${
+                  cashflow >= 0 ? 'from-emerald-400 to-teal-600' : 'from-amber-400 to-orange-600'
+                }`}
+                style={{
+                  boxShadow: cashflow >= 0
+                    ? '0 4px 14px rgba(16,185,129,0.5)'
+                    : '0 4px 14px rgba(245,158,11,0.5)',
+                }}
+              >
+                {cashflow >= 0
+                  ? <TrendingUp size={18} strokeWidth={2} />
+                  : <Minus size={18} strokeWidth={2} />}
               </div>
-              <span className={cn(
-                'text-xs font-semibold uppercase tracking-wide',
-                cashflow >= 0 ? 'text-slate-600' : 'text-warning-700'
-              )}>
-                Flux net
-              </span>
             </div>
-            <p className={cn(
-              'text-2xl font-bold tabular-nums',
-              cashflow >= 0 ? 'text-slate-800' : 'text-warning-700'
-            )}>
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Flux net</p>
+            <p className={`text-2xl font-bold tabular-nums ${cashflow >= 0 ? 'text-success-700' : 'text-warning-700'}`}>
               {cashflow >= 0 ? '+' : ''}{fmt(cashflow)}
+            </p>
+            <p className={`text-xs font-medium mt-1.5 ${cashflow >= 0 ? 'text-success-600' : 'text-warning-600'}`}>
+              {cashflow >= 0 ? 'Position positive ✓' : 'Attention au solde'}
             </p>
           </div>
         </div>

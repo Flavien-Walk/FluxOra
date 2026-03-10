@@ -7,8 +7,8 @@ import Header from '@/components/layout/Header';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
-import EmptyState from '@/components/ui/EmptyState';
-import { Plus, CreditCard, Lock, Unlock, Trash2, ChevronLeft, ChevronRight, Zap } from 'lucide-react';
+import InteractiveCard3D from '@/components/ui/InteractiveCard3D';
+import { Plus, CreditCard, Lock, Unlock, Trash2, Zap, BarChart3 } from 'lucide-react';
 
 const fmt = (n) =>
   new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n ?? 0);
@@ -31,8 +31,6 @@ const COLORS = [
   { value: 'sky',      bg: 'from-sky-500 to-sky-700' },
 ];
 
-const COLOR_MAP = Object.fromEntries(COLORS.map((c) => [c.value, c.bg]));
-
 const EMPTY_FORM = {
   name:         '',
   category:     'software',
@@ -41,54 +39,6 @@ const EMPTY_FORM = {
   color:        'indigo',
 };
 
-function VirtualCardUI({ card, isSelected, onClick }) {
-  const gradient = COLOR_MAP[card.color] || COLOR_MAP.indigo;
-  const usePct = card.monthlyLimit > 0
-    ? Math.min(100, Math.round((card.currentMonthSpend / card.monthlyLimit) * 100))
-    : 0;
-
-  return (
-    <button
-      onClick={onClick}
-      className={`relative w-72 h-44 rounded-2xl bg-gradient-to-br ${gradient} text-white p-6 text-left shadow-lg transition-transform ${
-        isSelected ? 'scale-105 ring-4 ring-white/40' : 'hover:scale-102 opacity-90 hover:opacity-100'
-      } ${card.status === 'blocked' ? 'opacity-60' : ''}`}
-    >
-      {/* Logo + statut */}
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex items-center gap-1.5">
-          <Zap size={16} className="text-white/80" />
-          <span className="text-sm font-bold tracking-wide">Fluxora</span>
-        </div>
-        {card.status === 'blocked' && (
-          <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">Bloquée</span>
-        )}
-      </div>
-      {/* Numéro masqué */}
-      <p className="text-lg font-mono tracking-widest mb-4">•••• •••• •••• {card.last4}</p>
-      {/* Infos bas */}
-      <div className="flex justify-between items-end">
-        <div>
-          <p className="text-xs text-white/60 uppercase">Carte</p>
-          <p className="text-sm font-semibold truncate max-w-36">{card.name}</p>
-        </div>
-        <div className="text-right">
-          <p className="text-xs text-white/60">Expire</p>
-          <p className="text-sm font-mono">
-            {String(card.expiryMonth).padStart(2, '0')}/{card.expiryYear}
-          </p>
-        </div>
-      </div>
-      {/* Barre budget */}
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20 rounded-b-2xl overflow-hidden">
-        <div
-          className={`h-full transition-all ${usePct > 80 ? 'bg-red-300' : 'bg-white/60'}`}
-          style={{ width: `${usePct}%` }}
-        />
-      </div>
-    </button>
-  );
-}
 
 export default function CardsPage() {
   const { cards, isLoading, mutate } = useCards();
@@ -161,11 +111,11 @@ export default function CardsPage() {
 
         {/* KPI */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-card group hover:shadow-card-hover transition-shadow duration-200 relative">
+          <div className="bg-white border border-slate-100 rounded-xl p-5 shadow-card group transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5 relative">
             <div className="flex items-start justify-between mb-4">
               <div
-                className="w-10 h-10 rounded-xl bg-slate-900 text-accent-400 flex items-center justify-center transition-transform duration-300 group-hover:scale-110"
-                style={{ boxShadow: '0 0 0 1px rgba(28,110,242,0.12), 0 4px 14px rgba(28,110,242,0.22)' }}
+                className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent-500 to-accent-700 text-white flex items-center justify-center transition-transform duration-300 group-hover:scale-110"
+                style={{ boxShadow: '0 4px 14px rgba(28,110,242,0.5)' }}
               >
                 <CreditCard size={18} strokeWidth={1.75} />
               </div>
@@ -175,25 +125,25 @@ export default function CardsPage() {
               {cards.filter((c) => c.status === 'active').length}
             </p>
           </div>
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-card group hover:shadow-card-hover transition-shadow duration-200 relative">
+          <div className="bg-white border border-slate-100 rounded-xl p-5 shadow-card group transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5 relative">
             <div className="flex items-start justify-between mb-4">
               <div
-                className="w-10 h-10 rounded-xl bg-slate-900 text-emerald-400 flex items-center justify-center transition-transform duration-300 group-hover:scale-110"
-                style={{ boxShadow: '0 0 0 1px rgba(16,185,129,0.12), 0 4px 14px rgba(16,185,129,0.22)' }}
+                className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-white flex items-center justify-center transition-transform duration-300 group-hover:scale-110"
+                style={{ boxShadow: '0 4px 14px rgba(16,185,129,0.5)' }}
               >
-                <Zap size={18} strokeWidth={1.75} />
+                <BarChart3 size={18} strokeWidth={1.75} />
               </div>
             </div>
             <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Budget total / mois</p>
             <p className="text-2xl font-bold text-slate-900 tabular-nums">{fmt(totalBudget)}</p>
           </div>
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-card group hover:shadow-card-hover transition-shadow duration-200 relative">
+          <div className="bg-white border border-slate-100 rounded-xl p-5 shadow-card group transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5 relative">
             <div className="flex items-start justify-between mb-4">
               <div
-                className="w-10 h-10 rounded-xl bg-slate-900 text-rose-400 flex items-center justify-center transition-transform duration-300 group-hover:scale-110"
-                style={{ boxShadow: '0 0 0 1px rgba(244,63,94,0.12), 0 4px 14px rgba(244,63,94,0.22)' }}
+                className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-rose-700 text-white flex items-center justify-center transition-transform duration-300 group-hover:scale-110"
+                style={{ boxShadow: '0 4px 14px rgba(244,63,94,0.5)' }}
               >
-                <Lock size={18} strokeWidth={1.75} />
+                <Zap size={18} strokeWidth={1.75} fill="currentColor" />
               </div>
             </div>
             <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Dépensé ce mois</p>
@@ -230,11 +180,9 @@ export default function CardsPage() {
               </div>
 
               {/* Cards scroll */}
-              <div className="flex gap-4 overflow-x-auto pb-2 snap-x">
+              <div className="flex gap-4 overflow-x-auto pb-4 snap-x" style={{ perspective: '900px' }}>
                 {cards.map((card, i) => (
-                  <div key={card._id} className="snap-start flex-shrink-0">
-                    <VirtualCardUI card={card} isSelected={i === selected} onClick={() => setSelected(i)} />
-                  </div>
+                  <InteractiveCard3D key={card._id} card={card} isSelected={i === selected} onClick={() => setSelected(i)} />
                 ))}
               </div>
 
