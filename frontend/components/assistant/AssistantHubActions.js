@@ -1,49 +1,56 @@
 'use client';
 
-import { FileText, Receipt, BookOpen, UserPlus, Send, BarChart2 } from 'lucide-react';
+import { FileText, Receipt, BookOpen, UserPlus, Send, BarChart2, ShieldCheck } from 'lucide-react';
 
 const HUB = [
   {
-    id:    'hub_quote',
+    id: 'hub_quote',
     label: 'Créer un devis',
-    icon:  FileText,
+    icon: FileText,
     color: 'from-accent-50 to-accent-100 border-accent-100 text-accent-700 hover:border-accent-300',
-    flow:  'create_quote',
+    flow: 'create_quote',
   },
   {
-    id:    'hub_invoice',
+    id: 'hub_invoice',
     label: 'Créer une facture',
-    icon:  Receipt,
+    icon: Receipt,
     color: 'from-violet-50 to-violet-100 border-violet-100 text-violet-700 hover:border-violet-300',
-    flow:  'create_invoice',
+    flow: 'create_invoice',
   },
   {
-    id:    'hub_accounting',
-    label: 'Écriture comptable',
-    icon:  BookOpen,
+    id: 'hub_review',
+    label: 'Contrôle prudent',
+    icon: ShieldCheck,
     color: 'from-emerald-50 to-emerald-100 border-emerald-100 text-emerald-700 hover:border-emerald-300',
-    path:  '/accounting',
+    path: '/reviews',
   },
   {
-    id:    'hub_client',
+    id: 'hub_accounting',
+    label: 'Écriture comptable',
+    icon: BookOpen,
+    color: 'from-teal-50 to-teal-100 border-teal-100 text-teal-700 hover:border-teal-300',
+    path: '/accounting',
+  },
+  {
+    id: 'hub_client',
     label: 'Créer un client',
-    icon:  UserPlus,
+    icon: UserPlus,
     color: 'from-amber-50 to-amber-100 border-amber-100 text-amber-700 hover:border-amber-300',
-    path:  '/clients',
+    path: '/clients',
   },
   {
-    id:    'hub_transfer',
+    id: 'hub_transfer',
     label: 'Virement',
-    icon:  Send,
+    icon: Send,
     color: 'from-sky-50 to-sky-100 border-sky-100 text-sky-700 hover:border-sky-300',
-    path:  '/transfers',
+    path: '/transfers',
   },
   {
-    id:    'hub_expenses',
+    id: 'hub_expenses',
     label: 'Dépenses',
-    icon:  BarChart2,
+    icon: BarChart2,
     color: 'from-slate-50 to-slate-100 border-slate-200 text-slate-600 hover:border-slate-300',
-    path:  '/expenses',
+    path: '/expenses',
   },
 ];
 
