@@ -86,4 +86,43 @@ router.post('/action', requireAuth, async (req, res) => {
   }
 });
 
+/* ── POST /api/assistant/agent ── Agent IA avec tool_use ─────── */
+router.post('/agent', requireAuth, async (req, res) => {
+  const { messages, context } = req.body;
+
+  if (!Array.isArray(messages) || messages.length === 0) {
+    return res.status(400).json({ error: 'messages[] requis.' });
+  }
+  if (!isAllowed(req.userId)) {
+    return res.status(429).json({ error: 'Trop de requêtes. Réessayez dans une minute.', code: 'RATE_LIMIT' });
+  }
+
+  const timeout = setTimeout(() => {
+    if (!res.headersSent) res.status(504).json({ error: 'Délai dépassé. Réessayez.', code: 'AGENT_TIMEOUT' });
+  }, 90_000);
+
+  try {
+    const { runAgent } = require('../agents/agentOrchestrator');
+    const result = await runAgent(req.userId, messages, context || {});
+    clearTimeout(timeout);
+    if (!res.headersSent) res.json(result);
+  } catch (err) {
+    clearTimeout(timeout);
+    if (!res.headersSent) {
+      res.status(err.status || 500).json({ error: err.message || 'Erreur agent.', code: err.code || 'AGENT_ERROR' });
+    }
+  }
+});
+
+/* ── POST /api/assistant/reset-context ── Efface la mémoire ──── */
+router.post('/reset-context', requireAuth, async (req, res) => {
+  try {
+    const { clearMemory } = require('../agents/agentMemory');
+    clearMemory(req.userId);
+    res.json({ ok: true });
+  } catch {
+    res.json({ ok: false });
+  }
+});
+
 module.exports = router;
