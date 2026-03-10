@@ -5,17 +5,19 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, X, Send, RotateCcw, AlertCircle, Loader2, ChevronRight } from 'lucide-react';
 import api from '@/lib/api';
-import AssistantActions from './AssistantActions';
-import AssistantEntityCard from './AssistantEntityCard';
+import AssistantActions     from './AssistantActions';
+import AssistantEntityCard  from './AssistantEntityCard';
+import AssistantHubActions  from './AssistantHubActions';
+import AssistantClientPicker from './AssistantClientPicker';
 
-/* ── Suggestions statiques fallback ─────────────────────────── */
+/* ── Suggestions analytiques fallback ───────────────────────── */
 const FALLBACK_SUGGESTIONS = [
   { text: 'Anticipe ma trésorerie sur 30 jours' },
   { text: 'Quel est mon score de santé financière ?' },
   { text: 'Analyse mes dépenses du mois' },
   { text: 'Quels fournisseurs me coûtent le plus cher ?' },
   { text: 'Propose une meilleure répartition budgétaire' },
-  { text: 'Créer une nouvelle facture' },
+  { text: 'Quel est mon bilan du mois ?' },
 ];
 
 const BADGE_STYLES = {
@@ -49,7 +51,17 @@ function MsgText({ text }) {
             </ul>
           );
         }
-        return <p key={i} className="text-[13px] text-slate-700 leading-relaxed">{block}</p>;
+        // Inline bold (**text**)
+        const parts = block.split(/(\*\*[^*]+\*\*)/g);
+        return (
+          <p key={i} className="text-[13px] text-slate-700 leading-relaxed">
+            {parts.map((p, j) =>
+              p.startsWith('**') && p.endsWith('**')
+                ? <strong key={j}>{p.slice(2, -2)}</strong>
+                : p
+            )}
+          </p>
+        );
       })}
     </div>
   );
@@ -58,12 +70,12 @@ function MsgText({ text }) {
 /* ── Composant principal ────────────────────────────────────── */
 export default function AssistantPanel({ open, onClose }) {
   const router = useRouter();
-  const [messages,    setMessages]    = useState([]);
-  const [input,       setInput]       = useState('');
-  const [loading,     setLoading]     = useState(false);
-  const [suggestions,      setSuggestions]      = useState([]);
-  const [loadingSugg,      setLoadingSugg]      = useState(false);
-  const [executingAction,  setExecutingAction]  = useState(null);
+  const [messages,       setMessages]       = useState([]);
+  const [input,          setInput]          = useState('');
+  const [loading,        setLoading]        = useState(false);
+  const [suggestions,    setSuggestions]    = useState([]);
+  const [loadingSugg,    setLoadingSugg]    = useState(false);
+  const [executingAction, setExecutingAction] = useState(null);
   const bottomRef = useRef(null);
   const inputRef  = useRef(null);
 
@@ -72,7 +84,7 @@ export default function AssistantPanel({ open, onClose }) {
     if (open) setTimeout(() => inputRef.current?.focus(), 320);
   }, [open]);
 
-  /* Charger suggestions dynamiques à chaque première ouverture */
+  /* Suggestions dynamiques (une seule fois par session) */
   useEffect(() => {
     if (!open || suggestions.length > 0) return;
     setLoadingSugg(true);
@@ -87,7 +99,7 @@ export default function AssistantPanel({ open, onClose }) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  /* Exécution / navigation depuis une action ─────────────────── */
+  /* ── Exécution / navigation depuis une action ─────────────── */
   const handleAction = useCallback(async (action) => {
     if (action.type === 'redirect' && action.path) {
       onClose();
@@ -109,6 +121,29 @@ export default function AssistantPanel({ open, onClose }) {
     }
   }, [onClose, router]);
 
+  /* ── Client sélectionné depuis le picker guidé ─────────────── */
+  const handleSelectClient = useCallback(async (clientId, clientName, flow) => {
+    const actionType = flow === 'create_quote' ? 'create_draft_quote' : 'create_draft_invoice';
+    await handleAction({ id: `select_${clientId}`, type: 'action', actionType, payload: { clientId, clientName } });
+  }, [handleAction]);
+
+  /* ── Hub action (Créer devis, Créer facture, redirect…) ──── */
+  const handleHubAction = useCallback((item) => {
+    if (item.path) {
+      onClose();
+      router.push(item.path);
+    } else if (item.flow) {
+      const label = item.flow === 'create_quote' ? 'devis' : 'facture';
+      setMessages([{
+        role:    'assistant',
+        content: `Créons votre ${label}. Choisissez un client existant ou créez-en un nouveau :`,
+        guided:  { type: 'select_client', flow: item.flow },
+        actions: [],
+      }]);
+    }
+  }, [onClose, router]);
+
+  /* ── Chat ────────────────────────────────────────────────── */
   const send = useCallback(async (text) => {
     const msg = (text || input).trim();
     if (!msg || loading) return;
@@ -134,7 +169,7 @@ export default function AssistantPanel({ open, onClose }) {
       const errMsg = code === 'ASSISTANT_NO_CREDITS'
         ? "Crédits IA épuisés — l'assistant est temporairement indisponible."
         : code === 'ASSISTANT_INVALID_KEY'
-          ? 'Assistant IA non configuré. Contactez l\'administrateur.'
+          ? "Assistant IA non configuré. Contactez l'administrateur."
           : code === 'ASSISTANT_UNAVAILABLE'
             ? 'Assistant temporairement indisponible. Réessayez dans quelques instants.'
             : err.response?.data?.error || "Erreur de connexion à l'assistant.";
@@ -145,10 +180,9 @@ export default function AssistantPanel({ open, onClose }) {
   }, [input, messages, loading]);
 
   const clear = () => { setMessages([]); setInput(''); };
+  const onKey = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } };
 
-  const onKey = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
-  };
+  const displaySuggestions = suggestions.length ? suggestions : FALLBACK_SUGGESTIONS;
 
   return (
     <AnimatePresence>
@@ -206,31 +240,47 @@ export default function AssistantPanel({ open, onClose }) {
               </button>
             </div>
 
-            {/* ── Messages ───────────────────────────────── */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+            {/* ── Messages ou Hub ─────────────────────────── */}
+            <div className="flex-1 overflow-y-auto">
+
               {messages.length === 0 ? (
 
-                /* État vide — suggestions dynamiques */
-                <div className="h-full flex flex-col items-center justify-center text-center px-4">
-                  <div
-                    className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent-50 to-accent-100 flex items-center justify-center mb-4"
-                    style={{ boxShadow: '0 4px 20px rgba(28,110,242,0.12)' }}
-                  >
-                    <Sparkles size={26} className="text-accent-600" strokeWidth={1.5} />
-                  </div>
-                  <p className="text-sm font-semibold text-slate-800 mb-1.5">Comment puis-je vous aider ?</p>
-                  <p className="text-xs text-slate-400 mb-6 max-w-[270px] leading-relaxed">
-                    Analysez vos finances, anticipez votre trésorerie et lancez des actions directement depuis ici.
-                  </p>
+                /* ── Hub d'accueil ───────────────────────── */
+                <div className="px-5 py-6 space-y-5">
 
+                  {/* Mini header */}
+                  <div className="flex flex-col items-center text-center">
+                    <div
+                      className="w-12 h-12 rounded-2xl bg-gradient-to-br from-accent-50 to-accent-100 flex items-center justify-center mb-3"
+                      style={{ boxShadow: '0 4px 16px rgba(28,110,242,0.10)' }}
+                    >
+                      <Sparkles size={22} className="text-accent-600" strokeWidth={1.5} />
+                    </div>
+                    <p className="text-[14px] font-semibold text-slate-900 mb-1">Comment puis-je vous aider ?</p>
+                    <p className="text-[11px] text-slate-400 max-w-[260px] leading-relaxed">
+                      Actions rapides · Analyses financières · Copilote métier
+                    </p>
+                  </div>
+
+                  {/* Hub actions */}
+                  <AssistantHubActions onAction={handleHubAction} />
+
+                  {/* Séparateur */}
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 h-px bg-slate-100" />
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-300">Suggestions</span>
+                    <div className="flex-1 h-px bg-slate-100" />
+                  </div>
+
+                  {/* Suggestions dynamiques */}
                   {loadingSugg ? (
-                    <div className="flex items-center gap-2 text-slate-400 text-xs">
-                      <Loader2 size={13} className="animate-spin" />
-                      <span>Chargement des suggestions…</span>
+                    <div className="flex items-center gap-2 text-slate-400 text-xs py-2">
+                      <Loader2 size={12} className="animate-spin" />
+                      <span>Chargement…</span>
                     </div>
                   ) : (
-                    <div className="w-full space-y-2">
-                      {(suggestions.length ? suggestions : FALLBACK_SUGGESTIONS).map((s, i) => (
+                    <div className="space-y-1.5">
+                      {displaySuggestions.map((s, i) => (
                         <button
                           key={i}
                           onClick={() => send(s.text)}
@@ -253,8 +303,8 @@ export default function AssistantPanel({ open, onClose }) {
 
               ) : (
 
-                /* Messages du chat */
-                <>
+                /* ── Messages du chat ────────────────────── */
+                <div className="p-5 space-y-4">
                   {messages.map((msg, i) => (
                     <div key={i} className={`flex gap-2.5 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                       {msg.role === 'assistant' && (
@@ -264,31 +314,45 @@ export default function AssistantPanel({ open, onClose }) {
                       )}
 
                       <div className="max-w-[86%] flex flex-col">
-                        <div className={`${
-                          msg.role === 'user'
-                            ? 'bg-accent-600 text-white rounded-2xl rounded-tr-md px-4 py-2.5'
-                            : msg.error
-                              ? 'bg-red-50 border border-red-100 rounded-2xl rounded-tl-md px-4 py-3'
-                              : 'bg-slate-50 border border-slate-100 rounded-2xl rounded-tl-md px-4 py-3'
-                        }`}>
-                          {msg.role === 'user' ? (
-                            <p className="text-[13px] leading-relaxed">{msg.content}</p>
-                          ) : msg.error ? (
-                            <div className="flex items-center gap-2 text-red-600 text-[13px]">
-                              <AlertCircle size={14} className="shrink-0" />
-                              <p>{msg.error}</p>
-                            </div>
-                          ) : (
-                            <MsgText text={msg.content} />
-                          )}
-                        </div>
+                        {/* Bulle de message */}
+                        {(msg.content || msg.error) && (
+                          <div className={`${
+                            msg.role === 'user'
+                              ? 'bg-accent-600 text-white rounded-2xl rounded-tr-md px-4 py-2.5'
+                              : msg.error
+                                ? 'bg-red-50 border border-red-100 rounded-2xl rounded-tl-md px-4 py-3'
+                                : 'bg-slate-50 border border-slate-100 rounded-2xl rounded-tl-md px-4 py-3'
+                          }`}>
+                            {msg.role === 'user' ? (
+                              <p className="text-[13px] leading-relaxed">{msg.content}</p>
+                            ) : msg.error ? (
+                              <div className="flex items-center gap-2 text-red-600 text-[13px]">
+                                <AlertCircle size={14} className="shrink-0" />
+                                <p>{msg.error}</p>
+                              </div>
+                            ) : (
+                              <MsgText text={msg.content} />
+                            )}
+                          </div>
+                        )}
+
+                        {/* Guided flow — sélecteur client */}
+                        {msg.role === 'assistant' && !msg.error && msg.guided?.type === 'select_client' && (
+                          <AssistantClientPicker
+                            flow={msg.guided.flow}
+                            onSelectClient={(clientId, clientName) =>
+                              handleSelectClient(clientId, clientName, msg.guided.flow)
+                            }
+                            onNewClient={() => { onClose(); router.push('/clients'); }}
+                          />
+                        )}
 
                         {/* Carte entité — client trouvé / introuvable */}
                         {msg.role === 'assistant' && !msg.error && msg.entityCard && (
                           <AssistantEntityCard entityCard={msg.entityCard} />
                         )}
 
-                        {/* Actions suggérées — s'affichent sous la bulle */}
+                        {/* Actions suggérées */}
                         {msg.role === 'assistant' && !msg.error && msg.actions?.length > 0 && (
                           <AssistantActions
                             actions={msg.actions}
@@ -313,7 +377,7 @@ export default function AssistantPanel({ open, onClose }) {
                   )}
 
                   <div ref={bottomRef} />
-                </>
+                </div>
               )}
             </div>
 
