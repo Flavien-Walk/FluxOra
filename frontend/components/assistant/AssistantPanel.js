@@ -1,25 +1,34 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, X, Send, RotateCcw, AlertCircle, Loader2, ChevronRight } from 'lucide-react';
 import api from '@/lib/api';
+import AssistantActions from './AssistantActions';
 
-/* ── Prompts rapides ─────────────────────────────────────────── */
-const QUICK = [
-  'Analyse mes dépenses du mois',
-  'Quel est mon score de santé financière ?',
-  'Anticipe ma trésorerie sur 30 jours',
-  'Quels fournisseurs me coûtent le plus cher ?',
-  'Propose une meilleure répartition budgétaire',
+/* ── Suggestions statiques fallback ─────────────────────────── */
+const FALLBACK_SUGGESTIONS = [
+  { text: 'Anticipe ma trésorerie sur 30 jours' },
+  { text: 'Quel est mon score de santé financière ?' },
+  { text: 'Analyse mes dépenses du mois' },
+  { text: 'Quels fournisseurs me coûtent le plus cher ?' },
+  { text: 'Propose une meilleure répartition budgétaire' },
+  { text: 'Créer une nouvelle facture' },
 ];
 
-/* ── Rendu texte assistant (formatage minimal) ───────────────── */
+const BADGE_STYLES = {
+  warning: 'bg-amber-100 text-amber-700',
+  danger:  'bg-red-100 text-red-600',
+  info:    'bg-accent-100 text-accent-700',
+};
+
+/* ── Rendu texte assistant ───────────────────────────────────── */
 function MsgText({ text }) {
   return (
     <div className="space-y-2">
       {text.split('\n\n').filter(Boolean).map((block, i) => {
-        if (block.startsWith('## ') || block.startsWith('**') && block.endsWith('**')) {
+        if (block.startsWith('## ') || (block.startsWith('**') && block.endsWith('**'))) {
           return (
             <p key={i} className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mt-3 first:mt-0">
               {block.replace(/^##\s*/, '').replace(/^\*\*|\*\*$/g, '')}
@@ -47,15 +56,28 @@ function MsgText({ text }) {
 
 /* ── Composant principal ────────────────────────────────────── */
 export default function AssistantPanel({ open, onClose }) {
-  const [messages, setMessages] = useState([]);
-  const [input,    setInput]    = useState('');
-  const [loading,  setLoading]  = useState(false);
-  const bottomRef  = useRef(null);
-  const inputRef   = useRef(null);
+  const router = useRouter();
+  const [messages,    setMessages]    = useState([]);
+  const [input,       setInput]       = useState('');
+  const [loading,     setLoading]     = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [loadingSugg, setLoadingSugg] = useState(false);
+  const bottomRef = useRef(null);
+  const inputRef  = useRef(null);
 
-  /* Focus input à l'ouverture */
+  /* Focus à l'ouverture */
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 320);
+  }, [open]);
+
+  /* Charger suggestions dynamiques à chaque première ouverture */
+  useEffect(() => {
+    if (!open || suggestions.length > 0) return;
+    setLoadingSugg(true);
+    api.get('/api/assistant/suggestions')
+      .then(({ data }) => setSuggestions(data.suggestions?.length ? data.suggestions : FALLBACK_SUGGESTIONS))
+      .catch(() => setSuggestions(FALLBACK_SUGGESTIONS))
+      .finally(() => setLoadingSugg(false));
   }, [open]);
 
   /* Scroll to bottom */
@@ -63,13 +85,21 @@ export default function AssistantPanel({ open, onClose }) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
+  /* Navigation depuis une action — ferme le panel puis redirige */
+  const handleAction = useCallback((action) => {
+    if (action.type === 'redirect' && action.path) {
+      onClose();
+      router.push(action.path);
+    }
+  }, [onClose, router]);
+
   const send = useCallback(async (text) => {
     const msg = (text || input).trim();
     if (!msg || loading) return;
     setInput('');
 
-    const userMsg   = { role: 'user', content: msg };
-    const next      = [...messages, userMsg];
+    const userMsg = { role: 'user', content: msg };
+    const next    = [...messages, userMsg];
     setMessages(next);
     setLoading(true);
 
@@ -77,16 +107,20 @@ export default function AssistantPanel({ open, onClose }) {
       const { data } = await api.post('/api/assistant/chat', {
         messages: next.map(m => ({ role: m.role, content: m.content })),
       });
-      setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
+      setMessages(prev => [...prev, {
+        role:    'assistant',
+        content: data.reply,
+        actions: data.actions || [],
+      }]);
     } catch (err) {
-      const code = err.response?.data?.code;
+      const code   = err.response?.data?.code;
       const errMsg = code === 'ASSISTANT_NO_CREDITS'
-        ? 'Crédits IA épuisés — l\'assistant est temporairement indisponible.'
+        ? "Crédits IA épuisés — l'assistant est temporairement indisponible."
         : code === 'ASSISTANT_INVALID_KEY'
           ? 'Assistant IA non configuré. Contactez l\'administrateur.'
           : code === 'ASSISTANT_UNAVAILABLE'
             ? 'Assistant temporairement indisponible. Réessayez dans quelques instants.'
-            : err.response?.data?.error || 'Erreur de connexion à l\'assistant.';
+            : err.response?.data?.error || "Erreur de connexion à l'assistant.";
       setMessages(prev => [...prev, { role: 'assistant', content: null, error: errMsg }]);
     } finally {
       setLoading(false);
@@ -136,7 +170,7 @@ export default function AssistantPanel({ open, onClose }) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[14px] font-semibold text-slate-900">Assistant Fluxora</p>
-                <p className="text-[11px] text-slate-400">Conseiller financier IA</p>
+                <p className="text-[11px] text-slate-400">Copilote financier IA</p>
               </div>
               {messages.length > 0 && (
                 <button
@@ -159,7 +193,7 @@ export default function AssistantPanel({ open, onClose }) {
             <div className="flex-1 overflow-y-auto p-5 space-y-4">
               {messages.length === 0 ? (
 
-                /* Empty state */
+                /* État vide — suggestions dynamiques */
                 <div className="h-full flex flex-col items-center justify-center text-center px-4">
                   <div
                     className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent-50 to-accent-100 flex items-center justify-center mb-4"
@@ -169,25 +203,40 @@ export default function AssistantPanel({ open, onClose }) {
                   </div>
                   <p className="text-sm font-semibold text-slate-800 mb-1.5">Comment puis-je vous aider ?</p>
                   <p className="text-xs text-slate-400 mb-6 max-w-[270px] leading-relaxed">
-                    Analysez vos finances, anticipez votre trésorerie et identifiez les risques en temps réel.
+                    Analysez vos finances, anticipez votre trésorerie et lancez des actions directement depuis ici.
                   </p>
-                  <div className="w-full space-y-2">
-                    {QUICK.map((q, i) => (
-                      <button
-                        key={i}
-                        onClick={() => send(q)}
-                        className="w-full flex items-center justify-between text-left text-[12.5px] font-medium text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl px-4 py-2.5 transition-colors group"
-                      >
-                        <span>{q}</span>
-                        <ChevronRight size={13} className="text-slate-300 group-hover:text-slate-500 shrink-0 ml-2 transition-colors" />
-                      </button>
-                    ))}
-                  </div>
+
+                  {loadingSugg ? (
+                    <div className="flex items-center gap-2 text-slate-400 text-xs">
+                      <Loader2 size={13} className="animate-spin" />
+                      <span>Chargement des suggestions…</span>
+                    </div>
+                  ) : (
+                    <div className="w-full space-y-2">
+                      {(suggestions.length ? suggestions : FALLBACK_SUGGESTIONS).map((s, i) => (
+                        <button
+                          key={i}
+                          onClick={() => send(s.text)}
+                          className="w-full flex items-center justify-between text-left text-[12.5px] font-medium text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl px-4 py-2.5 transition-colors group"
+                        >
+                          <span>{s.text}</span>
+                          <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                            {s.badge && (
+                              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${BADGE_STYLES[s.badgeStyle] || BADGE_STYLES.info}`}>
+                                {s.badge}
+                              </span>
+                            )}
+                            <ChevronRight size={13} className="text-slate-300 group-hover:text-slate-500 transition-colors" />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
               ) : (
 
-                /* Chat messages */
+                /* Messages du chat */
                 <>
                   {messages.map((msg, i) => (
                     <div key={i} className={`flex gap-2.5 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
@@ -196,22 +245,30 @@ export default function AssistantPanel({ open, onClose }) {
                           <Sparkles size={12} strokeWidth={1.75} className="text-white" />
                         </div>
                       )}
-                      <div className={`max-w-[86%] ${
-                        msg.role === 'user'
-                          ? 'bg-accent-600 text-white rounded-2xl rounded-tr-md px-4 py-2.5'
-                          : msg.error
-                            ? 'bg-red-50 border border-red-100 rounded-2xl rounded-tl-md px-4 py-3'
-                            : 'bg-slate-50 border border-slate-100 rounded-2xl rounded-tl-md px-4 py-3'
-                      }`}>
-                        {msg.role === 'user' ? (
-                          <p className="text-[13px] leading-relaxed">{msg.content}</p>
-                        ) : msg.error ? (
-                          <div className="flex items-center gap-2 text-red-600 text-[13px]">
-                            <AlertCircle size={14} className="shrink-0" />
-                            <p>{msg.error}</p>
-                          </div>
-                        ) : (
-                          <MsgText text={msg.content} />
+
+                      <div className="max-w-[86%] flex flex-col">
+                        <div className={`${
+                          msg.role === 'user'
+                            ? 'bg-accent-600 text-white rounded-2xl rounded-tr-md px-4 py-2.5'
+                            : msg.error
+                              ? 'bg-red-50 border border-red-100 rounded-2xl rounded-tl-md px-4 py-3'
+                              : 'bg-slate-50 border border-slate-100 rounded-2xl rounded-tl-md px-4 py-3'
+                        }`}>
+                          {msg.role === 'user' ? (
+                            <p className="text-[13px] leading-relaxed">{msg.content}</p>
+                          ) : msg.error ? (
+                            <div className="flex items-center gap-2 text-red-600 text-[13px]">
+                              <AlertCircle size={14} className="shrink-0" />
+                              <p>{msg.error}</p>
+                            </div>
+                          ) : (
+                            <MsgText text={msg.content} />
+                          )}
+                        </div>
+
+                        {/* Actions suggérées — s'affichent sous la bulle */}
+                        {msg.role === 'assistant' && !msg.error && msg.actions?.length > 0 && (
+                          <AssistantActions actions={msg.actions} onAction={handleAction} />
                         )}
                       </div>
                     </div>
@@ -257,7 +314,7 @@ export default function AssistantPanel({ open, onClose }) {
                 </button>
               </div>
               <p className="text-[10px] text-slate-400 text-center mt-2">
-                Données en temps réel · Recommandations à confirmer avant toute action
+                Données en temps réel · Les actions vous redirigent dans Fluxora
               </p>
             </div>
 
