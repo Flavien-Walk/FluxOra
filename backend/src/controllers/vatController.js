@@ -46,33 +46,70 @@ const getVatSummary = async (req, res) => {
   const dateRangeInvoices = { paidAt: { $gte: new Date(from), $lte: new Date(to) } };
   const dateRangeExpenses = { date: { $gte: new Date(from), $lte: new Date(to) } };
 
-  // 1. Calcul de la TVA collectée (sur les factures payées)
-  const collectedVAT = await calculateVAT(Invoice, org._id, dateRangeInvoices, 'vatAmount', {
-    status: 'paid',
+  const r = (n) => Math.round(n * 100) / 100;
+
+  // 1. TVA collectée totale
+  const collectedVAT = await calculateVAT(Invoice, org._id, dateRangeInvoices, 'vatAmount', { status: 'paid' });
+
+  // 2. TVA collectée par taux (pour mapping CA3 cases 01/11/13)
+  const collectedByRate = await Invoice.aggregate([
+    { $match: { organizationId: org._id, status: 'paid', ...dateRangeInvoices } },
+    { $unwind: '$lines' },
+    { $group: {
+      _id: '$lines.vatRate',
+      vatAmount: { $sum: { $multiply: ['$lines.quantity', '$lines.unitPrice', { $divide: ['$lines.vatRate', 100] }] } },
+      baseHT:    { $sum: { $multiply: ['$lines.quantity', '$lines.unitPrice'] } }
+    }}
+  ]);
+  const collectedVAT_details = {};
+  collectedByRate.forEach(({ _id, vatAmount, baseHT }) => {
+    if (_id != null) collectedVAT_details[_id] = { vatAmount: r(vatAmount), baseHT: r(baseHT) };
   });
 
-  // 2. Calcul de la TVA déductible sur biens et services
+  // 3. TVA déductible — services
   const deductibleVAT_services = await calculateVAT(Expense, org._id, dateRangeExpenses, 'vatRecoverable', {
-    status: 'validated',
-    assetCategory: false,
+    status: 'validated', assetCategory: false,
   });
 
-  // 3. Calcul de la TVA déductible sur immobilisations
+  // 4. TVA déductible — immobilisations
   const deductibleVAT_assets = await calculateVAT(Expense, org._id, dateRangeExpenses, 'vatRecoverable', {
-    status: 'validated',
-    assetCategory: true,
+    status: 'validated', assetCategory: true,
   });
-  
+
   const totalDeductibleVAT = deductibleVAT_services + deductibleVAT_assets;
   const vatBalance = collectedVAT - totalDeductibleVAT;
 
+  // 5. Statistiques de complétude des justificatifs
+  const completionAgg = await Expense.aggregate([
+    { $match: { organizationId: org._id, status: 'validated', ...dateRangeExpenses } },
+    { $group: {
+      _id: null,
+      total: { $sum: 1 },
+      withReceipt: { $sum: { $cond: [{ $and: [{ $ne: ['$receiptUrl', null] }, { $ne: ['$receiptUrl', ''] }] }, 1, 0] } }
+    }}
+  ]);
+  const completionRaw = completionAgg[0] || { total: 0, withReceipt: 0 };
+  const completionStats = {
+    totalExpenses: completionRaw.total,
+    withReceipt: completionRaw.withReceipt,
+    completionPct: completionRaw.total > 0 ? r((completionRaw.withReceipt / completionRaw.total) * 100) : 100
+  };
+
+  // 6. Liste des dépenses validées pour l'export PDF
+  const expenses = await Expense.find({
+    organizationId: org._id, status: 'validated', ...dateRangeExpenses,
+  }).select('description vendor date category amountHT vatRate vatRecoverable amount receiptUrl assetCategory').sort({ date: -1 }).lean();
+
   res.json({
-    collectedVAT: Math.round(collectedVAT * 100) / 100,
-    deductibleVAT_services: Math.round(deductibleVAT_services * 100) / 100,
-    deductibleVAT_assets: Math.round(deductibleVAT_assets * 100) / 100,
-    totalDeductibleVAT: Math.round(totalDeductibleVAT * 100) / 100,
-    vatDue: vatBalance > 0 ? Math.round(vatBalance * 100) / 100 : 0,
-    vatCredit: vatBalance < 0 ? Math.round(-vatBalance * 100) / 100 : 0,
+    collectedVAT:          r(collectedVAT),
+    collectedVAT_details,
+    deductibleVAT_services: r(deductibleVAT_services),
+    deductibleVAT_assets:   r(deductibleVAT_assets),
+    totalDeductibleVAT:     r(totalDeductibleVAT),
+    vatDue:    vatBalance > 0 ? r(vatBalance)  : 0,
+    vatCredit: vatBalance < 0 ? r(-vatBalance) : 0,
+    completionStats,
+    expenses,
   });
 };
 

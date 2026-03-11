@@ -18,6 +18,9 @@ export function useVatSummary(from, to) {
 
   return {
     summary: data,
+    completionStats: data?.completionStats || null,
+    expenses: data?.expenses || [],
+    collectedVAT_details: data?.collectedVAT_details || {},
     isLoading,
     error,
   };
