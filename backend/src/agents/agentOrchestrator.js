@@ -108,6 +108,16 @@ RÈGLE N°3 — RECHERCHE ET ANALYSE
 • Analyse budget → get_expense_categories
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RÈGLE N°3bis — ENVOI EMAIL POST-CRÉATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Quand l'utilisateur mentionne "envoie", "envoyer par mail", "envoyer au client", "il faut lui envoyer", "par email", "envoie la facture", "envoie le devis" :
+a. Extrait l'adresse email — réutilise client_email si déjà fourni dans le message
+b. Inclus send_email=true et recipient_email dans prepare_workflow
+c. Dans la réponse, mentionne explicitement que l'email sera envoyé après confirmation
+d. Si aucune adresse email n'est disponible → pose UNE seule question précise pour l'obtenir
+   NE promet JAMAIS l'envoi si aucune adresse n'est fournie ou trouvée
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 RÈGLE N°4 — MÉMOIRE ET CONTEXTE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 • "ce client" / "pour lui" / "le même" → utilise currentClientId de la mémoire session
@@ -171,27 +181,48 @@ async function executePendingWorkflow(userId, workflow) {
     lastCreatedPath: path,
   });
 
-  const successMsg = result.clientCreated
-    ? `Le client **${workflow.client?.name}** a été créé et le ${docType} **${docNum}** est prêt en brouillon.`
-    : `Le ${docType} **${docNum}** a été créé pour **${workflow.client?.name}**.`;
+  /* ── Construction du message de résultat étape par étape ───── */
+  const steps = [];
+  if (result.clientCreated) steps.push(`✅ Client **${workflow.client?.name}** créé`);
+  steps.push(`✅ ${docType.charAt(0).toUpperCase() + docType.slice(1)} **${docNum}** créé`);
 
-  const totals   = workflow.totals || {};
-  const amtNote  = totals.subtotal ? ` (${fmt(totals.subtotal, currency)} HT · ${fmt(totals.total, currency)} TTC)` : '';
+  if (workflow.sendEmail) {
+    if (result.emailSent) {
+      steps.push(`✅ Email envoyé à **${result.emailSentTo}**`);
+    } else {
+      const errDetail = result.emailError ? ` (${result.emailError})` : '';
+      steps.push(`⚠️ Email non envoyé${errDetail}`);
+    }
+  }
+
+  const totals  = workflow.totals || {};
+  const amtNote = totals.subtotal ? ` — ${fmt(totals.subtotal, currency)} HT · ${fmt(totals.total, currency)} TTC` : '';
+
+  const actions = [
+    { id: 'open_doc', label: `Ouvrir le ${docType}`, type: 'redirect', path, style: 'primary', icon: 'list' },
+    { id: 'go_list',  label: `Voir les ${docType}s`, type: 'redirect', path: workflow.type === 'create_invoice' ? '/invoices' : '/quotes', style: 'secondary', icon: 'list' },
+  ];
+  if (workflow.sendEmail && result.emailSent) {
+    actions.push({ id: 'resend', label: 'Renvoyer par email', type: 'redirect', path, style: 'secondary', icon: 'send' });
+  }
+
+  const journalLabel = [
+    result.clientCreated ? `Client créé` : null,
+    `${docType} ${docNum}`,
+    result.emailSent ? `Email envoyé` : result.emailError ? `Email échoué` : null,
+  ].filter(Boolean).join(' · ');
 
   return {
-    reply:   `${successMsg}${amtNote}`,
-    intent:  'workflow_executed',
-    actions: [
-      { id: 'open_doc', label: `Ouvrir le ${docType}`, type: 'redirect', path, style: 'primary', icon: 'list' },
-      { id: 'go_list',  label: `Voir les ${docType}s`, type: 'redirect', path: workflow.type === 'create_invoice' ? '/invoices' : '/quotes', style: 'secondary', icon: 'list' },
-    ],
-    confidence:   { score: 1.0, label: 'Élevée' },
-    agentLog:     [],
+    reply:          `${steps.join('\n')}${amtNote}`,
+    intent:         'workflow_executed',
+    actions,
+    confidence:     { score: 1.0, label: 'Élevée' },
+    agentLog:       [],
     pendingWorkflow: null,
     journalEntry: {
       type:   'workflow_executed',
-      label:  result.clientCreated ? `Client + ${docType} créé (${docNum})` : `${docType} créé (${docNum})`,
-      status: 'success',
+      label:  journalLabel,
+      status: result.emailError ? 'warning' : 'success',
       at:     new Date().toISOString(),
     },
     contextPatch: getMemory(userId),
@@ -300,12 +331,13 @@ function buildSmartActions(internalLog, reply, ctx) {
           icon:       'check',
         });
       } else {
-        const docType  = wf.type === 'create_invoice' ? 'facture' : 'devis';
-        const totals   = wf.totals || {};
-        const amtLabel = totals.subtotal != null ? ` — ${fmtC(totals.subtotal)} HT · ${fmtC(totals.total)} TTC` : '';
+        const docType   = wf.type === 'create_invoice' ? 'facture' : 'devis';
+        const totals    = wf.totals || {};
+        const amtLabel  = totals.subtotal != null ? ` — ${fmtC(totals.subtotal)} HT · ${fmtC(totals.total)} TTC` : '';
+        const emailNote = wf.sendEmail ? ' + envoyer par email' : '';
         actions.push({
           id:         'confirm_workflow',
-          label:      `Confirmer et créer le ${docType}${amtLabel}`,
+          label:      `Confirmer, créer${emailNote} le ${docType}${amtLabel}`,
           type:       'action',
           actionType: 'confirm_agent_workflow',
           payload:    { workflow: wf },

@@ -10,6 +10,8 @@ const Organization = require('../models/Organization');
 const Client       = require('../models/Client');
 const Quote        = require('../models/Quote');
 const Invoice      = require('../models/Invoice');
+// Lazy require pour éviter circular deps — appelé uniquement quand sendEmail=true
+const getEmailService = () => require('./emailService');
 
 const getUserOrg = (userId) =>
   Organization.findOne({
@@ -81,27 +83,87 @@ async function executeAction(userId, type, payload) {
         vatRate:     Number(l.vatRate   || l.vat_rate)   || 20,
       }));
 
+      /* ── Création du document ────────────────────────────────── */
+      let entityType, entityId, number, redirectTo;
+      let docForEmail = null;
+
       if (workflow.type === 'create_invoice') {
-        const number  = await generateInvoiceNumber(orgId);
-        const invoice = await Invoice.create({ organizationId: orgId, clientId, number, status: 'draft', lines });
-        return {
-          entityType:    'invoice',
-          entityId:      invoice._id.toString(),
-          number:        invoice.number,
-          redirectTo:    `/invoices/${invoice._id}`,
-          clientCreated: !workflow.client.exists,
-        };
+        number    = await generateInvoiceNumber(orgId);
+        const inv = await Invoice.create({ organizationId: orgId, clientId, number, status: 'draft', lines });
+        entityType  = 'invoice';
+        entityId    = inv._id.toString();
+        redirectTo  = `/invoices/${inv._id}`;
+        docForEmail = inv;
       } else {
-        const number = await generateQuoteNumber(orgId);
-        const quote  = await Quote.create({ organizationId: orgId, clientId, number, status: 'draft', lines });
-        return {
-          entityType:    'quote',
-          entityId:      quote._id.toString(),
-          number:        quote.number,
-          redirectTo:    `/quotes/${quote._id}`,
-          clientCreated: !workflow.client.exists,
-        };
+        number       = await generateQuoteNumber(orgId);
+        const qt     = await Quote.create({ organizationId: orgId, clientId, number, status: 'draft', lines });
+        entityType   = 'quote';
+        entityId     = qt._id.toString();
+        redirectTo   = `/quotes/${qt._id}`;
+        docForEmail  = qt;
       }
+
+      /* ── Envoi email post-création (si demandé) ──────────────── */
+      let emailSent     = false;
+      let emailSentTo   = null;
+      let emailError    = null;
+
+      if (workflow.sendEmail) {
+        const recipientEmail = workflow.recipientEmail || workflow.client?.email || null;
+        if (recipientEmail) {
+          try {
+            const emailSvc   = getEmailService();
+            const clientDoc  = await Client.findById(clientId).lean();
+            // Refetch avec tous les champs calculés (totals, trackingToken)
+            const freshDoc   = workflow.type === 'create_invoice'
+              ? await Invoice.findById(docForEmail._id).lean()
+              : await Quote.findById(docForEmail._id).lean();
+
+            if (workflow.type === 'create_invoice') {
+              await emailSvc.sendInvoiceEmail({
+                invoice:       freshDoc,
+                org,
+                client:        clientDoc,
+                overrideEmail: recipientEmail,
+              });
+              // Mettre le statut à 'sent'
+              await Invoice.findByIdAndUpdate(docForEmail._id, {
+                $set:  { status: 'sent', sentAt: new Date() },
+                $push: { events: { type: 'sent', timestamp: new Date() } },
+              });
+            } else {
+              await emailSvc.sendQuoteEmail({
+                quote:         freshDoc,
+                org,
+                client:        clientDoc,
+                overrideEmail: recipientEmail,
+              });
+              await Quote.findByIdAndUpdate(docForEmail._id, {
+                $set:  { status: 'sent', sentAt: new Date() },
+                $push: { events: { type: 'sent', timestamp: new Date() } },
+              });
+            }
+
+            emailSent   = true;
+            emailSentTo = recipientEmail;
+          } catch (err) {
+            emailError = err.message || 'Erreur d\'envoi inconnue';
+          }
+        } else {
+          emailError = 'Aucune adresse email disponible pour l\'envoi';
+        }
+      }
+
+      return {
+        entityType,
+        entityId,
+        number,
+        redirectTo,
+        clientCreated: !workflow.client.exists,
+        emailSent,
+        emailSentTo,
+        emailError,
+      };
     }
 
     /* ── Brouillon devis (client déjà existant) ──────────────── */

@@ -184,6 +184,15 @@ const TOOL_DEFINITIONS = [
             required: ['description', 'unit_price'],
           },
         },
+        /* Envoi email post-création */
+        send_email: {
+          type: 'boolean',
+          description: 'true si l\'utilisateur a demandé l\'envoi par email après création. Positionner à true uniquement si l\'utilisateur l\'a explicitement mentionné ("envoie", "envoyer par mail", "il faut lui envoyer", etc.)',
+        },
+        recipient_email: {
+          type: 'string',
+          description: 'Adresse email du destinataire. Si non précisée séparément, réutilise client_email. Laisser vide si aucun email fourni.',
+        },
         /* Champs pour update_client */
         update_fields: {
           type: 'object',
@@ -460,6 +469,8 @@ function exec_prepare_workflow(input, orgId, userId) {
   const vatAmount = lines.reduce((s, l) => s + l.quantity * l.unitPrice * (l.vatRate / 100), 0);
   const total     = subtotal + vatAmount;
 
+  const recipientEmail = input.recipient_email || input.client_email || '';
+
   workflow = {
     type: input.document_type === 'invoice' ? 'create_invoice' : 'create_quote',
     client: {
@@ -476,6 +487,8 @@ function exec_prepare_workflow(input, orgId, userId) {
       vatAmount: Math.round(vatAmount * 100) / 100,
       total:     Math.round(total     * 100) / 100,
     },
+    sendEmail:      !!input.send_email,
+    recipientEmail: recipientEmail,
     savedAt: Date.now(),
   };
 
@@ -485,11 +498,12 @@ function exec_prepare_workflow(input, orgId, userId) {
   const clientLabel = input.client_exists
     ? `client existant "${input.client_name}"`
     : `nouveau client "${input.client_name}"`;
+  const emailNote   = workflow.sendEmail ? ` + envoi email à ${recipientEmail || '?'}` : '';
 
   return {
     ok: true,
     workflow,
-    summary: `Workflow prêt : ${clientLabel} + ${docLabel} · ${workflow.totals.subtotal}€ HT / ${workflow.totals.total}€ TTC`,
+    summary: `Workflow prêt : ${clientLabel} + ${docLabel} · ${workflow.totals.subtotal}€ HT / ${workflow.totals.total}€ TTC${emailNote}`,
   };
 }
 
