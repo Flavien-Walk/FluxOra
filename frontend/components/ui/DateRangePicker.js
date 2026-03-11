@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Calendar as CalendarIcon } from 'lucide-react';
@@ -8,51 +8,56 @@ import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/Button';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/Popover';
+import Button from '@/components/ui/Button';
 
 export function DateRangePicker({ className, range, onSelectRange }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
-    <div className={cn('grid gap-2', className)}>
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            id="date"
-            variant="outline"
-            className={cn(
-              'w-[300px] justify-start text-left font-normal',
-              !range && 'text-gray-500'
-            )}
-          >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {range?.from ? (
-              range.to ? (
-                <>
-                  {format(range.from, 'd LLL y', { locale: fr })} -{' '}
-                  {format(range.to, 'd LLL y', { locale: fr })}
-                </>
-              ) : (
-                format(range.from, 'd LLL y', { locale: fr })
-              )
-            ) : (
-              <span>Choisissez une période</span>
-            )}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+    <div ref={ref} className={cn('relative', className)}>
+      <Button
+        variant="outline"
+        onClick={() => setOpen((v) => !v)}
+        className="w-[300px] justify-start text-left font-normal"
+      >
+        <CalendarIcon className="mr-2 h-4 w-4" />
+        {range?.from ? (
+          range.to ? (
+            <>
+              {format(range.from, 'd LLL y', { locale: fr })} -{' '}
+              {format(range.to, 'd LLL y', { locale: fr })}
+            </>
+          ) : (
+            format(range.from, 'd LLL y', { locale: fr })
+          )
+        ) : (
+          <span className="text-gray-500">Choisissez une période</span>
+        )}
+      </Button>
+
+      {open && (
+        <div className="absolute z-50 mt-1 rounded-md border bg-white shadow-lg">
           <style>{`.rdp-button:hover:not([disabled]):not(.rdp-day_selected) { background-color: #f8fafc; }`}</style>
           <DayPicker
             locale={fr}
             mode="range"
             defaultMonth={range?.from}
             selected={range}
-            onSelect={onSelectRange}
+            onSelect={(r) => { onSelectRange(r); if (r?.to) setOpen(false); }}
             numberOfMonths={2}
-            className="rounded-md border bg-white p-3"
+            className="p-3"
           />
-        </PopoverContent>
-      </Popover>
+        </div>
+      )}
     </div>
   );
 }

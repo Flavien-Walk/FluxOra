@@ -6,8 +6,8 @@ import { useVatSummary, useVatDeclarations, createVatDeclaration, updateCreditOp
 import { useOrganization } from '@/hooks/useOrganization';
 import { Card, CardHeader, CardBody, StatCard } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
+import Button from '@/components/ui/Button';
+import Badge from '@/components/ui/Badge';
 import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import {
   AlertCircle, TrendingUp, TrendingDown, Landmark, Scale, Coins,
