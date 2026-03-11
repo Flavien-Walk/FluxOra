@@ -1,14 +1,15 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { Check, ArrowRight, Plug, Zap } from 'lucide-react';
 
 const OFFER_STYLES = {
-  reduction:      'bg-white/20 text-white backdrop-blur-sm',
-  mois_offerts:   'bg-white/20 text-white backdrop-blur-sm',
-  gratuit:        'bg-emerald-500/80 text-white',
-  tarif_negocie:  'bg-amber-400/80 text-amber-900',
+  reduction:      'bg-black/40 text-white backdrop-blur-sm',
+  mois_offerts:   'bg-black/40 text-white backdrop-blur-sm',
+  gratuit:        'bg-emerald-500/90 text-white',
+  tarif_negocie:  'bg-amber-400/90 text-amber-900',
 };
 
 const CAT_LABELS = {
@@ -24,21 +25,50 @@ const CAT_LABELS = {
 };
 
 export default function PartnerCard({ partner, isConnected, onConnect }) {
-  const canConnect  = partner.integration.status === 'mock';
-  const comingSoon  = partner.integration.status === 'coming_soon';
+  const canConnect = partner.integration.status === 'mock';
+  const comingSoon = partner.integration.status === 'coming_soon';
 
   return (
     <div className={cn(
       'bg-white rounded-xl border overflow-hidden flex flex-col',
       'transition-all duration-200 hover:-translate-y-0.5',
-      isConnected ? 'border-accent-200 shadow-[0_0_0_2px_rgba(28,110,242,0.12),0_4px_14px_rgba(0,0,0,0.06)]' : 'border-slate-100 shadow-card hover:border-slate-200',
+      isConnected
+        ? 'border-accent-200 shadow-[0_0_0_2px_rgba(28,110,242,0.12),0_4px_14px_rgba(0,0,0,0.06)]'
+        : 'border-slate-100 shadow-card hover:border-slate-200',
     )}>
 
       {/* Banner */}
-      <div className={cn('relative h-24 bg-gradient-to-br flex items-center justify-center', partner.gradient)}>
-        <span className="text-white text-xl font-bold tracking-tight drop-shadow-sm select-none">
-          {partner.name}
-        </span>
+      <div className="relative h-28 overflow-hidden">
+        {partner.imageType === 'logo' ? (
+          /* Logo on solid background */
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{ backgroundColor: partner.imageBg || '#0f172a' }}
+          >
+            <Image
+              src={partner.image}
+              alt={partner.name}
+              width={160}
+              height={60}
+              className="object-contain max-h-14"
+            />
+          </div>
+        ) : (
+          /* Contextual photo with overlay */
+          <>
+            <Image
+              src={partner.image}
+              alt={partner.name}
+              fill
+              className="object-cover"
+              sizes="(max-width: 640px) 100vw, 320px"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
+            <span className="absolute bottom-3 left-3.5 text-white text-sm font-bold tracking-tight drop-shadow">
+              {partner.name}
+            </span>
+          </>
+        )}
 
         {/* Offer badge */}
         <span className={cn(
@@ -61,9 +91,9 @@ export default function PartnerCard({ partner, isConnected, onConnect }) {
 
         {/* Title + category */}
         <div>
-          <div className="flex items-start justify-between gap-2 mb-1">
-            <h3 className="text-sm font-semibold text-slate-800 leading-tight">{partner.tagline}</h3>
-          </div>
+          <h3 className="text-sm font-semibold text-slate-800 leading-tight mb-1">
+            {partner.tagline}
+          </h3>
           <span className="inline-block text-[10px] font-semibold uppercase tracking-widest text-slate-400">
             {CAT_LABELS[partner.category] || partner.category}
           </span>
