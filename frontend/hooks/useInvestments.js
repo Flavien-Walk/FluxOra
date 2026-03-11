@@ -13,6 +13,7 @@ export function useInvestments() {
     investments: data?.investments || [],
     totalInvested: data?.totalInvested || 0,
     totalGain: data?.totalGain || 0,
+    availableTreasury: data?.availableTreasury ?? null,
     isLoading,
     error,
     mutate
