@@ -19,4 +19,8 @@ router.delete('/:id', requireAuth, deleteQuote);
 router.post('/:id/send-email', requireAuth, sendEmail);
 router.post('/:id/convert', requireAuth, convertToInvoice);
 
+const { updateQuoteReminders, sendQuoteReminder } = require('../controllers/reminderController');
+router.put('/:id/reminders', requireAuth, updateQuoteReminders);
+router.post('/:id/send-reminder', requireAuth, sendQuoteReminder);
+
 module.exports = router;

@@ -63,6 +63,20 @@ const invoiceSchema = new mongoose.Schema(
     sentAt: { type: Date },
     paidAt: { type: Date },
     paymentMethod: { type: String }, // card | transfer | sepa | apple_pay | google_pay | wallet
+    reminderConfig: {
+      enabled: { type: Boolean, default: true },
+      beforeDueDays: { type: Number, default: 3 },
+      onDueDayEnabled: { type: Boolean, default: true },
+      afterDueDays: { type: [Number], default: [5, 15] },
+      history: [{
+        type: { type: String },
+        sentAt: { type: Date },
+        subject: { type: String },
+        recipientEmail: { type: String },
+        status: { type: String, default: 'sent' },
+        note: { type: String },
+      }],
+    },
   },
   { timestamps: true }
 );

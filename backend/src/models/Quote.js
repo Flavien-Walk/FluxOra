@@ -25,6 +25,20 @@ const quoteSchema = new mongoose.Schema({
   acceptedAt: { type: Date },
   refusedAt: { type: Date },
   invoiceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Invoice' },
+  reminderConfig: {
+    enabled: { type: Boolean, default: true },
+    firstReminderDays: { type: Number, default: 3 },
+    beforeExpiryDays: { type: Number, default: 2 },
+    afterExpiryEnabled: { type: Boolean, default: false },
+    history: [{
+      type: { type: String },
+      sentAt: { type: Date },
+      subject: { type: String },
+      recipientEmail: { type: String },
+      status: { type: String, default: 'sent' },
+      note: { type: String },
+    }],
+  },
 }, { timestamps: true });
 
 quoteSchema.pre('save', function (next) {
