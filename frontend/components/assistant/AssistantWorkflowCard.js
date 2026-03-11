@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle2, UserPlus, FileText, RefreshCw } from 'lucide-react';
+import { CheckCircle2, UserPlus, FileText, RefreshCw, Mail } from 'lucide-react';
 
 const fmt = (n) =>
   new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n || 0);
@@ -110,6 +110,20 @@ function UpdateClientSection({ client, fields }) {
   );
 }
 
+/* ── Section envoi email ────────────────────────────────────── */
+function EmailSection({ email }) {
+  if (!email) return null;
+  return (
+    <div className="flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2">
+      <Mail size={12} className="shrink-0 text-blue-500" />
+      <div className="min-w-0">
+        <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wide">Envoi email après création</p>
+        <p className="text-[11.5px] text-blue-800 font-medium truncate">{email}</p>
+      </div>
+    </div>
+  );
+}
+
 /* ══════════════════════════════════════════════════════════════
    COMPOSANT PRINCIPAL
    ══════════════════════════════════════════════════════════════ */
@@ -141,6 +155,7 @@ export default function AssistantWorkflowCard({ workflow }) {
             <ClientSection client={workflow.client} />
             {workflow.lines?.length > 0 && <LinesSection lines={workflow.lines} />}
             {workflow.totals && <TotalsSection totals={workflow.totals} type={workflow.type} />}
+            {workflow.sendEmail && <EmailSection email={workflow.recipientEmail} />}
           </>
         )}
       </div>
