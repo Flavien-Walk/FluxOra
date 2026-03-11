@@ -32,9 +32,13 @@ function patchMemory(userId, patch) {
   if (patch.amount != null) {
     next.mentionedAmounts = [...new Set([...(next.mentionedAmounts || []), patch.amount])].slice(-5);
   }
-  if (patch.lastIntent)     next.lastIntent     = patch.lastIntent;
-  if (patch.lastEntityId)   next.lastEntityId   = patch.lastEntityId;
-  if (patch.lastEntityType) next.lastEntityType = patch.lastEntityType;
+  if (patch.lastIntent)       next.lastIntent       = patch.lastIntent;
+  if (patch.lastEntityId)     next.lastEntityId     = patch.lastEntityId;
+  if (patch.lastEntityType)   next.lastEntityType   = patch.lastEntityType;
+  if (patch.currentClientId)  next.currentClientId  = patch.currentClientId;
+  if (patch.lastCreatedId)    next.lastCreatedId    = patch.lastCreatedId;
+  if (patch.lastCreatedType)  next.lastCreatedType  = patch.lastCreatedType;
+  if (patch.lastCreatedPath)  next.lastCreatedPath  = patch.lastCreatedPath;
   if (patch.toolCallCount != null) next.toolCallCount = (next.toolCallCount || 0) + patch.toolCallCount;
 
   store.set(userId, { data: next, updatedAt: Date.now() });
@@ -90,16 +94,24 @@ function buildMemoryBlock(userId) {
   if (!Object.keys(mem).length) return '';
 
   const parts = [];
-  if (mem.mentionedClients?.length) parts.push(`Clients mentionnés : ${mem.mentionedClients.join(', ')}`);
-  if (mem.mentionedAmounts?.length) parts.push(`Montants évoqués : ${mem.mentionedAmounts.map(a => `${a}€`).join(', ')}`);
-  if (mem.lastIntent) parts.push(`Dernier intent : ${mem.lastIntent}`);
-  if (mem.lastEntityType && mem.lastEntityId) parts.push(`Dernière entité : ${mem.lastEntityType} #${mem.lastEntityId}`);
+  if (mem.mentionedClients?.length)  parts.push(`Clients mentionnés : ${mem.mentionedClients.join(', ')}`);
+  if (mem.mentionedAmounts?.length)  parts.push(`Montants évoqués : ${mem.mentionedAmounts.map(a => `${a}€`).join(', ')}`);
+  if (mem.currentClientId)           parts.push(`Client actif : ID=${mem.currentClientId}`);
+  if (mem.lastEntityType && mem.lastEntityId) {
+    parts.push(`Dernière entité consultée : ${mem.lastEntityType} #${mem.lastEntityId}`);
+  }
+  if (mem.lastCreatedType && mem.lastCreatedId) {
+    parts.push(`Dernière entité créée : ${mem.lastCreatedType} #${mem.lastCreatedId}${mem.lastCreatedPath ? ` → ${mem.lastCreatedPath}` : ''}`);
+  }
   if (mem.pendingWorkflow) {
-    const wf = mem.pendingWorkflow;
-    parts.push(`Workflow en attente : ${wf.type} pour "${wf.client?.name}" (${wf.totals?.subtotal || 0}€ HT)`);
+    const wf    = mem.pendingWorkflow;
+    const label = wf.type === 'update_client'
+      ? `mise à jour client "${wf.client?.name}"`
+      : `${wf.type === 'create_invoice' ? 'facture' : 'devis'} pour "${wf.client?.name}" (${wf.totals?.subtotal || 0}€ HT)`;
+    parts.push(`Workflow en attente : ${label} — l'utilisateur doit confirmer`);
   }
 
-  return parts.length ? `\nMÉMOIRE SESSION:\n${parts.join(' | ')}` : '';
+  return parts.length ? `\n\nMÉMOIRE SESSION : ${parts.join(' | ')}` : '';
 }
 
 /* ── Nettoyage périodique des entrées expirées ───────────────── */

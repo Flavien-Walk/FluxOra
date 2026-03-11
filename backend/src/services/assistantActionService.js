@@ -156,6 +156,35 @@ async function executeAction(userId, type, payload) {
       return { entityType: 'client', entityId: client._id.toString(), redirectTo: `/clients/${client._id}` };
     }
 
+    /* ── Mise à jour client (champs enrichis) ────────────────── */
+    case 'update_client': {
+      const { clientId, fields } = payload || {};
+      if (!clientId) throw Object.assign(new Error('Client ID requis.'), { status: 400 });
+      if (!fields || !Object.keys(fields).length) {
+        throw Object.assign(new Error('Aucune donnée à mettre à jour.'), { status: 400 });
+      }
+      const ALLOWED = ['email', 'phone', 'company', 'address', 'notes'];
+      const updateData = {};
+      for (const key of ALLOWED) {
+        if (fields[key] !== undefined && fields[key] !== null) updateData[key] = fields[key];
+      }
+      if (!Object.keys(updateData).length) {
+        throw Object.assign(new Error('Champs non reconnus ou vides.'), { status: 400 });
+      }
+      const client = await Client.findOneAndUpdate(
+        { _id: clientId, organizationId: orgId },
+        { $set: updateData },
+        { new: true }
+      );
+      if (!client) throw Object.assign(new Error('Client introuvable.'), { status: 404 });
+      return {
+        entityType: 'client',
+        entityId:   client._id.toString(),
+        redirectTo: `/clients/${client._id}`,
+        updated:    Object.keys(updateData),
+      };
+    }
+
     default:
       throw Object.assign(new Error(`Action inconnue : ${type}`), { status: 400 });
   }
