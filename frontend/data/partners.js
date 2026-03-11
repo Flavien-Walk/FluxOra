@@ -25,7 +25,6 @@ export const PARTNERS = [
     gradient: 'from-blue-600 to-indigo-700',
     image: '/partners/sumup.png',
     imageType: 'logo',
-    imageBg: '#1A1A2E',
     features: [
       'Paiement sans contact (NFC, Apple Pay, Google Pay)',
       'Synchronisation automatique des transactions',
@@ -56,8 +55,6 @@ export const PARTNERS = [
     offer: '1 mois offert',
     offerType: 'mois_offerts',
     gradient: 'from-teal-500 to-emerald-600',
-    image: 'https://images.unsplash.com/photo-amLfrL8LGls?auto=format&fit=crop&w=800&q=80',
-    imageType: 'photo',
     features: [
       'IBAN français en 5 minutes',
       'Carte Visa physique et virtuelle',
@@ -88,8 +85,6 @@ export const PARTNERS = [
     offer: 'Devis gratuit',
     offerType: 'gratuit',
     gradient: 'from-pink-500 to-purple-600',
-    image: 'https://images.unsplash.com/photo-br5SJR2wAvE?auto=format&fit=crop&w=800&q=80',
-    imageType: 'photo',
     features: [
       'Protection complète (hospitalisation, dentaire, optique)',
       'Remboursements renforcés',
@@ -116,8 +111,6 @@ export const PARTNERS = [
     offer: 'Devis gratuit',
     offerType: 'gratuit',
     gradient: 'from-violet-500 to-purple-700',
-    image: 'https://images.unsplash.com/photo-ul24UmLMg1s?auto=format&fit=crop&w=800&q=80',
-    imageType: 'photo',
     features: [
       'RC Professionnelle sur mesure',
       'Sans engagement',
@@ -143,10 +136,9 @@ export const PARTNERS = [
     longDescription: 'Wix est la plateforme de création de sites web la plus populaire chez les indépendants. Créez votre vitrine en ligne, prenez des rendez-vous, gérez vos commandes. Intégrez vos paiements directement dans Fluxora.',
     offer: '-10%',
     offerType: 'reduction',
-    gradient: 'from-blue-400 to-cyan-500',
+    gradient: 'from-slate-800 to-slate-950',
     image: '/partners/wix.png',
     imageType: 'logo',
-    imageBg: '#0C0C0C',
     features: [
       'Éditeur drag & drop intuitif',
       'Designs variés et professionnels',
@@ -173,8 +165,6 @@ export const PARTNERS = [
     offer: '-30%',
     offerType: 'reduction',
     gradient: 'from-orange-500 to-amber-500',
-    image: 'https://images.unsplash.com/photo-tLZhFRLj6nY?auto=format&fit=crop&w=800&q=80',
-    imageType: 'photo',
     features: [
       '30% de réduction pour créateurs d\'entreprise',
       'Réseau fiable et performant',
@@ -201,8 +191,6 @@ export const PARTNERS = [
     offer: 'Jusqu\'à -46%',
     offerType: 'reduction',
     gradient: 'from-red-500 to-rose-600',
-    image: 'https://images.unsplash.com/photo-wGlgRXVax5c?auto=format&fit=crop&w=800&q=80',
-    imageType: 'photo',
     features: [
       'Jusqu\'à 46% de réduction',
       'Gamme ThinkPad professionnelle',
@@ -229,8 +217,6 @@ export const PARTNERS = [
     offer: 'Tarifs négociés',
     offerType: 'tarif_negocie',
     gradient: 'from-amber-400 to-orange-500',
-    image: 'https://images.unsplash.com/photo-pmZnZwwn9dM?auto=format&fit=crop&w=800&q=80',
-    imageType: 'photo',
     features: [
       'Tarifs négociés auprès de 500+ loueurs',
       '160 pays couverts',
