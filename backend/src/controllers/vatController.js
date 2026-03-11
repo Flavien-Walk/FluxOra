@@ -66,9 +66,9 @@ const getVatSummary = async (req, res) => {
     if (_id != null) collectedVAT_details[_id] = { vatAmount: r(vatAmount), baseHT: r(baseHT) };
   });
 
-  // 3. TVA déductible — services
+  // 3. TVA déductible — services (assetCategory false ou absent)
   const deductibleVAT_services = await calculateVAT(Expense, org._id, dateRangeExpenses, 'vatRecoverable', {
-    status: 'validated', assetCategory: false,
+    status: 'validated', assetCategory: { $ne: true },
   });
 
   // 4. TVA déductible — immobilisations
@@ -149,7 +149,7 @@ const createVatDeclaration = async (req, res) => {
   const dateRangeExpenses = { date: { $gte: new Date(startDate), $lte: new Date(endDate) } };
   
   const collectedVAT = await calculateVAT(Invoice, org._id, dateRangeInvoices, 'vatAmount', { status: 'paid' });
-  const deductibleVAT_services = await calculateVAT(Expense, org._id, dateRangeExpenses, 'vatRecoverable', { status: 'validated', assetCategory: false });
+  const deductibleVAT_services = await calculateVAT(Expense, org._id, dateRangeExpenses, 'vatRecoverable', { status: 'validated', assetCategory: { $ne: true } });
   const deductibleVAT_assets = await calculateVAT(Expense, org._id, dateRangeExpenses, 'vatRecoverable', { status: 'validated', assetCategory: true });
   const totalDeductibleVAT = deductibleVAT_services + deductibleVAT_assets;
   const vatBalance = collectedVAT - totalDeductibleVAT;
