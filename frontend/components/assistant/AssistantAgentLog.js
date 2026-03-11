@@ -7,11 +7,14 @@ import { ChevronRight, CheckCircle2, XCircle, Bot } from 'lucide-react';
 const TOOL_LABELS = {
   search_clients:        'Recherche client',
   search_invoices:       'Recherche factures',
+  search_quotes:         'Recherche devis',
   search_expenses:       'Recherche dépenses',
   get_client_history:    'Historique client',
   check_draft_duplicate: 'Vérif. doublons',
   list_late_invoices:    'Factures en retard',
+  list_alerts:           'Alertes comptables',
   get_expense_categories:'Catégories dépenses',
+  prepare_workflow:      'Préparation workflow',
 };
 
 export default function AssistantAgentLog({ entries }) {

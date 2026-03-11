@@ -22,7 +22,8 @@ import AssistantModalHost from './AssistantModalHost';
 import AssistantObjectCard from './AssistantObjectCard';
 import AssistantSectionReport from './AssistantSectionReport';
 import { normalizeAssistantResponse } from '@/lib/assistant/normalizeAssistantResponse';
-import AssistantAgentLog from './AssistantAgentLog';
+import AssistantAgentLog from "./AssistantAgentLog";
+import AssistantWorkflowCard from "./AssistantWorkflowCard";
 
 const FALLBACK_SUGGESTIONS = [
   { text: 'Anticipe ma tresorerie sur 30 jours' },
@@ -582,6 +583,10 @@ export default function AssistantPanel({ open, onClose }) {
 
                           {message.role === 'assistant' && !message.error && message.agentLog?.length > 0 && (
                             <AssistantAgentLog entries={message.agentLog} />
+                          )}
+
+                          {message.role === 'assistant' && !message.error && message.pendingWorkflow && (
+                            <AssistantWorkflowCard workflow={message.pendingWorkflow} />
                           )}
 
                           {message.role === 'assistant' && !message.error && message.actions?.length > 0 && (

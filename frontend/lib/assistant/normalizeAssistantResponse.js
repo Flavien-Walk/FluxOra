@@ -128,6 +128,7 @@ export function normalizeAssistantResponse(data) {
     confidence: normalizeConfidence(envelope.confidence),
     journalEntry: envelope.journalEntry || null,
     contextPatch: envelope.contextPatch || null,
-    agentLog: asArray(envelope.agentLog),
+    agentLog:       asArray(envelope.agentLog),
+    pendingWorkflow: envelope.pendingWorkflow || null,
   };
 }

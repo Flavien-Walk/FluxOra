@@ -33,10 +33,11 @@ const ICON_MAP = {
 };
 
 const STYLE_MAP = {
-  primary: 'bg-accent-600 text-white hover:bg-accent-700 border-transparent',
+  primary:   'bg-accent-600 text-white hover:bg-accent-700 border-transparent',
+  confirm:   'bg-violet-600 text-white hover:bg-violet-700 border-transparent shadow-sm',
   secondary: 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200',
-  warning: 'bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200',
-  danger: 'bg-red-50 text-red-700 hover:bg-red-100 border-red-200',
+  warning:   'bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200',
+  danger:    'bg-red-50 text-red-700 hover:bg-red-100 border-red-200',
 };
 
 export default function AssistantActions({ actions, onAction, executingActionId }) {
