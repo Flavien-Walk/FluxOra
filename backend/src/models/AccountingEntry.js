@@ -30,12 +30,12 @@ const accountingEntrySchema = new mongoose.Schema(
     // Source de l'écriture (automatique ou manuelle)
     source: {
       type: String,
-      enum: ['invoice', 'payment', 'expense', 'manual'],
+      enum: ['invoice', 'payment', 'expense', 'investment', 'manual'],
       default: 'manual',
     },
     // Référence optionnelle vers l'objet source
     sourceId: { type: mongoose.Schema.Types.ObjectId },
-    sourceModel: { type: String, enum: ['Invoice', 'Payment', 'Expense'] },
+    sourceModel: { type: String, enum: ['Invoice', 'Payment', 'Expense', 'Investment'] },
   },
   { timestamps: true }
 );

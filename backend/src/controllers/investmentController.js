@@ -6,6 +6,23 @@ const { getProductsWithRates, getLatestRates } = require('../services/marketData
 const getUserOrg = async (userId) =>
   Organization.findOne({ $or: [{ clerkOwnerId: userId }, { 'members.clerkUserId': userId }] });
 
+// Calcule la trésorerie disponible à partir du journal comptable
+const getAvailableTreasury = async (orgId) => {
+  const [credits, debits] = await Promise.all([
+    AccountingEntry.aggregate([
+      { $match: { organizationId: orgId, type: 'credit' } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]),
+    AccountingEntry.aggregate([
+      { $match: { organizationId: orgId, type: 'debit' } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ])
+  ]);
+  const totalCredits = credits[0]?.total || 0;
+  const totalDebits = debits[0]?.total || 0;
+  return parseFloat((totalCredits - totalDebits).toFixed(2));
+};
+
 // GET /api/investments/products — catalogue avec taux live
 const getProducts = async (req, res) => {
   const products = await getProductsWithRates();
@@ -18,12 +35,15 @@ const getRates = async (req, res) => {
   res.json({ rates });
 };
 
-// GET /api/investments — portefeuille de l'organisation
+// GET /api/investments — portefeuille + tréso disponible
 const getInvestments = async (req, res) => {
   const org = await getUserOrg(req.userId);
   if (!org) return res.status(404).json({ error: 'Organisation introuvable.' });
 
-  const investments = await Investment.find({ organizationId: org._id }).sort({ investedAt: -1 }).lean();
+  const [investments, availableTreasury] = await Promise.all([
+    Investment.find({ organizationId: org._id }).sort({ investedAt: -1 }).lean(),
+    getAvailableTreasury(org._id)
+  ]);
 
   // Calcul des gains virtuels
   const enriched = investments.map(inv => {
@@ -36,7 +56,7 @@ const getInvestments = async (req, res) => {
   const totalInvested = enriched.filter(i => i.status === 'active').reduce((s, i) => s + i.amount, 0);
   const totalGain = enriched.filter(i => i.status === 'active').reduce((s, i) => s + i.currentGain, 0);
 
-  res.json({ investments: enriched, totalInvested, totalGain });
+  res.json({ investments: enriched, totalInvested, totalGain, availableTreasury });
 };
 
 // POST /api/investments — créer un placement
@@ -48,6 +68,15 @@ const createInvestment = async (req, res) => {
 
   if (!productId || !amount || amount <= 0) {
     return res.status(400).json({ error: 'Produit et montant requis.' });
+  }
+
+  // Vérification de la trésorerie disponible
+  const available = await getAvailableTreasury(org._id);
+  if (parseFloat(amount) > available) {
+    return res.status(400).json({
+      error: `Fonds insuffisants. Trésorerie disponible : ${available.toFixed(2)} €`,
+      availableTreasury: available
+    });
   }
 
   const investment = await Investment.create({
@@ -69,7 +98,7 @@ const createInvestment = async (req, res) => {
     type: 'debit',
     amount: parseFloat(amount),
     currency: org.currency || 'EUR',
-    source: 'manual',
+    source: 'investment',
     sourceId: investment._id,
     sourceModel: 'Investment'
   });
@@ -104,7 +133,7 @@ const withdrawInvestment = async (req, res) => {
     type: 'credit',
     amount: withdrawnAmount,
     currency: org.currency || 'EUR',
-    source: 'manual',
+    source: 'investment',
     sourceId: investment._id,
     sourceModel: 'Investment'
   });

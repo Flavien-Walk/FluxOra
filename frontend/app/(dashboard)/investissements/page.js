@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { toast } from 'sonner';
 import {
-  TrendingUp, Wallet, ArrowUpRight, ArrowDownLeft,
-  Clock, ShieldCheck, Info, ChevronRight, X, Loader2,
-  BarChart3, Zap, Lock
+  TrendingUp, Wallet, ArrowDownLeft,
+  Clock, ShieldCheck, Info, X, Loader2,
+  BarChart3, Zap, Lock, AlertTriangle
 } from 'lucide-react';
 import api from '../../../lib/api';
 import { useInvestments, useInvestmentProducts } from '../../../hooks/useInvestments';
@@ -16,22 +16,19 @@ const fmt = (n) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency:
 const fmtPct = (n) => `${(n ?? 0).toFixed(2)} %`;
 
 const RISK_COLORS = { 1: 'text-emerald-600 bg-emerald-50', 2: 'text-blue-600 bg-blue-50', 3: 'text-amber-600 bg-amber-50' };
-const RISK_BAR = { 1: 'w-1/7', 2: 'w-2/7', 3: 'w-3/7' };
-
 const LIQUIDITY_ICON = { 'J+1': Zap, 'J+2': Clock, 'J+3': Clock, 'À maturité': Lock };
-
 const STATUS_LABELS = { active: 'Actif', withdrawn: 'Retiré', matured: 'Échu' };
 const STATUS_COLORS = { active: 'bg-emerald-100 text-emerald-700', withdrawn: 'bg-gray-100 text-gray-600', matured: 'bg-blue-100 text-blue-700' };
 
 // ─── Composant : carte produit ─────────────────────────────────────────────────
-function ProductCard({ product, onInvest }) {
+function ProductCard({ product, onInvest, availableTreasury }) {
   const LiqIcon = LIQUIDITY_ICON[product.liquidity] || Clock;
+  const canInvest = availableTreasury === null || availableTreasury >= product.minAmount;
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col">
-      {/* Header coloré */}
       <div className="h-2" style={{ backgroundColor: product.color }} />
       <div className="p-5 flex flex-col flex-1 gap-4">
-        {/* Titre + catégorie */}
         <div className="flex items-start justify-between gap-2">
           <div>
             <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">{product.category}</span>
@@ -44,10 +41,8 @@ function ProductCard({ product, onInvest }) {
           </div>
         </div>
 
-        {/* Description */}
         <p className="text-sm text-gray-600 leading-relaxed">{product.description}</p>
 
-        {/* Badges info */}
         <div className="flex flex-wrap gap-2">
           <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${RISK_COLORS[product.risk] || 'text-gray-600 bg-gray-100'}`}>
             <ShieldCheck className="w-3 h-3" />
@@ -63,19 +58,25 @@ function ProductCard({ product, onInvest }) {
           </span>
         </div>
 
-        {/* Min amount */}
         <div className="text-xs text-gray-400">
           Montant minimum : <span className="font-medium text-gray-600">{fmt(product.minAmount)}</span>
         </div>
 
         <div className="mt-auto">
-          <button
-            onClick={() => onInvest(product)}
-            className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 active:scale-95"
-            style={{ backgroundColor: product.color }}
-          >
-            Investir maintenant
-          </button>
+          {canInvest ? (
+            <button
+              onClick={() => onInvest(product)}
+              className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 active:scale-95"
+              style={{ backgroundColor: product.color }}
+            >
+              Investir maintenant
+            </button>
+          ) : (
+            <div className="w-full py-2.5 rounded-xl text-sm font-medium text-center bg-gray-100 text-gray-400 cursor-not-allowed flex items-center justify-center gap-2">
+              <AlertTriangle className="w-4 h-4" />
+              Fonds insuffisants
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -96,24 +97,16 @@ function ReturnSimulator({ product }) {
         <div>
           <label className="block text-xs text-gray-500 mb-1">Montant (€)</label>
           <input
-            type="number"
-            value={amount}
-            min={product.minAmount}
-            step={1000}
+            type="number" value={amount} min={product.minAmount} step={1000}
             onChange={e => setAmount(parseFloat(e.target.value) || 0)}
             className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
           />
         </div>
         <div>
           <label className="block text-xs text-gray-500 mb-1">Durée (mois)</label>
-          <select
-            value={months}
-            onChange={e => setMonths(parseInt(e.target.value))}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-          >
-            {[1, 3, 6, 12, 24, 36].map(m => (
-              <option key={m} value={m}>{m} mois</option>
-            ))}
+          <select value={months} onChange={e => setMonths(parseInt(e.target.value))}
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+            {[1, 3, 6, 12, 24, 36].map(m => <option key={m} value={m}>{m} mois</option>)}
           </select>
         </div>
       </div>
@@ -136,9 +129,9 @@ function ReturnSimulator({ product }) {
 }
 
 // ─── Modal : nouveau placement ────────────────────────────────────────────────
-function InvestModal({ product, onClose, onSuccess }) {
+function InvestModal({ product, availableTreasury, onClose, onSuccess }) {
   const { getToken } = useAuth();
-  const [amount, setAmount] = useState(product.minAmount);
+  const [amount, setAmount] = useState(Math.min(product.minAmount, availableTreasury ?? product.minAmount));
   const [months, setMonths] = useState(12);
   const [loading, setLoading] = useState(false);
 
@@ -146,19 +139,17 @@ function InvestModal({ product, onClose, onSuccess }) {
     ? new Date(Date.now() + months * 30 * 24 * 60 * 60 * 1000).toISOString()
     : null;
 
+  const isOverBudget = availableTreasury !== null && amount > availableTreasury;
+
   const handleSubmit = async () => {
-    if (amount < product.minAmount) {
-      return toast.error(`Montant minimum : ${fmt(product.minAmount)}`);
-    }
+    if (amount < product.minAmount) return toast.error(`Montant minimum : ${fmt(product.minAmount)}`);
+    if (isOverBudget) return toast.error(`Fonds insuffisants. Trésorerie disponible : ${fmt(availableTreasury)}`);
     setLoading(true);
     try {
       const token = await getToken();
       await api.post('/api/investments', {
-        productId: product.id,
-        productName: product.name,
-        amount,
-        expectedRate: product.currentRate,
-        maturityDate
+        productId: product.id, productName: product.name,
+        amount, expectedRate: product.currentRate, maturityDate
       }, { headers: { Authorization: `Bearer ${token}` } });
       toast.success('Placement créé avec succès !');
       onSuccess();
@@ -175,7 +166,6 @@ function InvestModal({ product, onClose, onSuccess }) {
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-        {/* Header */}
         <div className="h-2" style={{ backgroundColor: product.color }} />
         <div className="p-6">
           <div className="flex items-center justify-between mb-5">
@@ -184,7 +174,20 @@ function InvestModal({ product, onClose, onSuccess }) {
           </div>
 
           <div className="space-y-5">
-            {/* Taux en évidence */}
+            {/* Tréso disponible */}
+            {availableTreasury !== null && (
+              <div className={`flex items-center justify-between p-3 rounded-xl border ${availableTreasury < product.minAmount ? 'bg-red-50 border-red-100' : 'bg-emerald-50 border-emerald-100'}`}>
+                <div className="flex items-center gap-2">
+                  <Wallet className={`w-4 h-4 ${availableTreasury < product.minAmount ? 'text-red-500' : 'text-emerald-600'}`} />
+                  <span className="text-sm text-gray-600">Trésorerie disponible</span>
+                </div>
+                <span className={`font-bold text-sm ${availableTreasury < product.minAmount ? 'text-red-600' : 'text-emerald-700'}`}>
+                  {fmt(availableTreasury)}
+                </span>
+              </div>
+            )}
+
+            {/* Taux */}
             <div className="flex items-center gap-3 p-4 rounded-xl" style={{ backgroundColor: product.color + '15' }}>
               <TrendingUp className="w-8 h-8" style={{ color: product.color }} />
               <div>
@@ -200,26 +203,26 @@ function InvestModal({ product, onClose, onSuccess }) {
               </label>
               <div className="relative">
                 <input
-                  type="number"
-                  value={amount}
-                  min={product.minAmount}
-                  step={1000}
+                  type="number" value={amount} min={product.minAmount} step={1000}
                   onChange={e => setAmount(parseFloat(e.target.value) || 0)}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-12 text-base focus:ring-2 focus:ring-blue-500 outline-none"
+                  className={`w-full border rounded-xl px-4 py-3 pr-12 text-base outline-none focus:ring-2 ${isOverBudget ? 'border-red-300 focus:ring-red-400 bg-red-50' : 'border-gray-200 focus:ring-blue-500'}`}
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">€</span>
               </div>
+              {isOverBudget && (
+                <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  Dépasse la trésorerie disponible de {fmt(amount - availableTreasury)}
+                </p>
+              )}
             </div>
 
             {/* Durée (uniquement pour CAT) */}
             {product.liquidity === 'À maturité' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Durée</label>
-                <select
-                  value={months}
-                  onChange={e => setMonths(parseInt(e.target.value))}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
-                >
+                <select value={months} onChange={e => setMonths(parseInt(e.target.value))}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none">
                   {[3, 6, 12].map(m => <option key={m} value={m}>{m} mois</option>)}
                 </select>
               </div>
@@ -231,7 +234,6 @@ function InvestModal({ product, onClose, onSuccess }) {
               <div className="font-bold text-emerald-600 text-lg">+{fmt(gain)}</div>
             </div>
 
-            {/* Avertissement */}
             <div className="flex gap-2 p-3 bg-amber-50 rounded-xl text-xs text-amber-700">
               <Info className="w-4 h-4 shrink-0 mt-0.5" />
               <span>Les performances passées ne préjugent pas des performances futures. Ce placement est simulé à des fins de démonstration.</span>
@@ -244,9 +246,9 @@ function InvestModal({ product, onClose, onSuccess }) {
             </button>
             <button
               onClick={handleSubmit}
-              disabled={loading}
-              className="flex-1 py-3 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-60"
-              style={{ backgroundColor: product.color }}
+              disabled={loading || isOverBudget}
+              className="flex-1 py-3 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ backgroundColor: isOverBudget ? '#9CA3AF' : product.color }}
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               Confirmer le placement
@@ -261,12 +263,12 @@ function InvestModal({ product, onClose, onSuccess }) {
 // ─── Page principale ──────────────────────────────────────────────────────────
 export default function InvestissementsPage() {
   const { getToken } = useAuth();
-  const { investments, totalInvested, totalGain, isLoading: loadingPortfolio, mutate } = useInvestments();
+  const { investments, totalInvested, totalGain, availableTreasury, isLoading: loadingPortfolio, mutate } = useInvestments();
   const { products, isLoading: loadingProducts } = useInvestmentProducts();
 
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [withdrawing, setWithdrawing] = useState(null);
-  const [tab, setTab] = useState('catalogue'); // 'catalogue' | 'portfolio'
+  const [tab, setTab] = useState('catalogue');
 
   const activeInvestments = investments.filter(i => i.status === 'active');
 
@@ -303,8 +305,15 @@ export default function InvestissementsPage() {
             Placez vos excédents de liquidités dans des produits sécurisés et obtenez un rendement sur votre trésorerie dormante.
           </p>
 
-          {/* KPI cards */}
-          <div className="grid grid-cols-3 gap-4 mt-6">
+          {/* KPI cards — 4 colonnes */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+            <div className="bg-white/10 backdrop-blur rounded-xl p-4">
+              <div className="text-blue-200 text-xs mb-1">Tréso disponible</div>
+              <div className={`text-xl font-bold ${availableTreasury !== null && availableTreasury < 0 ? 'text-red-300' : 'text-white'}`}>
+                {availableTreasury !== null ? fmt(availableTreasury) : '—'}
+              </div>
+              <div className="text-blue-300 text-xs mt-1">solde comptable net</div>
+            </div>
             <div className="bg-white/10 backdrop-blur rounded-xl p-4">
               <div className="text-blue-200 text-xs mb-1">Total placé</div>
               <div className="text-white text-xl font-bold">{fmt(totalInvested)}</div>
@@ -313,18 +322,24 @@ export default function InvestissementsPage() {
             <div className="bg-white/10 backdrop-blur rounded-xl p-4">
               <div className="text-blue-200 text-xs mb-1">Gain accumulé</div>
               <div className="text-emerald-300 text-xl font-bold">+{fmt(totalGain)}</div>
-              <div className="text-blue-300 text-xs mt-1">depuis le premier placement</div>
+              <div className="text-blue-300 text-xs mt-1">depuis le 1er placement</div>
             </div>
             <div className="bg-white/10 backdrop-blur rounded-xl p-4">
               <div className="text-blue-200 text-xs mb-1">Valeur totale</div>
               <div className="text-white text-xl font-bold">{fmt(totalInvested + totalGain)}</div>
               {totalInvested > 0 && (
-                <div className="text-emerald-300 text-xs mt-1">
-                  +{((totalGain / totalInvested) * 100).toFixed(2)} % de rendement
-                </div>
+                <div className="text-emerald-300 text-xs mt-1">+{((totalGain / totalInvested) * 100).toFixed(2)} % rendement</div>
               )}
             </div>
           </div>
+
+          {/* Alerte tréso insuffisante */}
+          {availableTreasury !== null && availableTreasury < 1000 && (
+            <div className="mt-4 flex items-center gap-2 p-3 bg-amber-500/20 border border-amber-400/30 rounded-xl text-amber-200 text-sm">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              Trésorerie disponible insuffisante pour un nouveau placement. Attendez des rentrées ou retirez un placement existant.
+            </div>
+          )}
         </div>
       </div>
 
@@ -335,13 +350,8 @@ export default function InvestissementsPage() {
             { key: 'catalogue', label: 'Catalogue', icon: BarChart3 },
             { key: 'portfolio', label: 'Mon portefeuille', icon: Wallet }
           ].map(({ key, label, icon: Icon }) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                tab === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
+            <button key={key} onClick={() => setTab(key)}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${tab === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
               <Icon className="w-4 h-4" />
               {label}
               {key === 'portfolio' && activeInvestments.length > 0 && (
@@ -356,8 +366,7 @@ export default function InvestissementsPage() {
         {/* ── CATALOGUE ─────────────────────────────────────────────────────── */}
         {tab === 'catalogue' && (
           <div>
-            {/* Taux live */}
-            {products.length > 0 && !products[0].isFallback && (
+            {products.length > 0 && !products[0]?.isFallback && (
               <div className="flex items-center gap-2 mb-5 text-xs text-gray-500">
                 <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                 Taux mis à jour le {products[0].ratesDate} via BCE & Yahoo Finance
@@ -366,19 +375,16 @@ export default function InvestissementsPage() {
 
             {loadingProducts ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {[1, 2, 3, 4].map(i => (
-                  <div key={i} className="h-72 bg-gray-200 rounded-2xl animate-pulse" />
-                ))}
+                {[1, 2, 3, 4].map(i => <div key={i} className="h-72 bg-gray-200 rounded-2xl animate-pulse" />)}
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {products.map(p => (
-                  <ProductCard key={p.id} product={p} onInvest={setSelectedProduct} />
+                  <ProductCard key={p.id} product={p} onInvest={setSelectedProduct} availableTreasury={availableTreasury} />
                 ))}
               </div>
             )}
 
-            {/* Disclaimer */}
             <div className="mt-8 p-4 bg-blue-50 border border-blue-100 rounded-xl flex gap-3">
               <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
               <p className="text-sm text-blue-700">
@@ -404,10 +410,8 @@ export default function InvestissementsPage() {
                 </div>
                 <p className="text-gray-500 font-medium mb-2">Aucun placement actif</p>
                 <p className="text-gray-400 text-sm mb-5">Explorez le catalogue pour démarrer votre premier placement.</p>
-                <button
-                  onClick={() => setTab('catalogue')}
-                  className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700"
-                >
+                <button onClick={() => setTab('catalogue')}
+                  className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700">
                   Voir le catalogue
                 </button>
               </div>
@@ -461,15 +465,11 @@ export default function InvestissementsPage() {
                             </div>
                           )}
                           {inv.status === 'active' && (
-                            <button
-                              onClick={() => handleWithdraw(inv)}
-                              disabled={withdrawing === inv._id}
-                              className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
-                            >
+                            <button onClick={() => handleWithdraw(inv)} disabled={withdrawing === inv._id}
+                              className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50">
                               {withdrawing === inv._id
                                 ? <Loader2 className="w-4 h-4 animate-spin" />
-                                : <ArrowDownLeft className="w-4 h-4" />
-                              }
+                                : <ArrowDownLeft className="w-4 h-4" />}
                               Retirer
                             </button>
                           )}
@@ -488,6 +488,7 @@ export default function InvestissementsPage() {
       {selectedProduct && (
         <InvestModal
           product={selectedProduct}
+          availableTreasury={availableTreasury}
           onClose={() => setSelectedProduct(null)}
           onSuccess={mutate}
         />
