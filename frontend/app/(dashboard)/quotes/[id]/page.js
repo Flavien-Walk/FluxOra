@@ -11,6 +11,7 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Modal from '@/components/ui/Modal';
 import QuoteForm from '@/components/modules/QuoteForm';
+import ReminderBlock from '@/components/reminders/ReminderBlock';
 import { cn } from '@/lib/utils';
 import {
   ArrowLeft, Pencil, Trash2, Send, FileText, Mail,
@@ -402,6 +403,11 @@ export default function QuoteDetailPage() {
               </ol>
             </CardBody>
           </Card>
+        )}
+
+        {/* Relances automatiques */}
+        {(quote.status === 'sent' || quote.status === 'email_opened' || quote.status === 'viewed' || quote.status === 'draft') && (
+          <ReminderBlock doc={quote} docType="quote" mutate={mutate} />
         )}
       </div>
 

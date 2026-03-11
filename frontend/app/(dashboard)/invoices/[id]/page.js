@@ -11,6 +11,7 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Modal from '@/components/ui/Modal';
 import InvoiceForm from '@/components/modules/InvoiceForm';
+import ReminderBlock from '@/components/reminders/ReminderBlock';
 import { cn } from '@/lib/utils';
 import {
   ArrowLeft, Pencil, Trash2, Send, CreditCard, Mail, Clock,
@@ -357,6 +358,11 @@ export default function InvoiceDetailPage() {
             <CardHeader><h3 className="text-sm font-semibold text-slate-800">Notes</h3></CardHeader>
             <CardBody><p className="text-sm text-slate-600 whitespace-pre-line">{invoice.notes}</p></CardBody>
           </Card>
+        )}
+
+        {/* Relances automatiques */}
+        {!isPaid && invoice.status !== 'cancelled' && (
+          <ReminderBlock doc={invoice} docType="invoice" mutate={mutate} />
         )}
 
         {/* Timeline des événements */}
