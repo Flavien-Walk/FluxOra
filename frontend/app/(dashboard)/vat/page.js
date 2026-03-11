@@ -8,8 +8,8 @@ import Button from '@/components/ui/Button';
 import api from '@/lib/api';
 import { SkeletonTable } from '@/components/ui/Skeleton';
 import { 
-    Save, FileText, Download, ChevronsLeft, ChevronsRight, 
-    TrendingUp, TrendingDown, Info 
+    FileText, Download, ChevronsLeft, ChevronsRight, 
+    TrendingUp, TrendingDown, Info, AlertTriangle 
 } from 'lucide-react';
 
 const fmt = (n) =>
@@ -40,11 +40,11 @@ export default function VATDashboardPage() {
     }, [currentDate]);
 
     // Data fetching
-    const { data: summary, isLoading: loadingSummary } = useSWR(
+    const { data: summary, error: summaryError, isLoading: loadingSummary } = useSWR(
         `/api/vat/summary?from=${from}&to=${to}`, fetcher
     );
     
-    const { data: details, isLoading: loadingDetails } = useSWR(
+    const { data: details, error: detailsError, isLoading: loadingDetails } = useSWR(
         showDetails ? `/api/vat/details?from=${from}&to=${to}` : null, fetcher
     );
 
@@ -62,6 +62,7 @@ export default function VATDashboardPage() {
             document.body.appendChild(link);
             link.click();
             link.parentNode.removeChild(link);
+            window.URL.revokeObjectURL(url); // Nettoyage
         } catch (e) {
             alert('Erreur lors du téléchargement du PDF');
         }
@@ -92,7 +93,12 @@ export default function VATDashboardPage() {
                 </div>
 
                 {/* Résumé des Cartes */}
-                {loadingSummary ? <SkeletonTable rows={1} cols={3} /> : summary && (
+                {summaryError ? (
+                    <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 flex items-center gap-2">
+                        <AlertTriangle size={20} />
+                        <p>Impossible de charger le résumé de TVA. Vérifiez que le Backend est lancé et accessible.</p>
+                    </div>
+                ) : loadingSummary ? <SkeletonTable rows={1} cols={3} /> : summary && (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <Card className="border-l-4 border-l-blue-500">
                             <CardBody>
@@ -146,7 +152,12 @@ export default function VATDashboardPage() {
                     <Card className="animate-in fade-in slide-in-from-bottom-4 duration-300">
                         <CardHeader><h3 className="font-semibold text-gray-800">Détail des opérations ({periodLabel})</h3></CardHeader>
                         <CardBody className="p-0">
-                            {loadingDetails ? <SkeletonTable rows={5} cols={6} /> : (
+                            {detailsError ? (
+                                <div className="p-4 text-red-600 flex items-center gap-2">
+                                    <AlertTriangle size={16} />
+                                    Erreur de chargement des détails.
+                                </div>
+                            ) : loadingDetails ? <SkeletonTable rows={5} cols={6} /> : (
                                 <div className="overflow-x-auto max-h-[500px]">
                                     <table className="w-full text-sm text-left">
                                         <thead className="bg-gray-50 text-gray-500 sticky top-0">

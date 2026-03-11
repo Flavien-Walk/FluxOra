@@ -1,0 +1,1 @@
+// Ce fichier contenait du code Backend mal placé. Le modèle correct est dans backend/src/models/VATDeclaration.js
