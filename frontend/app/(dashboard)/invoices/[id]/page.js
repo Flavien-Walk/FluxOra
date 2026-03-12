@@ -15,7 +15,7 @@ import ReminderBlock from '@/components/reminders/ReminderBlock';
 import { cn } from '@/lib/utils';
 import {
   ArrowLeft, Pencil, Trash2, Send, CreditCard, Mail, Clock,
-  CheckCircle2, Building2, Banknote, Smartphone, User, FileText,
+  CheckCircle2, User, FileText,
 } from 'lucide-react';
 
 const EVENT_CONFIG = {
@@ -32,105 +32,6 @@ const EVENT_CONFIG = {
 const fmt = (n) =>
   new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n ?? 0);
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('fr-FR') : '—');
-
-const PAYMENT_METHODS = [
-  { id: 'card',   label: 'Carte bancaire', sub: 'Visa, Mastercard, CB',       Icon: CreditCard, ring: 'border-accent-400 bg-accent-50',   icon: 'text-accent-600'  },
-  { id: 'wire',   label: 'Virement SEPA',  sub: 'Délai 1–2 jours ouvrés',    Icon: Building2,  ring: 'border-blue-400 bg-blue-50',        icon: 'text-blue-600'    },
-  { id: 'direct', label: 'Prélèvement',    sub: 'Autorisation SEPA requise',  Icon: Banknote,   ring: 'border-violet-400 bg-violet-50',    icon: 'text-violet-600'  },
-  { id: 'wallet', label: 'Wallet Fluxora', sub: 'Paiement instantané simulé', Icon: Smartphone, ring: 'border-emerald-400 bg-emerald-50',  icon: 'text-emerald-600' },
-];
-
-function PaymentSimulationBlock({ invoice, onMarkPaid, loading }) {
-  const [selected, setSelected] = useState('card');
-  const [confirmed, setConfirmed] = useState(false);
-
-  const handleConfirm = async () => {
-    setConfirmed(true);
-    await onMarkPaid();
-  };
-
-  if (confirmed) {
-    return (
-      <div className="bg-success-50 border border-success-200 rounded-xl p-6 flex items-center gap-4">
-        <div className="w-10 h-10 bg-success-100 rounded-xl flex items-center justify-center flex-shrink-0">
-          <CheckCircle2 size={20} className="text-success-600" />
-        </div>
-        <div>
-          <p className="font-semibold text-success-800">Paiement confirmé</p>
-          <p className="text-sm text-success-600 mt-0.5">La facture a été marquée comme payée.</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-semibold text-slate-800">Procéder au paiement</h3>
-            <p className="text-xs text-slate-400 mt-0.5">Simulation — en production via Stripe</p>
-          </div>
-          <div className="text-right">
-            <p className="text-[11px] text-slate-400 uppercase font-semibold tracking-wide mb-0.5">Total à payer</p>
-            <p className="text-xl font-bold text-slate-900 tabular-nums">{fmt(invoice.total)}</p>
-          </div>
-        </div>
-      </CardHeader>
-      <CardBody className="space-y-4">
-        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Mode de paiement</p>
-        <div className="grid grid-cols-2 gap-3">
-          {PAYMENT_METHODS.map(({ id, label, sub, Icon, ring, icon }) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setSelected(id)}
-              className={cn(
-                'flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left',
-                selected === id ? ring : 'border-slate-100 hover:border-slate-200'
-              )}
-            >
-              <div className={cn(
-                'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0',
-                selected === id ? '' : 'bg-slate-100'
-              )}>
-                <Icon size={16} className={selected === id ? icon : 'text-slate-400'} />
-              </div>
-              <div>
-                <p className={cn('text-xs font-semibold', selected === id ? 'text-slate-900' : 'text-slate-600')}>{label}</p>
-                <p className="text-[11px] text-slate-400">{sub}</p>
-              </div>
-            </button>
-          ))}
-        </div>
-
-        <div className="bg-slate-50 rounded-xl p-4 text-sm space-y-1.5 border border-slate-100">
-          <div className="flex justify-between text-slate-500">
-            <span>Facture</span>
-            <span className="font-mono text-slate-700">{invoice.number}</span>
-          </div>
-          <div className="flex justify-between text-slate-500">
-            <span>Mode</span>
-            <span>{PAYMENT_METHODS.find((m) => m.id === selected)?.label}</span>
-          </div>
-          <div className="flex justify-between font-bold text-slate-900 pt-2 border-t border-slate-200">
-            <span>Total à payer</span>
-            <span className="tabular-nums">{fmt(invoice.total)}</span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 pt-1">
-          <Button onClick={handleConfirm} loading={loading} className="flex-1">
-            <CheckCircle2 size={15} /> Confirmer le paiement
-          </Button>
-          <p className="text-xs text-slate-400 text-center leading-tight">
-            Sécurisé via<br />Stripe (simulation)
-          </p>
-        </div>
-      </CardBody>
-    </Card>
-  );
-}
 
 export default function InvoiceDetailPage() {
   const { id } = useParams();
@@ -343,15 +244,6 @@ export default function InvoiceDetailPage() {
             </div>
           </CardBody>
         </Card>
-
-        {/* Simulation paiement */}
-        {(isSent || invoice.status === 'late') && (
-          <PaymentSimulationBlock
-            invoice={invoice}
-            onMarkPaid={() => updateStatus('paid')}
-            loading={loading === 'paid'}
-          />
-        )}
 
         {invoice.notes && (
           <Card>
