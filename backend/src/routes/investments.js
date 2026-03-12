@@ -1,13 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const { requireAuth } = require('../middleware/auth');
-const ctrl = require('../controllers/investmentController');
+const {
+  getProducts,
+  getRates,
+  getInvestments,
+  createInvestment,
+  withdrawInvestment,
+  deleteInvestment
+} = require('../controllers/investmentController');
 
-router.use(requireAuth());
+// Taux & catalogue (auth requis pour cohérence multi-tenant)
+router.get('/products', requireAuth, getProducts);
+router.get('/rates', requireAuth, getRates);
 
-router.get('/',           ctrl.getInvestments);
-router.get('/products',   ctrl.getProducts);
-router.post('/',          ctrl.createInvestment);
-router.post('/:id/withdraw', ctrl.withdraw);
+// Portefeuille
+router.get('/', requireAuth, getInvestments);
+router.post('/', requireAuth, createInvestment);
+router.post('/:id/withdraw', requireAuth, withdrawInvestment);
+router.delete('/:id', requireAuth, deleteInvestment);
 
 module.exports = router;

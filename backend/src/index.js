@@ -68,4 +68,16 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
   console.log(`Fluxora API démarrée sur http://localhost:${PORT}`);
+
+  // Cron quotidien — mise à jour des taux marché (08h15 CET, après publication ECB à 08h00)
+  const cron = require('node-cron');
+  const { updateMarketRates } = require('./services/marketDataService');
+
+  cron.schedule('15 7 * * 1-5', async () => {
+    try { await updateMarketRates(); }
+    catch (e) { console.error('[Cron] Erreur updateMarketRates:', e.message); }
+  }, { timezone: 'Europe/Paris' });
+
+  // Fetch immédiat au démarrage si pas de données aujourd'hui
+  updateMarketRates().catch(e => console.error('[MarketData] Init error:', e.message));
 });
