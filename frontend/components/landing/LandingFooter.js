@@ -13,11 +13,13 @@ const LINKS = {
     { label: 'S\'inscrire', href: '/sign-up' },
     { label: 'Dashboard', href: '/dashboard' },
   ],
-  Support: [
+  Légal: [
+    { label: 'Mentions légales', href: '/legal/mentions-legales' },
+    { label: 'CGU', href: '/legal/cgu' },
+    { label: 'CGV', href: '/legal/cgv' },
+    { label: 'Confidentialité', href: '/legal/confidentialite' },
+    { label: 'Cookies', href: '/legal/cookies' },
     { label: 'Contact', href: 'mailto:support@fluxora.io' },
-    { label: 'Mentions légales', href: '#' },
-    { label: 'Confidentialité', href: '#' },
-    { label: 'CGU', href: '#' },
   ],
 };
 
@@ -25,7 +27,7 @@ export default function LandingFooter() {
   return (
     <footer className="bg-[#0A0F1E] border-t border-white/5">
       <div className="max-w-7xl mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-12">
 
           {/* Brand */}
           <div className="md:col-span-1">
