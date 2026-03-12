@@ -12,7 +12,7 @@ const fmt = (n) =>
 function FinancingContent({ invoice, onConfirm, onCancel, loading }) {
   const max = invoice.total;
   const [amount, setAmount] = useState(max);
-  const fees      = +(amount * 0.01).toFixed(2);
+  const fees      = +(amount * 0.10).toFixed(2);
   const netAmount = +(amount - fees).toFixed(2);
 
   return (
@@ -56,7 +56,7 @@ function FinancingContent({ invoice, onConfirm, onCancel, loading }) {
           <span className="font-semibold text-slate-800">{fmt(amount)}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-slate-500">Frais de service (1%)</span>
+          <span className="text-slate-500">Frais de service (10%)</span>
           <span className="text-danger-600 font-medium">− {fmt(fees)}</span>
         </div>
         <div className="border-t border-slate-200 pt-2.5 flex justify-between">
