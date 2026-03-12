@@ -56,6 +56,7 @@ app.use('/api/vat',          require('./routes/vat'));
 app.use('/api/transactions', require('./routes/transactions'));
 app.use('/api/webhooks',     require('./routes/webhooks'));
 app.use('/api/assistant',    require('./routes/assistant'));
+app.use('/api/investments',  require('./routes/investments'));
 
 // Gestion des erreurs globale
 app.use((err, req, res, next) => {
