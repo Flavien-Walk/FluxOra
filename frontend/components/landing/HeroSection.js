@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, CheckCircle2, ShieldCheck, Zap, TrendingUp } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ShieldCheck, Zap, TrendingUp, CreditCard } from 'lucide-react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 
 /* ─── Variants ─── */
@@ -117,31 +117,31 @@ function DashboardMockup3D() {
               </div>
               <div className="flex items-center gap-5">
                 <div className="text-right">
-                  <p className="text-[10px] text-slate-500">CA total</p>
-                  <p className="text-sm font-bold text-white tabular-nums">84 200 €</p>
+                  <p className="text-[10px] text-slate-500">Trésorerie</p>
+                  <p className="text-sm font-bold text-white tabular-nums">142 800 €</p>
                 </div>
                 <div className="w-px h-6 bg-slate-700" />
                 <div className="text-right">
                   <p className="text-[10px] text-slate-500">Cashflow</p>
-                  <p className="text-sm font-bold text-emerald-400 tabular-nums">+12 400 €</p>
+                  <p className="text-sm font-bold text-emerald-400 tabular-nums">+18 400 €</p>
                 </div>
               </div>
             </div>
 
             {/* KPIs */}
             <div className="grid grid-cols-2 gap-2.5">
-              <MockKPI label="Chiffre d'affaires" value="84 200 €" color="green"  sub="CA total" />
-              <MockKPI label="En attente"         value="6 800 €"  color="yellow" sub="3 factures" />
-              <MockKPI label="Dépenses"           value="5 320 €"  color="indigo" sub="Ce mois" />
-              <MockKPI label="Devis en cours"     value="4"        color="blue"   sub="Valeur : 28 000 €" />
+              <MockKPI label="Trésorerie nette"  value="142 800 €" color="green"  sub="Solde disponible" />
+              <MockKPI label="Dépenses"           value="9 320 €"   color="yellow" sub="8 cartes actives" />
+              <MockKPI label="Virements en cours" value="4"         color="indigo" sub="23 000 € total" />
+              <MockKPI label="Factures dues"      value="6 800 €"   color="blue"   sub="3 en attente" />
             </div>
 
             {/* Animated chart */}
             <div className="rounded-xl bg-slate-900/60 border border-white/5 p-4">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-[10px] text-slate-500 uppercase tracking-widest">CA — 6 derniers mois</p>
+                <p className="text-[10px] text-slate-500 uppercase tracking-widest">Cashflow — 6 derniers mois</p>
                 <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
-                  <TrendingUp size={10} /> +18%
+                  <TrendingUp size={10} /> +22%
                 </span>
               </div>
               <div className="flex items-end gap-1.5 h-12">
@@ -173,15 +173,15 @@ function DashboardMockup3D() {
         <FloatingBadge className="-top-4 -right-4" delay={1.0}>
           <div className="bg-emerald-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.6)] flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-            Cashflow positif
+            Trésorerie positive
           </div>
         </FloatingBadge>
 
         <FloatingBadge className="-bottom-4 -left-4" delay={1.3}>
           <div className="bg-[#111827] border border-white/10 rounded-xl px-3 py-2 shadow-xl backdrop-blur-sm">
             <div className="flex items-center gap-2">
-              <CheckCircle2 size={13} className="text-emerald-400" />
-              <span className="text-[11px] text-slate-300 font-medium">2 devis acceptés</span>
+              <CreditCard size={13} className="text-blue-400" />
+              <span className="text-[11px] text-slate-300 font-medium">Carte bloquée instantanément</span>
             </div>
           </div>
         </FloatingBadge>
@@ -190,7 +190,7 @@ function DashboardMockup3D() {
           <div className="bg-[#111827] border border-blue-500/30 rounded-xl px-3 py-2 shadow-xl backdrop-blur-sm">
             <div className="flex items-center gap-2">
               <Zap size={11} className="text-blue-400" fill="currentColor" />
-              <span className="text-[11px] text-blue-300 font-medium">Facture envoyée</span>
+              <span className="text-[11px] text-blue-300 font-medium">Virement validé</span>
             </div>
           </div>
         </FloatingBadge>
@@ -229,21 +229,20 @@ export default function HeroSection({ isConnected }) {
             <motion.div variants={fadeUp}>
               <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold px-4 py-1.5 rounded-full mb-8">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
-                Cockpit financier tout-en-un
+                Cockpit financier pour PME
               </div>
             </motion.div>
 
-            <motion.h1 variants={fadeUp} className="text-5xl lg:text-7xl font-bold tracking-tight text-white leading-[1.06] mb-6">
-              Pilotez vos{' '}
+            <motion.h1 variants={fadeUp} className="text-5xl lg:text-6xl font-bold tracking-tight text-white leading-[1.08] mb-6">
+              Voir, contrôler et faire avancer{' '}
               <span className="bg-gradient-to-r from-blue-400 via-indigo-400 to-violet-400 bg-clip-text text-transparent">
-                finances
+                votre cash
               </span>
-              <br />comme un pro
             </motion.h1>
 
             <motion.p variants={fadeUp} className="text-lg text-slate-400 leading-relaxed mb-10 max-w-lg">
-              Fluxora centralise vos factures, devis, dépenses et comptabilité.
-              Un seul outil pour remplacer cinq. Pensé pour les freelances et PME.
+              Centralisez vos cartes, dépenses, virements et suivi de trésorerie dans un seul outil.
+              Fini les tableurs. Fini les surprises.
             </motion.p>
 
             <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 mb-12">
@@ -251,24 +250,24 @@ export default function HeroSection({ isConnected }) {
                 href={isConnected ? '/dashboard' : '/sign-up'}
                 className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-[0_0_30px_rgba(79,70,229,0.45)] hover:shadow-[0_0_50px_rgba(79,70,229,0.65)] transition-all duration-200 hover:-translate-y-0.5"
               >
-                {isConnected ? 'Accéder au dashboard' : 'Commencer gratuitement'}
+                {isConnected ? 'Accéder au dashboard' : 'Demander une démo'}
                 <ArrowRight size={16} />
               </Link>
               {!isConnected && (
-                <Link
-                  href="/sign-in"
+                <a
+                  href="#how-it-works"
                   className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-white/70 border border-white/15 hover:border-white/35 hover:text-white hover:bg-white/5 transition-all duration-200 hover:-translate-y-0.5"
                 >
-                  Se connecter
-                </Link>
+                  Voir comment ça fonctionne
+                </a>
               )}
             </motion.div>
 
             <motion.div variants={fadeUp} className="flex flex-wrap items-center gap-5 text-sm text-slate-500">
               {[
-                { icon: CheckCircle2, label: 'Gratuit pour démarrer' },
-                { icon: ShieldCheck,  label: 'Données sécurisées RGPD' },
-                { icon: Zap,          label: 'Opérationnel en 5 min' },
+                { icon: CheckCircle2, label: 'Sans engagement' },
+                { icon: ShieldCheck,  label: 'Conformité RGPD' },
+                { icon: Zap,          label: 'Déploiement en 48h' },
               ].map(({ icon: Icon, label }) => (
                 <div key={label} className="flex items-center gap-1.5">
                   <Icon size={14} className="text-emerald-500" />
