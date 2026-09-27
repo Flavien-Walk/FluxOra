@@ -47,7 +47,7 @@ export default function PartnerDetailPage({ params }) {
     return (
       <>
         <Header title="Partenaire introuvable" />
-        <div className="flex-1 p-6 flex flex-col items-center justify-center gap-4">
+        <div className="flex-1 p-4 lg:p-6 flex flex-col items-center justify-center gap-4">
           <p className="text-slate-500">Ce partenaire n'existe pas.</p>
           <Link href="/partenariats" className="text-sm text-accent-600 hover:underline">
             ← Retour aux partenariats
@@ -70,7 +70,7 @@ export default function PartnerDetailPage({ params }) {
     <>
       <Header title={partner.name} />
 
-      <div className="flex-1 p-6 max-w-3xl space-y-6">
+      <div className="flex-1 p-4 lg:p-6 max-w-3xl space-y-6">
 
         {/* Back */}
         <Link

@@ -3,51 +3,9 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import {
-  LayoutDashboard, Users, FileText, ClipboardList,
-  Receipt, BookOpen, Settings, Zap,
-  CreditCard, ArrowUpRight, ArrowLeftRight, Landmark, TrendingUp,
-} from 'lucide-react';
+import { Settings, Zap } from 'lucide-react';
 import { useAlerts } from '@/hooks/useAlerts';
-
-const NAV_GROUPS = [
-  {
-    label: 'Accueil',
-    items: [
-      { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    ],
-  },
-  {
-    label: 'Gestion',
-    items: [
-      { href: '/clients',  label: 'Clients',  icon: Users },
-      { href: '/invoices', label: 'Factures', icon: FileText },
-      { href: '/quotes',   label: 'Devis',    icon: ClipboardList },
-      { href: '/expenses', label: 'Dépenses', icon: Receipt, alertBadge: true },
-    ],
-  },
-  {
-    label: 'Finance',
-    items: [
-      { href: '/cards',     label: 'Cartes',       icon: CreditCard },
-      { href: '/transfers', label: 'Virements',    icon: ArrowUpRight },
-      { href: '/transactions', label: 'Transactions', icon: ArrowLeftRight },
-    ],
-  },
-  {
-    label: 'Analyse',
-    items: [
-      { href: '/accounting', label: 'Comptabilité', icon: BookOpen },
-      { href: '/vat',        label: 'TVA',          icon: Landmark },
-    ],
-  },
-  {
-    label: 'Croissance',
-    items: [
-      { href: '/investissements', label: 'Investissements', icon: TrendingUp },
-    ],
-  },
-];
+import { NAV_GROUPS, isNavActive } from './navConfig';
 
 function NavItem({ href, label, icon: Icon, isActive, badge }) {
   return (
@@ -82,11 +40,10 @@ export default function Sidebar() {
   const pathname  = usePathname();
   const { openCount } = useAlerts('open');
 
-  const isActive = (href) =>
-    pathname === href || (href !== '/dashboard' && pathname.startsWith(href + '/'));
+  const isActive = (href) => isNavActive(pathname, href);
 
   return (
-    <aside className="w-56 min-h-screen bg-white border-r border-gray-100 flex flex-col">
+    <aside className="hidden lg:flex w-56 flex-shrink-0 h-screen sticky top-0 bg-white border-r border-gray-100 flex-col">
       {/* Logo */}
       <div className="h-14 flex items-center gap-2.5 px-4 border-b border-gray-100">
         <div className="w-7 h-7 bg-accent-600 rounded-lg flex items-center justify-center shadow-sm flex-shrink-0">

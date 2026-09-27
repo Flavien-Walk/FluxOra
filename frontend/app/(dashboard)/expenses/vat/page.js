@@ -85,7 +85,7 @@ export default function VatPage() {
   return (
     <>
       <Header title="Récupération TVA" />
-      <div className="flex-1 p-6 space-y-6">
+      <div className="flex-1 p-4 lg:p-6 space-y-6">
 
         {/* Sélection période */}
         <Card>

@@ -105,7 +105,7 @@ export default function CardsPage() {
   return (
     <>
       <Header title="Cartes virtuelles" />
-      <div className="flex-1 p-6 space-y-6">
+      <div className="flex-1 p-4 lg:p-6 space-y-6">
 
         {/* Banner simulation */}
         <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-3 flex items-start gap-3">

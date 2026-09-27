@@ -55,7 +55,7 @@ export default function QuotesPage() {
           </Button>
         }
       />
-      <div className="flex-1 p-6">
+      <div className="flex-1 p-4 lg:p-6">
         {/* Filtres + search intégrés */}
         <div className="flex items-center gap-3 mb-5 flex-wrap">
           <div className="flex gap-1.5 flex-wrap">

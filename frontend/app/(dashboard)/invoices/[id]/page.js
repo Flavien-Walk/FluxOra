@@ -104,7 +104,7 @@ export default function InvoiceDetailPage() {
   return (
     <>
       <Header title={invoice.number} />
-      <div className="flex-1 p-6 max-w-3xl space-y-5">
+      <div className="flex-1 p-4 lg:p-6 max-w-3xl space-y-5">
 
         {/* Navigation + actions */}
         <div className="flex items-center justify-between flex-wrap gap-3">

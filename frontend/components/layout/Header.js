@@ -2,7 +2,7 @@
 
 import { useUser, useClerk } from '@clerk/nextjs';
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Settings, LogOut, Globe, ChevronDown } from 'lucide-react';
+import { Bell, Settings, LogOut, Globe, ChevronDown, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import GlobalSearch from '@/components/ui/GlobalSearch';
@@ -109,20 +109,35 @@ function UserDropdown() {
 /* ─── Header ─── */
 export default function Header({ title, subtitle, actions }) {
   return (
-    <header className="h-14 bg-white border-b border-slate-100 flex items-center gap-4 px-6 flex-shrink-0">
+    <header
+      className={cn(
+        'sticky top-0 z-30 lg:static bg-white/95 backdrop-blur lg:bg-white border-b border-slate-100',
+        'flex flex-wrap lg:flex-nowrap items-center gap-x-3 gap-y-2 lg:gap-4 px-4 lg:px-6 py-2.5 lg:py-0 lg:h-14 flex-shrink-0'
+      )}
+    >
 
-      <div className="min-w-0 w-40 flex-shrink-0">
-        <h1 className="text-sm font-semibold text-slate-900 truncate">{title}</h1>
+      {/* Logo compact — mobile uniquement (la sidebar est masquée) */}
+      <div className="lg:hidden w-7 h-7 bg-accent-600 rounded-lg flex items-center justify-center shadow-sm flex-shrink-0">
+        <Zap size={14} className="text-white" />
+      </div>
+
+      <div className="min-w-0 flex-1 lg:flex-none lg:w-40">
+        <h1 className="text-base lg:text-sm font-semibold text-slate-900 truncate">{title}</h1>
         {subtitle && <p className="text-xs text-slate-400 truncate mt-0.5">{subtitle}</p>}
       </div>
 
-      <div className="flex-1 flex justify-center">
+      <div className="hidden md:flex flex-1 justify-center">
         <GlobalSearch />
       </div>
 
-      <div className="flex items-center gap-1.5 flex-shrink-0">
-        {actions && <div className="flex items-center gap-2 mr-1">{actions}</div>}
+      {/* Mobile : les actions de la page passent sur une 2e ligne pleine largeur */}
+      {actions && (
+        <div className="order-last w-full flex items-center gap-2 lg:order-none lg:w-auto lg:mr-1 [&>*]:flex-1 lg:[&>*]:flex-none">
+          {actions}
+        </div>
+      )}
 
+      <div className="flex items-center gap-1.5 flex-shrink-0">
         <button className={cn(
           'w-8 h-8 flex items-center justify-center rounded-lg',
           'text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors duration-150'

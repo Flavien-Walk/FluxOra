@@ -88,7 +88,7 @@ export default function ClientDetailPage() {
   return (
     <>
       <Header title={client.name} />
-      <div className="flex-1 p-6 max-w-3xl space-y-5">
+      <div className="flex-1 p-4 lg:p-6 max-w-3xl space-y-5">
 
         {/* Retour + actions */}
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -110,7 +110,7 @@ export default function ClientDetailPage() {
 
         {/* KPIs client */}
         {invoices.length > 0 && (
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* CA encaissé */}
             <div className="bg-white rounded-xl border border-[rgba(148,163,184,0.3)] shadow-card overflow-hidden">
               <div className="h-[3px] bg-success-500" />

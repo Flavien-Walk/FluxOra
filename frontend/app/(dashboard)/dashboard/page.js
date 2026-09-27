@@ -110,7 +110,7 @@ export default function DashboardPage() {
   return (
     <>
       <Header title="Dashboard" />
-      <div className="flex-1 p-6 space-y-5">
+      <div className="flex-1 p-4 lg:p-6 space-y-5">
 
         {/* ══════════════════════════════════════════════════
             HERO — Section premium navy gradient

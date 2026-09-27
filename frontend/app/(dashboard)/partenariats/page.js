@@ -41,7 +41,7 @@ export default function PartenariatsPage() {
     <>
       <Header title="Bons plans & intégrations" />
 
-      <div className="flex-1 p-6 space-y-6">
+      <div className="flex-1 p-4 lg:p-6 space-y-6">
 
         {/* Hero */}
         <div className="bg-white border border-slate-100 rounded-xl p-5 flex items-start justify-between gap-4 flex-wrap shadow-card">

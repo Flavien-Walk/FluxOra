@@ -217,7 +217,7 @@ export default function ExpensesPage() {
   return (
     <>
       <Header title="Dépenses" />
-      <div className="flex-1 p-6 space-y-6">
+      <div className="flex-1 p-4 lg:p-6 space-y-6">
 
         {/* KPI */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -28,7 +28,7 @@ export default function ClientsPage() {
           </Button>
         }
       />
-      <div className="flex-1 p-6">
+      <div className="flex-1 p-4 lg:p-6">
         {/* Recherche */}
         <div className="relative w-full sm:w-72 mb-5">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />

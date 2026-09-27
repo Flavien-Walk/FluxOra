@@ -127,7 +127,7 @@ export default function AccountingPage() {
   return (
     <>
       <Header title="Comptabilité" />
-      <div className="flex-1 p-6 space-y-6">
+      <div className="flex-1 p-4 lg:p-6 space-y-6">
 
         {/* KPI solde */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

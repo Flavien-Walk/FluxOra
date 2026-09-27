@@ -284,7 +284,7 @@ export default function InvestissementsPage() {
         subtitle="Faites travailler votre trésorerie dormante"
       />
 
-      <div className="flex-1 p-6 max-w-5xl mx-auto w-full space-y-6">
+      <div className="flex-1 p-4 lg:p-6 max-w-5xl mx-auto w-full space-y-6">
 
         {/* ── KPI cards ──────────────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
