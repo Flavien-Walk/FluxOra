@@ -5,6 +5,8 @@
  *   - "Share on LinkedIn"                            (scope w_member_social)
  * Les jetons membres durent ~60 jours et ne sont pas rafraîchissables → reconnexion.
  */
+const { assertPublicHttpsUrl } = require('./safeUrl');
+
 const AUTH_URL  = 'https://www.linkedin.com/oauth/v2/authorization';
 const TOKEN_URL = 'https://www.linkedin.com/oauth/v2/accessToken';
 const API       = 'https://api.linkedin.com';
@@ -82,13 +84,18 @@ async function uploadImage(accessToken, authorUrn, imageUrl) {
   if (!init.ok) throw await linkedinError(init, 'préparation image');
   const { value } = await init.json();
 
-  const img = await fetch(imageUrl);
+  // URL fournie par l'utilisateur : https public uniquement, sans suivre de redirection (anti-SSRF)
+  await assertPublicHttpsUrl(imageUrl);
+  const img = await fetch(imageUrl, { redirect: 'error' });
   if (!img.ok) throw new Error(`Image inaccessible (${img.status})`);
+  const contentType = img.headers.get('content-type') || '';
+  if (!/^image\/(jpeg|png|gif|webp)/i.test(contentType)) throw new Error('Le lien ne pointe pas vers une image (jpeg, png, gif, webp).');
   const bytes = Buffer.from(await img.arrayBuffer());
+  if (bytes.length > 8 * 1024 * 1024) throw new Error('Image trop lourde (8 Mo max).');
 
   const put = await fetch(value.uploadUrl, {
     method: 'PUT',
-    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': img.headers.get('content-type') || 'image/jpeg' },
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': contentType },
     body: bytes,
   });
   if (!put.ok) throw await linkedinError(put, 'envoi image');

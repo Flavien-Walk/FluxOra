@@ -30,8 +30,16 @@ async function searchPhotos(query, perPage = 6) {
 }
 
 // À appeler quand une photo est réellement utilisée (publication)
+// L'URL vient du client : n'envoyer la clé qu'à l'API Unsplash officielle (sinon fuite du Client-ID)
+const isUnsplashApiUrl = (raw) => {
+  try {
+    const u = new URL(raw);
+    return u.protocol === 'https:' && u.hostname === 'api.unsplash.com';
+  } catch { return false; }
+};
+
 async function trackDownload(downloadLocation) {
-  if (!isConfigured() || !downloadLocation) return;
+  if (!isConfigured() || !isUnsplashApiUrl(downloadLocation)) return;
   try {
     await fetch(downloadLocation, { headers: { Authorization: `Client-ID ${process.env.UNSPLASH_ACCESS_KEY}` } });
   } catch (e) {
