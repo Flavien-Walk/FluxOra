@@ -80,7 +80,7 @@ const HUB = [
 export default function AssistantHubActions({ onAction }) {
   return (
     <div>
-      <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+      <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
         Actions rapides
       </p>
       <div className="grid grid-cols-3 gap-2">

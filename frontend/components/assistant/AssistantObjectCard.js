@@ -17,7 +17,7 @@ function SocialPostCard({ card }) {
       <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-3.5 py-2">
         <div className="min-w-0">
           <p className="text-[12.5px] font-semibold text-slate-800">{card.title}</p>
-          {card.subtitle && <p className="text-[11px] text-slate-400">{card.subtitle}</p>}
+          {card.subtitle && <p className="text-[11px] text-slate-500">{card.subtitle}</p>}
         </div>
         {card.badge && (
           <span className="shrink-0 rounded-full bg-[#0A66C2]/10 px-2 py-0.5 text-[10px] font-semibold text-[#0A66C2]">
@@ -76,7 +76,7 @@ export default function AssistantObjectCard({ card }) {
           {card.fields.map((field, index) => (
             <div key={`${card.id}-field-${index}`} className="rounded-lg bg-white/70 px-3 py-2">
               {field.label && (
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
                   {field.label}
                 </p>
               )}

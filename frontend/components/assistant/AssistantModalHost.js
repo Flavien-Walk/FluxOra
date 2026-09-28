@@ -236,8 +236,8 @@ function ExpenseReclassModal({ modal, onClose, onAppendAssistantMessage }) {
           <p className="text-[11px] text-slate-500">{expense.vendor || 'Fournisseur inconnu'}</p>
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Nouvelle catégorie</label>
-          <select
+          <label htmlFor="assistant-assistantmodalhost-nouvelle-categorie" className="mb-1 block text-sm font-medium text-slate-700">Nouvelle catégorie</label>
+          <select id="assistant-assistantmodalhost-nouvelle-categorie"
             value={category}
             onChange={(event) => setCategory(event.target.value)}
             className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
@@ -248,8 +248,8 @@ function ExpenseReclassModal({ modal, onClose, onAppendAssistantMessage }) {
           </select>
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Notes</label>
-          <textarea
+          <label htmlFor="assistant-assistantmodalhost-notes" className="mb-1 block text-sm font-medium text-slate-700">Notes</label>
+          <textarea id="assistant-assistantmodalhost-notes"
             rows={3}
             value={notes}
             onChange={(event) => setNotes(event.target.value)}

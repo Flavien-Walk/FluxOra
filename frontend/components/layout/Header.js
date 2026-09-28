@@ -45,7 +45,7 @@ function UserDropdown() {
             <span className="text-white text-[11px] font-bold leading-none">{initials}</span>
           </div>
         )}
-        <ChevronDown size={11} className={cn('text-slate-400 transition-transform duration-200', open && 'rotate-180')} />
+        <ChevronDown size={11} className={cn('text-slate-500 transition-transform duration-200', open && 'rotate-180')} />
       </button>
 
       {/* Panel dropdown */}
@@ -64,7 +64,7 @@ function UserDropdown() {
               )}
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-slate-900 truncate">{name}</p>
-                {email && <p className="text-xs text-slate-400 truncate">{email}</p>}
+                {email && <p className="text-xs text-slate-500 truncate">{email}</p>}
               </div>
             </div>
           </div>
@@ -76,7 +76,7 @@ function UserDropdown() {
               onClick={() => setOpen(false)}
               className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
             >
-              <Settings size={14} className="text-slate-400" />
+              <Settings size={14} className="text-slate-500" />
               Paramètres
             </Link>
             <a
@@ -85,7 +85,7 @@ function UserDropdown() {
               rel="noreferrer"
               className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
             >
-              <Globe size={14} className="text-slate-400" />
+              <Globe size={14} className="text-slate-500" />
               Découvrir Fluxora
             </a>
           </div>
@@ -123,7 +123,7 @@ export default function Header({ title, subtitle, actions }) {
 
       <div className="min-w-0 flex-1 lg:flex-none lg:w-40">
         <h1 className="text-base lg:text-sm font-semibold text-slate-900 truncate">{title}</h1>
-        {subtitle && <p className="text-xs text-slate-400 truncate mt-0.5">{subtitle}</p>}
+        {subtitle && <p className="text-xs text-slate-500 truncate mt-0.5">{subtitle}</p>}
       </div>
 
       <div className="hidden md:flex flex-1 justify-center">
@@ -138,9 +138,9 @@ export default function Header({ title, subtitle, actions }) {
       )}
 
       <div className="flex items-center gap-1.5 flex-shrink-0">
-        <button className={cn(
+        <button aria-label="Notifications" className={cn(
           'w-8 h-8 flex items-center justify-center rounded-lg',
-          'text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors duration-150'
+          'text-slate-500 hover:text-slate-600 hover:bg-slate-50 transition-colors duration-150'
         )}>
           <Bell size={15} />
         </button>

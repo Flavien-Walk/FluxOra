@@ -31,7 +31,7 @@ export default function ClientsPage() {
       <div className="flex-1 p-4 lg:p-6">
         {/* Recherche */}
         <div className="relative w-full sm:w-72 mb-5">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
           <input
             type="text"
             placeholder="Rechercher un client…"
@@ -74,11 +74,11 @@ export default function ClientsPage() {
                     <div className="min-w-0">
                       <p className="font-medium text-slate-900 text-sm truncate">{client.name}</p>
                       {client.company && (
-                        <p className="text-xs text-slate-400 truncate">{client.company}</p>
+                        <p className="text-xs text-slate-500 truncate">{client.company}</p>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-5 text-xs text-slate-400 flex-shrink-0">
+                  <div className="flex items-center gap-5 text-xs text-slate-500 flex-shrink-0">
                     {client.email && (
                       <span className="hidden sm:flex items-center gap-1.5">
                         <Mail size={12} /> {client.email}
@@ -95,7 +95,7 @@ export default function ClientsPage() {
               ))}
             </div>
             {total > clients.length && (
-              <div className="px-5 py-3 border-t border-slate-100 text-xs text-slate-400 text-center">
+              <div className="px-5 py-3 border-t border-slate-100 text-xs text-slate-500 text-center">
                 {total} clients au total
               </div>
             )}

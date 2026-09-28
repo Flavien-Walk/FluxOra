@@ -59,7 +59,7 @@ export default function PartnerConnectModal({ partner, open, onClose, onConnecte
 
         {/* Close */}
         {phase !== 'connecting' && (
-          <button
+          <button aria-label="Fermer"
             onClick={onClose}
             className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
           >
@@ -81,7 +81,7 @@ export default function PartnerConnectModal({ partner, open, onClose, onConnecte
               {/* Actions preview */}
               {partner.integration.actions.length > 0 && (
                 <div className="bg-slate-50 rounded-xl p-4 mb-5 space-y-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-2">Ce qui sera automatisé</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-2">Ce qui sera automatisé</p>
                   {partner.integration.actions.map((action) => (
                     <div key={action} className="flex items-center gap-2 text-sm text-slate-600">
                       <Zap size={12} className="text-accent-500 flex-shrink-0" />
@@ -97,7 +97,7 @@ export default function PartnerConnectModal({ partner, open, onClose, onConnecte
               >
                 Connecter <ArrowRight size={14} />
               </button>
-              <p className="text-center text-xs text-slate-400 mt-3">
+              <p className="text-center text-xs text-slate-500 mt-3">
                 Simulation MVP — aucune donnée réelle n'est échangée
               </p>
             </>

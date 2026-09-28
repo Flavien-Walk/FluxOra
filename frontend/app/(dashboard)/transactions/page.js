@@ -76,7 +76,7 @@ export default function TransactionsPage() {
                 <ArrowDownLeft size={18} strokeWidth={2} />
               </div>
             </div>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Encaissements</p>
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-1">Encaissements</p>
             <p className="text-2xl font-bold text-slate-900 tabular-nums">{fmt(totalRevenue)}</p>
             <p className="text-xs text-success-600 font-medium mt-1.5">Recettes reçues</p>
           </div>
@@ -91,7 +91,7 @@ export default function TransactionsPage() {
                 <TrendingDown size={18} strokeWidth={2} />
               </div>
             </div>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Dépenses</p>
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-1">Dépenses</p>
             <p className="text-2xl font-bold text-slate-900 tabular-nums">{fmt(totalExpenses)}</p>
             <p className="text-xs text-danger-600 font-medium mt-1.5">Charges enregistrées</p>
           </div>
@@ -106,7 +106,7 @@ export default function TransactionsPage() {
                 <ArrowUpRight size={18} strokeWidth={2} />
               </div>
             </div>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Virements</p>
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-1">Virements</p>
             <p className="text-2xl font-bold text-slate-900 tabular-nums">{fmt(totalTransfer)}</p>
             <p className="text-xs text-accent-600 font-medium mt-1.5">Sorties bancaires</p>
           </div>
@@ -129,7 +129,7 @@ export default function TransactionsPage() {
                   : <Minus size={18} strokeWidth={2} />}
               </div>
             </div>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Flux net</p>
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-1">Flux net</p>
             <p className={`text-2xl font-bold tabular-nums ${cashflow >= 0 ? 'text-success-700' : 'text-warning-700'}`}>
               {cashflow >= 0 ? '+' : ''}{fmt(cashflow)}
             </p>
@@ -146,7 +146,7 @@ export default function TransactionsPage() {
               <div>
                 <h2 className="text-sm font-semibold text-slate-800">Journal des transactions</h2>
                 {data?.total != null && (
-                  <p className="text-xs text-slate-400 mt-0.5">{data.total} mouvements</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{data.total} mouvements</p>
                 )}
               </div>
               <div className="flex gap-0.5 bg-slate-100 rounded-lg p-1">
@@ -181,7 +181,7 @@ export default function TransactionsPage() {
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <RefreshCw size={36} className="text-slate-200 mb-3" />
                 <p className="text-slate-500 font-medium">Aucune transaction</p>
-                <p className="text-slate-400 text-sm mt-1">
+                <p className="text-slate-500 text-sm mt-1">
                   Les mouvements financiers apparaîtront ici automatiquement
                 </p>
               </div>
@@ -190,12 +190,12 @@ export default function TransactionsPage() {
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50/60 border-b border-slate-100">
                     <tr>
-                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Date</th>
-                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Type</th>
-                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Description</th>
-                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Tiers</th>
-                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Référence</th>
-                      <th className="text-right px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Montant</th>
+                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Date</th>
+                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Type</th>
+                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Description</th>
+                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Tiers</th>
+                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Référence</th>
+                      <th className="text-right px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Montant</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
@@ -215,13 +215,13 @@ export default function TransactionsPage() {
                           <td className="px-5 py-3 text-slate-900 font-medium max-w-[180px] truncate">
                             {tx.label}
                             {tx.category && (
-                              <span className="ml-1.5 text-xs text-slate-400 font-normal">
+                              <span className="ml-1.5 text-xs text-slate-500 font-normal">
                                 {CAT_LABELS[tx.category] || tx.category}
                               </span>
                             )}
                           </td>
                           <td className="px-5 py-3 text-slate-500 text-xs truncate max-w-[120px]">{tx.party}</td>
-                          <td className="px-5 py-3 text-slate-400 text-xs font-mono">{tx.reference || '—'}</td>
+                          <td className="px-5 py-3 text-slate-500 text-xs font-mono">{tx.reference || '—'}</td>
                           <td className="px-5 py-3 text-right">
                             <span className={cn('font-semibold tabular-nums', cfg.color)}>
                               {cfg.sign}{fmt(tx.amount)}

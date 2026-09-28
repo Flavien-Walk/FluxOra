@@ -6,8 +6,15 @@ export default function CGU() {
       <div className="mb-10">
         <span className="text-xs font-semibold text-indigo-600 uppercase tracking-widest">Conditions Générales d&apos;Utilisation</span>
         <h1 className="text-3xl font-bold text-slate-900 mt-2 mb-1">CGU — Conditions Générales d&apos;Utilisation</h1>
-        <p className="text-sm text-slate-400">Version 1.0 — Dernière mise à jour : mars 2026</p>
+        <p className="text-sm text-slate-500">Version 1.0 — Dernière mise à jour : mars 2026</p>
       </div>
+
+      <p className="mb-8 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <strong>Bêta non commerciale :</strong> Fluxora est un projet étudiant, gratuit pendant la bêta. Les conditions
+        tarifaires ci-dessous décrivent l&apos;offre envisagée ; elles ne s&apos;appliqueront qu&apos;au lancement commercial,
+        après validation juridique.
+      </p>
+
 
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-10 text-sm text-amber-800">
         <strong>Important :</strong> Fluxora est un outil de gestion financière (logiciel SaaS). Fluxora n&apos;est pas une banque,
@@ -18,7 +25,7 @@ export default function CGU() {
         <h2 className="text-xl font-bold text-slate-800 mb-4">1. Objet</h2>
         <p className="text-slate-600 leading-relaxed">
           Les présentes Conditions Générales d&apos;Utilisation (ci-après « CGU ») régissent l&apos;accès et l&apos;utilisation
-          de la plateforme Fluxora (ci-après « la Plateforme »), éditée par Fluxora SAS.
+          de la plateforme Fluxora (ci-après « la Plateforme »), éditée par l’équipe Fluxora.
           Toute utilisation de la Plateforme implique l&apos;acceptation pleine et entière des présentes CGU.
         </p>
       </section>
@@ -135,7 +142,7 @@ export default function CGU() {
         <h2 className="text-xl font-bold text-slate-800 mb-4">11. Droit applicable</h2>
         <p className="text-slate-600 leading-relaxed">
           Les présentes CGU sont soumises au droit français. En cas de litige, les parties s&apos;efforceront de trouver
-          une solution amiable. À défaut, les tribunaux du ressort du siège social de Fluxora SAS seront seuls compétents.
+          une solution amiable. À défaut, les tribunaux du ressort du siège social de l’équipe Fluxora seront seuls compétents.
         </p>
       </section>
     </article>

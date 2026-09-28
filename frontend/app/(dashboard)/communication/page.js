@@ -60,14 +60,14 @@ function LinkedInAccountCard({ linkedin, onConnect, onDisconnect, connecting }) 
           ) : (
             <>
               <p className="text-sm font-semibold text-slate-900">LinkedIn</p>
-              <p className={cn('text-xs', acc?.expired ? 'text-amber-600' : 'text-slate-400')}>
+              <p className={cn('text-xs', acc?.expired ? 'text-amber-600' : 'text-slate-500')}>
                 {acc?.expired ? 'Connexion expirée — reconnectez-vous' : !linkedin.configured ? 'Non configuré côté serveur' : 'Publiez sur votre profil'}
               </p>
             </>
           )}
         </div>
         {acc && !acc.expired ? (
-          <button onClick={onDisconnect} title="Déconnecter" className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-danger-600 hover:bg-danger-50">
+          <button onClick={onDisconnect} title="Déconnecter" aria-label="Déconnecter" className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-danger-600 hover:bg-danger-50">
             <Unplug size={15} />
           </button>
         ) : (
@@ -250,10 +250,10 @@ function CommunicationContent() {
                     className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-accent-500 disabled:bg-slate-50"
                   />
                   <div className="mt-1 flex justify-between text-[11px]">
-                    <span className={chars > FOLD_CHARS ? 'text-amber-600' : 'text-slate-400'}>
+                    <span className={chars > FOLD_CHARS ? 'text-amber-600' : 'text-slate-500'}>
                       {chars > FOLD_CHARS ? 'Au-delà de 1 300 caractères, le texte est replié (« voir plus »)' : 'Idéal : jusqu\'à 1 300 caractères'}
                     </span>
-                    <span className={cn('tabular-nums', chars > MAX_CHARS - 100 ? 'text-danger-600' : 'text-slate-400')}>{chars} / {MAX_CHARS}</span>
+                    <span className={cn('tabular-nums', chars > MAX_CHARS - 100 ? 'text-danger-600' : 'text-slate-500')}>{chars} / {MAX_CHARS}</span>
                   </div>
                 </div>
 
@@ -293,7 +293,7 @@ function CommunicationContent() {
                       )}
                     </div>
                     {!connected && (
-                      <p className="text-[11px] text-slate-400">Connectez LinkedIn pour publier ou programmer. Vous pouvez déjà enregistrer des brouillons.</p>
+                      <p className="text-[11px] text-slate-500">Connectez LinkedIn pour publier ou programmer. Vous pouvez déjà enregistrer des brouillons.</p>
                     )}
                   </div>
                 ) : draft.externalUrl && (
@@ -309,7 +309,7 @@ function CommunicationContent() {
           <div className="lg:col-span-2 space-y-4">
             <LinkedInAccountCard linkedin={linkedin} onConnect={connect} onDisconnect={disconnect} connecting={busy === 'connect'} />
             <div className="lg:sticky lg:top-6 space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">Aperçu</p>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Aperçu</p>
               <LinkedInPreview text={draft.text} image={draft.image} author={connected ? linkedin.account : null} />
             </div>
           </div>
@@ -332,7 +332,7 @@ function CommunicationContent() {
             </div>
           </CardHeader>
           {isLoading ? (
-            <CardBody><p className="text-sm text-slate-400">Chargement…</p></CardBody>
+            <CardBody><p className="text-sm text-slate-500">Chargement…</p></CardBody>
           ) : visiblePosts.length === 0 ? (
             <EmptyState icon={Megaphone} title="Aucun post pour l'instant" description="Rédigez votre premier post ci-dessus, ou demandez-le à l'assistant IA." />
           ) : (
@@ -342,11 +342,11 @@ function CommunicationContent() {
                   {p.image?.thumbUrl || p.image?.url ? (
                     <img src={p.image.thumbUrl || p.image.url} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
                   ) : (
-                    <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0"><Linkedin size={16} className="text-slate-400" /></div>
+                    <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0"><Linkedin size={16} className="text-slate-500" /></div>
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-slate-800 truncate">{p.text || '(sans texte)'}</p>
-                    <p className="text-[11px] text-slate-400">
+                    <p className="text-[11px] text-slate-500">
                       <span className={cn('mr-1.5 rounded-full px-1.5 py-0.5 font-semibold', STATUS[p.status]?.className)}>{STATUS[p.status]?.label}</span>
                       {p.status === 'published' && p.publishedAt && format(new Date(p.publishedAt), "d MMM yyyy 'à' HH:mm", { locale: fr })}
                       {p.status === 'scheduled' && p.scheduledAt && `le ${format(new Date(p.scheduledAt), "d MMM 'à' HH:mm", { locale: fr })}`}
@@ -355,15 +355,15 @@ function CommunicationContent() {
                     </p>
                   </div>
                   {p.externalUrl && (
-                    <a href={p.externalUrl} target="_blank" rel="noreferrer" title="Voir sur LinkedIn" className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-[#0A66C2] hover:bg-slate-50">
+                    <a href={p.externalUrl} target="_blank" rel="noreferrer" title="Voir sur LinkedIn" aria-label="Voir sur LinkedIn" className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-[#0A66C2] hover:bg-slate-50">
                       <ExternalLink size={15} />
                     </a>
                   )}
-                  <button onClick={() => loadPost(p)} title="Ouvrir" className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-accent-600 hover:bg-slate-50">
+                  <button aria-label="Ouvrir" onClick={() => loadPost(p)} title="Ouvrir" className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-accent-600 hover:bg-slate-50">
                     <PenSquare size={15} />
                   </button>
                   {p.status !== 'publishing' && (
-                    <button onClick={() => remove(p)} title="Supprimer" className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-danger-600 hover:bg-danger-50">
+                    <button aria-label="Supprimer" onClick={() => remove(p)} title="Supprimer" className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-danger-600 hover:bg-danger-50">
                       <Trash2 size={15} />
                     </button>
                   )}

@@ -30,10 +30,10 @@ function FinancingContent({ invoice, onConfirm, onCancel, loading }) {
 
       {/* Slider montant */}
       <div>
-        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
+        <label htmlFor="modules-overdueactionmodal-montant-a-debloquer" className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
           Montant à débloquer
         </label>
-        <input
+        <input id="modules-overdueactionmodal-montant-a-debloquer"
           type="range"
           min={Math.round(max * 0.1)}
           max={max}
@@ -42,7 +42,7 @@ function FinancingContent({ invoice, onConfirm, onCancel, loading }) {
           onChange={(e) => setAmount(Number(e.target.value))}
           className="w-full accent-accent-600 cursor-pointer"
         />
-        <div className="flex justify-between text-xs text-slate-400 mt-1.5">
+        <div className="flex justify-between text-xs text-slate-500 mt-1.5">
           <span>{fmt(max * 0.1)}</span>
           <span className="font-bold text-slate-700 text-sm">{fmt(amount)}</span>
           <span>{fmt(max)}</span>
@@ -65,7 +65,7 @@ function FinancingContent({ invoice, onConfirm, onCancel, loading }) {
         </div>
       </div>
 
-      <p className="text-xs text-slate-400 leading-relaxed">
+      <p className="text-xs text-slate-500 leading-relaxed">
         * Simulation. Le virement sera effectué sous 24 h ouvrées après validation par Defacto.
         Sans engagement.
       </p>
@@ -118,7 +118,7 @@ function RecoveryContent({ invoice, onConfirm, onCancel, loading }) {
 
       {/* Étapes */}
       <div>
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
           Procédure en 3 étapes
         </p>
         <div className="space-y-2">
@@ -130,7 +130,7 @@ function RecoveryContent({ invoice, onConfirm, onCancel, loading }) {
               <span className="text-lg leading-none mt-0.5">{step.icon}</span>
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5 mb-0.5">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">
                     Étape {i + 1}
                   </span>
                   {i < RECOVERY_STEPS.length - 1 && (

@@ -1,5 +1,7 @@
 'use client';
 
+import { toast } from 'sonner';
+
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -73,7 +75,7 @@ export default function InvoiceDetailPage() {
       setEmailOpen(false);
       mutate();
     } catch (err) {
-      alert(err.response?.data?.error || "Erreur lors de l'envoi.");
+      toast.error(err.response?.data?.error || "Erreur lors de l'envoi.");
     } finally {
       setLoading('');
     }
@@ -167,7 +169,7 @@ export default function InvoiceDetailPage() {
                 {invoice.paidAt && <p className="text-sm text-success-600 mt-1">Payée le {fmtDate(invoice.paidAt)}</p>}
               </div>
               <div className="text-right">
-                <p className="text-[11px] text-slate-400 uppercase font-semibold tracking-wide mb-1">Total TTC</p>
+                <p className="text-[11px] text-slate-500 uppercase font-semibold tracking-wide mb-1">Total TTC</p>
                 <p className="text-4xl font-bold text-slate-900 tabular-nums">{fmt(invoice.total)}</p>
               </div>
             </div>
@@ -179,7 +181,7 @@ export default function InvoiceDetailPage() {
           <Card hover>
             <CardHeader>
               <div className="flex items-center gap-2">
-                <User size={13} className="text-slate-400" />
+                <User size={13} className="text-slate-500" />
                 <h3 className="text-sm font-semibold text-slate-800">Client</h3>
               </div>
             </CardHeader>
@@ -193,7 +195,7 @@ export default function InvoiceDetailPage() {
                     {invoice.clientId.name}
                   </p>
                   {invoice.clientId.company && <p className="text-xs text-slate-500">{invoice.clientId.company}</p>}
-                  {invoice.clientId.email && <p className="text-xs text-slate-400">{invoice.clientId.email}</p>}
+                  {invoice.clientId.email && <p className="text-xs text-slate-500">{invoice.clientId.email}</p>}
                 </div>
               </Link>
             </CardBody>
@@ -209,11 +211,11 @@ export default function InvoiceDetailPage() {
             <table className="w-full text-sm">
               <thead className="bg-slate-50/80 border-b border-slate-100">
                 <tr>
-                  <th className="text-left px-6 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Description</th>
-                  <th className="text-center px-3 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Qté</th>
-                  <th className="text-right px-3 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">PU HT</th>
-                  <th className="text-center px-3 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">TVA</th>
-                  <th className="text-right px-6 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Total HT</th>
+                  <th className="text-left px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Description</th>
+                  <th className="text-center px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Qté</th>
+                  <th className="text-right px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">PU HT</th>
+                  <th className="text-center px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">TVA</th>
+                  <th className="text-right px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Total HT</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -222,7 +224,7 @@ export default function InvoiceDetailPage() {
                     <td className="px-6 py-3.5 text-slate-900 font-medium">{line.description}</td>
                     <td className="px-3 py-3.5 text-center text-slate-600 tabular-nums">{line.quantity}</td>
                     <td className="px-3 py-3.5 text-right text-slate-600 tabular-nums">{fmt(line.unitPrice)}</td>
-                    <td className="px-3 py-3.5 text-center text-slate-400">{line.vatRate}%</td>
+                    <td className="px-3 py-3.5 text-center text-slate-500">{line.vatRate}%</td>
                     <td className="px-6 py-3.5 text-right font-semibold text-slate-800 tabular-nums">{fmt(line.quantity * line.unitPrice)}</td>
                   </tr>
                 ))}
@@ -262,7 +264,7 @@ export default function InvoiceDetailPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Clock size={13} className="text-slate-400" />
+                <Clock size={13} className="text-slate-500" />
                 <h3 className="text-sm font-semibold text-slate-800">Historique</h3>
               </div>
             </CardHeader>
@@ -284,7 +286,7 @@ export default function InvoiceDetailPage() {
                           <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold', cfg.color)}>
                             {cfg.label}
                           </span>
-                          <time className="text-[11px] text-slate-400 whitespace-nowrap">
+                          <time className="text-[11px] text-slate-500 whitespace-nowrap">
                             {new Date(ev.timestamp).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}
                           </time>
                         </div>
@@ -309,8 +311,8 @@ export default function InvoiceDetailPage() {
             La facture <strong className="text-slate-900">{invoice.number}</strong> ({fmt(invoice.total)}) sera envoyée par email.
           </p>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Email destinataire</label>
-            <input
+            <label htmlFor="invoices-id-page-email-destinataire" className="block text-sm font-medium text-slate-700 mb-1">Email destinataire</label>
+            <input id="invoices-id-page-email-destinataire"
               type="email"
               value={emailOverride}
               onChange={(e) => setEmailOverride(e.target.value)}
@@ -318,7 +320,7 @@ export default function InvoiceDetailPage() {
               className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-accent-500"
             />
             {clientEmail && (
-              <p className="text-xs text-slate-400 mt-1">Laissez vide pour utiliser {clientEmail}</p>
+              <p className="text-xs text-slate-500 mt-1">Laissez vide pour utiliser {clientEmail}</p>
             )}
           </div>
           <div className="flex justify-end gap-3">

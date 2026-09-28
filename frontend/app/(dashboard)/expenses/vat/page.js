@@ -92,7 +92,7 @@ export default function VatPage() {
           <CardBody>
             <div className="flex flex-wrap items-end gap-4">
               <div>
-                <label className="block text-xs font-medium text-gray-500 uppercase mb-2">Période</label>
+                <p className="block text-xs font-medium text-gray-500 uppercase mb-2">Période</p>
                 <div className="flex flex-wrap gap-2">
                   {QUARTERS.map((q) => (
                     <button
@@ -111,8 +111,8 @@ export default function VatPage() {
               </div>
               <div className="flex items-end gap-2">
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Du</label>
-                  <input
+                  <label htmlFor="expenses-vat-page-du" className="block text-xs font-medium text-gray-500 uppercase mb-1">Du</label>
+                  <input id="expenses-vat-page-du"
                     type="date"
                     value={custom.from}
                     onChange={(e) => { setCustom((c) => ({ ...c, from: e.target.value })); setUseCustom(true); }}
@@ -120,8 +120,8 @@ export default function VatPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Au</label>
-                  <input
+                  <label htmlFor="expenses-vat-page-au" className="block text-xs font-medium text-gray-500 uppercase mb-1">Au</label>
+                  <input id="expenses-vat-page-au"
                     type="date"
                     value={custom.to}
                     onChange={(e) => { setCustom((c) => ({ ...c, to: e.target.value })); setUseCustom(true); }}
@@ -188,7 +188,7 @@ export default function VatPage() {
           </CardHeader>
           <CardBody className="p-0">
             {eligible.length === 0 ? (
-              <p className="px-4 py-6 text-center text-gray-400 text-sm">
+              <p className="px-4 py-6 text-center text-gray-500 text-sm">
                 Aucune dépense éligible sur cette période.
               </p>
             ) : (
@@ -211,13 +211,13 @@ export default function VatPage() {
                         <td className="px-4 py-2 text-gray-500 whitespace-nowrap">{fmtDate(e.date)}</td>
                         <td className="px-4 py-2 text-gray-900">
                           <div>{e.description}</div>
-                          {e.vendor && <div className="text-xs text-gray-400">{e.vendor}</div>}
+                          {e.vendor && <div className="text-xs text-gray-500">{e.vendor}</div>}
                         </td>
                         <td className="px-4 py-2 text-gray-500 text-xs">
                           {CATEGORY_LABELS[e.category] || e.category}
                         </td>
                         <td className="px-4 py-2 text-right text-gray-600">{fmt(e.amountHT)}</td>
-                        <td className="px-4 py-2 text-center text-gray-400">{e.vatRate}%</td>
+                        <td className="px-4 py-2 text-center text-gray-500">{e.vatRate}%</td>
                         <td className="px-4 py-2 text-right font-semibold text-indigo-600">{fmt(e.vatRecoverable)}</td>
                         <td className="px-4 py-2 text-right text-gray-700">{fmt(e.amount)}</td>
                       </tr>
@@ -255,7 +255,7 @@ export default function VatPage() {
                   <div key={e._id} className="flex items-center justify-between px-4 py-3">
                     <div>
                       <p className="text-sm text-gray-800">{e.description}</p>
-                      <p className="text-xs text-gray-400">{fmtDate(e.date)} · {CATEGORY_LABELS[e.category] || e.category}</p>
+                      <p className="text-xs text-gray-500">{fmtDate(e.date)} · {CATEGORY_LABELS[e.category] || e.category}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${

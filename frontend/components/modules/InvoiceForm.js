@@ -100,8 +100,8 @@ export default function InvoiceForm({ invoice, initialValues, onSuccess, onCance
       {/* Client + échéance */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Client *</label>
-          <select
+          <label htmlFor="modules-invoiceform-client" className="block text-sm font-medium text-gray-700 mb-1">Client *</label>
+          <select id="modules-invoiceform-client"
             value={clientId}
             onChange={(e) => setClientId(e.target.value)}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -115,10 +115,10 @@ export default function InvoiceForm({ invoice, initialValues, onSuccess, onCance
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="modules-invoiceform-date-d-apos-echeance" className="block text-sm font-medium text-gray-700 mb-1">
             Date d&apos;échéance
           </label>
-          <input
+          <input id="modules-invoiceform-date-d-apos-echeance"
             type="date"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
@@ -180,11 +180,11 @@ export default function InvoiceForm({ invoice, initialValues, onSuccess, onCance
                 <option value={10}>10%</option>
                 <option value={20}>20%</option>
               </select>
-              <button
+              <button aria-label="Supprimer"
                 type="button"
                 onClick={() => removeLine(i)}
                 disabled={lines.length === 1}
-                className="col-span-1 flex justify-center text-gray-400 hover:text-red-500 disabled:opacity-30 transition-colors"
+                className="col-span-1 flex justify-center text-gray-500 hover:text-red-500 disabled:opacity-30 transition-colors"
               >
                 <Trash2 size={15} />
               </button>
@@ -208,8 +208,8 @@ export default function InvoiceForm({ invoice, initialValues, onSuccess, onCance
 
       {/* Notes */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-        <textarea
+        <label htmlFor="modules-invoiceform-notes" className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+        <textarea id="modules-invoiceform-notes"
           rows={2}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}

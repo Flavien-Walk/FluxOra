@@ -6,13 +6,20 @@ export default function CGV() {
       <div className="mb-10">
         <span className="text-xs font-semibold text-indigo-600 uppercase tracking-widest">Conditions Générales de Vente</span>
         <h1 className="text-3xl font-bold text-slate-900 mt-2 mb-1">CGV — Conditions Générales de Vente</h1>
-        <p className="text-sm text-slate-400">Version 1.0 — Dernière mise à jour : mars 2026</p>
+        <p className="text-sm text-slate-500">Version 1.0 — Dernière mise à jour : mars 2026</p>
       </div>
+
+      <p className="mb-8 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <strong>Bêta non commerciale :</strong> Fluxora est un projet étudiant, gratuit pendant la bêta. Les conditions
+        tarifaires ci-dessous décrivent l&apos;offre envisagée ; elles ne s&apos;appliqueront qu&apos;au lancement commercial,
+        après validation juridique.
+      </p>
+
 
       <section className="mb-8">
         <h2 className="text-xl font-bold text-slate-800 mb-4">1. Objet</h2>
         <p className="text-slate-600 leading-relaxed">
-          Les présentes Conditions Générales de Vente (CGV) régissent les relations contractuelles entre Fluxora SAS
+          Les présentes Conditions Générales de Vente (CGV) régissent les relations contractuelles entre l’équipe Fluxora
           (ci-après « Fluxora ») et tout client professionnel (ci-après « le Client ») souscrivant à un plan payant
           de la Plateforme Fluxora. Elles prévalent sur tout autre document du Client.
         </p>
@@ -81,7 +88,7 @@ export default function CGV() {
         </p>
         <p className="text-slate-600 leading-relaxed mt-3">
           Toutefois, Fluxora accorde à tout nouveau Client un délai de 14 jours à compter de la souscription pour
-          demander un remboursement intégral, sans justification, en contactant <a href="mailto:support@fluxora.io" className="text-indigo-600">support@fluxora.io</a>.
+          demander un remboursement intégral, sans justification, en contactant <a href="mailto:mvpfintech798@gmail.com" className="text-indigo-600">mvpfintech798@gmail.com</a>.
         </p>
       </section>
 
@@ -126,7 +133,7 @@ export default function CGV() {
         </p>
         <p className="text-slate-600 leading-relaxed mt-3">
           Les présentes CGV sont soumises au droit français. À défaut de résolution amiable,
-          le tribunal compétent sera celui du siège social de Fluxora SAS.
+          le tribunal compétent sera celui du siège social de l’équipe Fluxora.
         </p>
       </section>
     </article>

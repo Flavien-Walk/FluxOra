@@ -75,7 +75,7 @@ export default function PartnerDetailPage({ params }) {
         {/* Back */}
         <Link
           href="/partenariats"
-          className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-600 transition-colors"
         >
           <ArrowLeft size={13} /> Retour aux partenariats
         </Link>
@@ -119,7 +119,7 @@ export default function PartnerDetailPage({ params }) {
 
           {/* Features */}
           <div className="bg-white border border-slate-100 rounded-xl p-5 shadow-card">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-4">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-4">
               Fonctionnalités
             </p>
             <ul className="space-y-3">
@@ -134,7 +134,7 @@ export default function PartnerDetailPage({ params }) {
 
           {/* Integration */}
           <div className="bg-white border border-slate-100 rounded-xl p-5 shadow-card">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-4">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-4">
               Intégration Fluxora
             </p>
 
@@ -144,7 +144,7 @@ export default function PartnerDetailPage({ params }) {
                   <Clock size={18} className="text-amber-500" />
                 </div>
                 <p className="text-sm font-medium text-slate-700">Intégration à venir</p>
-                <p className="text-xs text-slate-400 mt-1 leading-relaxed max-w-xs">
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed max-w-xs">
                   {partner.integration.description}
                 </p>
               </div>
@@ -161,7 +161,7 @@ export default function PartnerDetailPage({ params }) {
                           <Zap size={12} className="text-accent-500 flex-shrink-0" />
                           <span>{ACTION_LABELS[action] || action}</span>
                         </div>
-                        <span className="text-[10px] font-semibold text-slate-400 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-full">
+                        <span className="text-[10px] font-semibold text-slate-500 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-full">
                           {MODULE_LABELS[action]}
                         </span>
                       </li>
@@ -176,7 +176,7 @@ export default function PartnerDetailPage({ params }) {
         {/* How it works */}
         {canConnect && (
           <div className="bg-slate-50 border border-slate-100 rounded-xl p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-4">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-4">
               Comment ça marche
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -190,7 +190,7 @@ export default function PartnerDetailPage({ params }) {
                     {step}
                   </div>
                   <p className="text-sm font-semibold text-slate-700 mb-1">{title}</p>
-                  <p className="text-xs text-slate-400 leading-relaxed">{desc}</p>
+                  <p className="text-xs text-slate-500 leading-relaxed">{desc}</p>
                 </div>
               ))}
             </div>
@@ -207,7 +207,7 @@ export default function PartnerDetailPage({ params }) {
               <p className={cn('text-sm font-semibold mb-0.5', canConnect ? 'text-white' : 'text-slate-600')}>
                 {canConnect ? `Prêt à connecter ${partner.name} ?` : 'Intégration à venir'}
               </p>
-              <p className={cn('text-xs', canConnect ? 'text-slate-400' : 'text-slate-400')}>
+              <p className={cn('text-xs', canConnect ? 'text-slate-500' : 'text-slate-500')}>
                 {canConnect
                   ? 'La synchronisation sera immédiatement active après connexion.'
                   : 'Cette intégration sera disponible prochainement.'}

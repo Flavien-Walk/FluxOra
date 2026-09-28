@@ -117,7 +117,7 @@ export default function ClientDetailPage() {
               <div className="p-4">
                 <div className="flex items-center gap-1.5 mb-2">
                   <TrendingUp size={13} className="text-success-600" />
-                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">CA encaissé</span>
+                  <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">CA encaissé</span>
                 </div>
                 <p className="text-xl font-bold text-slate-900 tabular-nums">{fmt(totalCA)}</p>
               </div>
@@ -128,10 +128,10 @@ export default function ClientDetailPage() {
               <div className={`h-[3px] ${totalPending > 0 ? 'bg-warning-500' : 'bg-slate-200'}`} />
               <div className="p-4">
                 <div className="flex items-center gap-1.5 mb-2">
-                  <Clock size={13} className={totalPending > 0 ? 'text-warning-600' : 'text-slate-400'} />
-                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">En attente</span>
+                  <Clock size={13} className={totalPending > 0 ? 'text-warning-600' : 'text-slate-500'} />
+                  <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">En attente</span>
                 </div>
-                <p className={`text-xl font-bold tabular-nums ${totalPending > 0 ? 'text-warning-700' : 'text-slate-400'}`}>
+                <p className={`text-xl font-bold tabular-nums ${totalPending > 0 ? 'text-warning-700' : 'text-slate-500'}`}>
                   {fmt(totalPending)}
                 </p>
               </div>
@@ -142,8 +142,8 @@ export default function ClientDetailPage() {
               <div className={`h-[3px] ${lateCount > 0 ? 'bg-danger-500' : 'bg-slate-200'}`} />
               <div className="p-4">
                 <div className="flex items-center gap-1.5 mb-2">
-                  <FileText size={13} className={lateCount > 0 ? 'text-danger-500' : 'text-slate-400'} />
-                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Factures</span>
+                  <FileText size={13} className={lateCount > 0 ? 'text-danger-500' : 'text-slate-500'} />
+                  <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Factures</span>
                 </div>
                 <p className="text-xl font-bold text-slate-900 tabular-nums">
                   {invoices.length}
@@ -167,7 +167,7 @@ export default function ClientDetailPage() {
                 <h2 className="text-lg font-bold text-slate-900">{client.name}</h2>
                 {client.company && (
                   <p className="text-sm text-slate-500 flex items-center gap-1.5 mt-0.5">
-                    <Building size={13} className="text-slate-400" /> {client.company}
+                    <Building size={13} className="text-slate-500" /> {client.company}
                   </p>
                 )}
               </div>
@@ -177,7 +177,7 @@ export default function ClientDetailPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               {client.email && (
                 <div className="flex items-center gap-2 text-slate-600">
-                  <Mail size={14} className="text-slate-400 flex-shrink-0" />
+                  <Mail size={14} className="text-slate-500 flex-shrink-0" />
                   <a
                     href={`mailto:${client.email}`}
                     className="hover:text-accent-600 transition-colors truncate"
@@ -188,26 +188,26 @@ export default function ClientDetailPage() {
               )}
               {client.phone && (
                 <div className="flex items-center gap-2 text-slate-600">
-                  <Phone size={14} className="text-slate-400 flex-shrink-0" />
+                  <Phone size={14} className="text-slate-500 flex-shrink-0" />
                   {client.phone}
                 </div>
               )}
               {(client.address || client.city) && (
                 <div className="flex items-center gap-2 text-slate-600 sm:col-span-2">
-                  <MapPin size={14} className="text-slate-400 flex-shrink-0" />
+                  <MapPin size={14} className="text-slate-500 flex-shrink-0" />
                   {[client.address, client.city, client.country].filter(Boolean).join(', ')}
                 </div>
               )}
               {client.vatNumber && (
                 <div className="text-slate-600">
-                  <span className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider">N° TVA</span>
+                  <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider">N° TVA</span>
                   <p className="mt-0.5">{client.vatNumber}</p>
                 </div>
               )}
             </div>
             {client.notes && (
               <div className="mt-4 pt-4 border-t border-slate-100">
-                <p className="text-[10px] uppercase font-semibold text-slate-400 tracking-wider mb-1">Notes</p>
+                <p className="text-[10px] uppercase font-semibold text-slate-500 tracking-wider mb-1">Notes</p>
                 <p className="text-sm text-slate-600 whitespace-pre-line">{client.notes}</p>
               </div>
             )}
@@ -219,10 +219,10 @@ export default function ClientDetailPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <FileText size={15} className="text-slate-400" />
+                <FileText size={15} className="text-slate-500" />
                 <h3 className="text-sm font-semibold text-slate-700">Factures</h3>
                 {invoices.length > 0 && (
-                  <span className="text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">
+                  <span className="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-full">
                     {invoices.length}
                   </span>
                 )}
@@ -238,7 +238,7 @@ export default function ClientDetailPage() {
           <CardBody className="p-0">
             {invoices.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-sm text-slate-400">Aucune facture pour ce client</p>
+                <p className="text-sm text-slate-500">Aucune facture pour ce client</p>
                 <Link
                   href="/invoices"
                   className="text-xs text-accent-600 hover:underline mt-1 inline-block"
@@ -256,7 +256,7 @@ export default function ClientDetailPage() {
                   >
                     <div>
                       <p className="text-sm font-medium text-slate-900 font-mono">{inv.number}</p>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-slate-500">
                         {fmtDate(inv.issueDate)}
                         {inv.dueDate && ` · Échéance ${fmtDate(inv.dueDate)}`}
                       </p>
@@ -277,10 +277,10 @@ export default function ClientDetailPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <ClipboardList size={15} className="text-slate-400" />
+              <ClipboardList size={15} className="text-slate-500" />
               <h3 className="text-sm font-semibold text-slate-700">Devis</h3>
               {quotes.length > 0 && (
-                <span className="text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">
+                <span className="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-full">
                   {quotes.length}
                 </span>
               )}
@@ -289,7 +289,7 @@ export default function ClientDetailPage() {
           <CardBody className="p-0">
             {quotes.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-sm text-slate-400">Aucun devis pour ce client</p>
+                <p className="text-sm text-slate-500">Aucun devis pour ce client</p>
               </div>
             ) : (
               <div className="divide-y divide-slate-100">
@@ -303,7 +303,7 @@ export default function ClientDetailPage() {
                     >
                       <div>
                         <p className="text-sm font-medium text-slate-900 font-mono">{q.number}</p>
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-slate-500">
                           {fmtDate(q.issueDate)}
                           {q.expiryDate && ` · Expire ${fmtDate(q.expiryDate)}`}
                         </p>

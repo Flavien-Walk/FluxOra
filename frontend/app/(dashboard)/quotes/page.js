@@ -76,7 +76,7 @@ export default function QuotesPage() {
           </div>
 
           <div className="relative ml-auto">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
             <input
               type="text"
               placeholder="N° ou client…"
@@ -85,7 +85,7 @@ export default function QuotesPage() {
               className="pl-8 pr-8 h-9 w-48 bg-white border border-[rgba(148,163,184,0.4)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent placeholder:text-slate-400"
             />
             {search && (
-              <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+              <button aria-label="Fermer" onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-600">
                 <X size={13} />
               </button>
             )}
@@ -107,12 +107,12 @@ export default function QuotesPage() {
         ) : quotes.length === 0 ? (
           <Card>
             <div className="py-12 text-center">
-              <p className="text-sm text-slate-400">Aucun résultat pour «&nbsp;{search}&nbsp;»</p>
+              <p className="text-sm text-slate-500">Aucun résultat pour «&nbsp;{search}&nbsp;»</p>
             </div>
           </Card>
         ) : (
           <Card>
-            <div className="hidden sm:grid grid-cols-12 gap-4 px-5 py-3 border-b border-slate-100 bg-slate-50/60 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
+            <div className="hidden sm:grid grid-cols-12 gap-4 px-5 py-3 border-b border-slate-100 bg-slate-50/60 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
               <span className="col-span-2">Numéro</span>
               <span className="col-span-3">Client</span>
               <span className="col-span-2">Statut</span>
@@ -131,7 +131,7 @@ export default function QuotesPage() {
                   <span className="col-span-3 text-sm text-slate-700 truncate">
                     {q.clientId?.name || '—'}
                     {q.clientId?.company && (
-                      <span className="block text-xs text-slate-400 truncate">{q.clientId.company}</span>
+                      <span className="block text-xs text-slate-500 truncate">{q.clientId.company}</span>
                     )}
                   </span>
                   <span className="col-span-2"><Badge status={q.status} /></span>

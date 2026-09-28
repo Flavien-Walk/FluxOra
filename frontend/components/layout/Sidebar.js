@@ -23,7 +23,7 @@ function NavItem({ href, label, icon: Icon, isActive, badge }) {
         size={16}
         className={cn(
           'flex-shrink-0 transition-colors duration-150',
-          isActive ? 'text-accent-600' : 'text-gray-400 group-hover:text-gray-600'
+          isActive ? 'text-accent-600' : 'text-gray-500 group-hover:text-gray-600'
         )}
       />
       <span className="flex-1 truncate">{label}</span>
@@ -56,7 +56,7 @@ export default function Sidebar() {
       <nav className="flex-1 px-2 py-4 space-y-5 overflow-y-auto">
         {NAV_GROUPS.map((group) => (
           <div key={group.label}>
-            <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400 select-none">
+            <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest text-gray-500 select-none">
               {group.label}
             </p>
             <div className="space-y-0.5">

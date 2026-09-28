@@ -19,7 +19,7 @@ const LINKS = {
     { label: 'CGV', href: '/legal/cgv' },
     { label: 'Confidentialité', href: '/legal/confidentialite' },
     { label: 'Cookies', href: '/legal/cookies' },
-    { label: 'Contact', href: 'mailto:support@fluxora.io' },
+    { label: 'Contact', href: 'mailto:mvpfintech798@gmail.com' },
   ],
 };
 

@@ -24,7 +24,7 @@ export default function AssistantClientPicker({ flow, onSelectClient, onNewClien
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 text-slate-400 text-[12px] mt-3">
+      <div className="flex items-center gap-2 text-slate-500 text-[12px] mt-3">
         <Loader2 size={13} className="animate-spin" />
         <span>Chargement des clients…</span>
       </div>
@@ -34,7 +34,7 @@ export default function AssistantClientPicker({ flow, onSelectClient, onNewClien
   return (
     <div className="mt-3 space-y-1.5">
       {clients.length === 0 && (
-        <p className="text-[12px] text-slate-400 py-1">Aucun client enregistré pour l&apos;instant.</p>
+        <p className="text-[12px] text-slate-500 py-1">Aucun client enregistré pour l&apos;instant.</p>
       )}
 
       {clients.map((c) => {
@@ -55,8 +55,8 @@ export default function AssistantClientPicker({ flow, onSelectClient, onNewClien
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[12.5px] font-semibold text-slate-800 truncate">{c.name}</p>
-              {c.company && <p className="text-[11px] text-slate-400 truncate">{c.company}</p>}
-              {!c.company && c.email && <p className="text-[11px] text-slate-400 truncate">{c.email}</p>}
+              {c.company && <p className="text-[11px] text-slate-500 truncate">{c.company}</p>}
+              {!c.company && c.email && <p className="text-[11px] text-slate-500 truncate">{c.email}</p>}
             </div>
           </button>
         );

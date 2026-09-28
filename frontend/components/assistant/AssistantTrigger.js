@@ -11,7 +11,7 @@ export default function AssistantTrigger() {
   return (
     <>
       {/* Floating button — bottom right */}
-      <motion.button
+      <motion.button aria-label="Ouvrir l’assistant IA"
         onClick={() => setOpen(true)}
         initial={{ scale: 0.7, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}

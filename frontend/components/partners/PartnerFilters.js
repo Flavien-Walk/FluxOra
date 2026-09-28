@@ -23,7 +23,7 @@ export default function PartnerFilters({ categories, active, onChange, counts })
             {!isAll && count > 0 && (
               <span className={cn(
                 'text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none tabular-nums',
-                active === id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-400',
+                active === id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500',
               )}>
                 {count}
               </span>

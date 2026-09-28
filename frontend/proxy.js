@@ -7,6 +7,10 @@ const isPublicRoute = createRouteMatcher([
   '/api/webhooks(.*)',
   '/q(.*)',
   '/pay(.*)',
+  '/legal(.*)',
+  '/robots.txt',
+  '/sitemap.xml',
+  '/opengraph-image(.*)',
   '/icon(.*)',
   '/apple-icon(.*)',
 ]);

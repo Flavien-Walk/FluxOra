@@ -3,37 +3,9 @@
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { FAQS } from '@/data/faq';
 
-const FAQS = [
-  {
-    q: 'FluxOra est-il une banque ?',
-    a: "Non. Fluxora est un cockpit financier — un logiciel de pilotage, pas un établissement bancaire. Nous ne détenons pas vos fonds. Les flux de paiement transitent par des partenaires agréés (établissements de paiement ou EME). Votre argent reste chez eux, sécurisé et séparé. Fluxora agrège, visualise et automatise — c'est tout.",
-  },
-  {
-    q: 'Mes données sont-elles sécurisées ?',
-    a: 'Oui. Vos données sont chiffrées en transit (TLS 1.3) et au repos (AES-256). Elles sont hébergées sur des infrastructures européennes conformes au RGPD. Nous ne revendons jamais vos données. Accès aux données strictement limité à vos collaborateurs autorisés.',
-  },
-  {
-    q: "Puis-je passer d'un plan à l'autre facilement ?",
-    a: "Oui, vous pouvez upgrader ou downgrader votre plan à tout moment depuis votre espace paramètres. Le changement est effectif immédiatement, avec un pro-rata calculé automatiquement.",
-  },
-  {
-    q: "Fluxora est-il compatible avec mon expert-comptable ?",
-    a: "Oui. Fluxora génère un journal comptable complet, exportable en CSV ou PDF. Nos exports sont compatibles avec les formats standards utilisés par les experts-comptables en France (FEC inclus). Votre comptable peut accéder à un espace lecture dédié.",
-  },
-  {
-    q: "Combien de temps faut-il pour déployer Fluxora ?",
-    a: "En général moins de 48 heures. La configuration initiale (organisation, utilisateurs, connexion aux comptes) prend 30 minutes. L'onboarding complet avec import de données historiques est accompagné par notre équipe.",
-  },
-  {
-    q: "Quels types d'entreprises utilisent Fluxora ?",
-    a: "Fluxora est conçu pour les freelances, TPE et PME de 1 à 200 personnes : agences, cabinets de conseil, studios créatifs, e-commerce, SaaS B2B. Si vous avez besoin de maîtriser vos dépenses, votre trésorerie et vos flux, Fluxora est fait pour vous.",
-  },
-  {
-    q: "Puis-je utiliser Fluxora sans engagement ?",
-    a: "Oui. Tous nos plans sont sans engagement de durée. Vous pouvez résilier à tout moment depuis votre tableau de bord, sans frais ni préavis. Vos données vous appartiennent et sont exportables intégralement.",
-  },
-];
+
 
 function FAQItem({ q, a, index }) {
   const [open, setOpen] = useState(false);
@@ -60,7 +32,7 @@ function FAQItem({ q, a, index }) {
         }`}>
           <ChevronDown
             size={14}
-            className={`transition-transform duration-300 ${open ? 'rotate-180 text-indigo-600' : 'text-slate-400'}`}
+            className={`transition-transform duration-300 ${open ? 'rotate-180 text-indigo-600' : 'text-slate-500'}`}
           />
         </div>
       </button>
@@ -114,7 +86,7 @@ export default function FAQSection() {
         </div>
 
         <motion.p
-          className="text-center text-sm text-slate-400 mt-10"
+          className="text-center text-sm text-slate-500 mt-10"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
@@ -122,7 +94,7 @@ export default function FAQSection() {
         >
           Vous ne trouvez pas votre réponse ?{' '}
           <a
-            href="mailto:support@fluxora.io"
+            href="mailto:mvpfintech798@gmail.com"
             className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
           >
             Contactez notre support

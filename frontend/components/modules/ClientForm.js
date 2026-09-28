@@ -50,8 +50,8 @@ export default function ClientForm({ client, initialValues, onSuccess, onCancel 
 
   const field = (name, label, type = 'text', placeholder = '') => (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-      <input
+      <label htmlFor={`clientform-${name}`} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <input id={`clientform-${name}`}
         name={name}
         type={type}
         value={form[name]}
@@ -66,10 +66,10 @@ export default function ClientForm({ client, initialValues, onSuccess, onCancel 
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="modules-clientform-nom-complet" className="block text-sm font-medium text-gray-700 mb-1">
             Nom complet *
           </label>
-          <input
+          <input id="modules-clientform-nom-complet"
             name="name"
             required
             value={form.name}
@@ -88,8 +88,8 @@ export default function ClientForm({ client, initialValues, onSuccess, onCancel 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {field('city', 'Ville', 'text', 'Paris')}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Pays</label>
-          <select
+          <label htmlFor="modules-clientform-pays" className="block text-sm font-medium text-gray-700 mb-1">Pays</label>
+          <select id="modules-clientform-pays"
             name="country"
             value={form.country}
             onChange={set}
@@ -107,8 +107,8 @@ export default function ClientForm({ client, initialValues, onSuccess, onCancel 
       {field('vatNumber', 'N° TVA intracommunautaire', 'text', 'FR12345678901')}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-        <textarea
+        <label htmlFor="modules-clientform-notes" className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+        <textarea id="modules-clientform-notes"
           name="notes"
           value={form.notes}
           onChange={set}

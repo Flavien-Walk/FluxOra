@@ -99,7 +99,7 @@ function CA3Table({ summary, collectedVAT_details }) {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="font-semibold text-gray-800">Mapping Formulaire CA3 — DGFiP</h3>
-            <p className="text-xs text-gray-400 mt-0.5">Données calculées à partir de vos scans et transactions</p>
+            <p className="text-xs text-gray-500 mt-0.5">Données calculées à partir de vos scans et transactions</p>
           </div>
           <Badge variant="blue">Officieux</Badge>
         </div>
@@ -117,7 +117,7 @@ function CA3Table({ summary, collectedVAT_details }) {
             {rows.map(({ section, cases }) => (
               <>
                 <tr key={section} className="bg-gray-50/50">
-                  <td colSpan={3} className="px-5 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide border-t border-b border-gray-100">
+                  <td colSpan={3} className="px-5 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide border-t border-b border-gray-100">
                     {section}
                   </td>
                 </tr>

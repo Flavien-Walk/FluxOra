@@ -40,7 +40,7 @@ const PLANS = [
     accentColor: 'indigo',
     features: [
       'Jusqu\'à 10 utilisateurs',
-      'Cartes physiques & virtuelles illimitées',
+      'Cartes virtuelles illimitées (démo)',
       'Workflow d\'approbation des dépenses',
       'Virements & bénéficiaires illimités',
       'Reporting temps réel',
@@ -57,7 +57,7 @@ const PLANS = [
     period: null,
     description: 'Pour les structures multi-équipes.',
     cta: "Contacter l'équipe",
-    ctaHref: 'mailto:sales@fluxora.io',
+    ctaHref: 'mailto:mvpfintech798@gmail.com',
     popular: false,
     accentColor: 'violet',
     features: [
@@ -127,11 +127,14 @@ export default function PricingSection({ isConnected }) {
         </div>
 
         {/* Hint */}
-        <p className="text-center text-xs text-slate-400 mb-8 tracking-wide">
+        <p className="text-center text-xs text-slate-500 mb-8 tracking-wide">
           Cliquez sur un plan pour le sélectionner
         </p>
 
         {/* Plans grid */}
+        <p className="mx-auto mb-8 max-w-2xl rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm text-amber-900">
+          <strong>Bêta gratuite :</strong> toutes les fonctionnalités sont accessibles gratuitement pendant la bêta. Les tarifs ci-dessous sont indicatifs.
+        </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
           {PLANS.map((plan, i) => {
             const isSelected = selected === plan.name;
@@ -195,7 +198,7 @@ export default function PricingSection({ isConnected }) {
                     </div>
                     <div>
                       <h3 className="text-base font-bold text-slate-900">{plan.name}</h3>
-                      <p className="text-xs text-slate-400">{plan.description}</p>
+                      <p className="text-xs text-slate-500">{plan.description}</p>
                     </div>
                   </div>
 
@@ -204,7 +207,7 @@ export default function PricingSection({ isConnected }) {
                     {plan.price !== null ? (
                       <div className="flex items-end gap-1">
                         <span className="text-5xl font-bold text-slate-900 tracking-tight">{plan.price}€</span>
-                        <span className="text-slate-400 text-sm mb-1.5">{plan.period}</span>
+                        <span className="text-slate-500 text-sm mb-1.5">{plan.period}</span>
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
@@ -260,7 +263,7 @@ export default function PricingSection({ isConnected }) {
         </div>
 
         {/* Bottom note */}
-        <p className="text-center text-sm text-slate-400 mt-10">
+        <p className="text-center text-sm text-slate-500 mt-10">
           Tous les prix sont HT · TVA 20% · Annulation à tout moment sans frais
         </p>
       </div>

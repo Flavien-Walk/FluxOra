@@ -48,7 +48,7 @@ export default function MobileNav() {
                 href={href}
                 className={cn(
                   'flex flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors',
-                  active ? 'text-accent-600' : 'text-slate-400 active:text-slate-600'
+                  active ? 'text-accent-600' : 'text-slate-500 active:text-slate-600'
                 )}
               >
                 <span className="relative">
@@ -63,7 +63,7 @@ export default function MobileNav() {
             onClick={() => setMoreOpen(true)}
             className={cn(
               'flex flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors',
-              moreActive ? 'text-accent-600' : 'text-slate-400 active:text-slate-600'
+              moreActive ? 'text-accent-600' : 'text-slate-500 active:text-slate-600'
             )}
           >
             <LayoutGrid size={20} strokeWidth={moreActive ? 2.2 : 1.8} />
@@ -112,7 +112,7 @@ export default function MobileNav() {
               <div className="px-4 space-y-5 pt-2">
                 {NAV_GROUPS.map((group) => (
                   <div key={group.label}>
-                    <p className="px-1 mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+                    <p className="px-1 mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
                       {group.label}
                     </p>
                     <div className="grid grid-cols-3 gap-2">

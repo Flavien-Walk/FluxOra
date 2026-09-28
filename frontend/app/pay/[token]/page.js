@@ -26,6 +26,7 @@ export default function PayInvoicePage() {
   const [method, setMethod] = useState('card');
   const [payLoading, setPayLoading] = useState(false);
   const [step, setStep] = useState('choose'); // choose | processing | success
+  const [payError, setPayError] = useState('');
 
   useEffect(() => {
     const fetchInvoice = async () => {
@@ -51,6 +52,7 @@ export default function PayInvoicePage() {
 
   const handlePay = async (e) => {
     e.preventDefault();
+    setPayError('');
     setPayLoading(true);
     setStep('processing');
     try {
@@ -60,23 +62,29 @@ export default function PayInvoicePage() {
         body: JSON.stringify({ method }),
       });
       const data = await res.json();
+      if (res.ok && data.checkoutUrl) {
+        // Paiement réel : page sécurisée Stripe (la facture passe « payée » à la confirmation de Stripe)
+        window.location.href = data.checkoutUrl;
+        return;
+      }
       if (res.ok) {
-        // Attendre ~2s pour montrer l'animation de traitement, puis succès
+        // Mode démonstration : aucun argent n'est encaissé
         setTimeout(() => {
           setStep('success');
           setInvoice((inv) => ({ ...inv, status: 'paid', paidAt: new Date().toISOString() }));
         }, 2000);
       } else {
         setStep('choose');
-        alert(data.error || 'Erreur lors du paiement.');
+        setPayError(data.error || 'Le paiement n’a pas pu être lancé. Réessayez ou contactez l’émetteur.');
       }
     } catch {
       setStep('choose');
-      alert('Erreur réseau, veuillez réessayer.');
+      setPayError('Erreur réseau : vérifiez votre connexion puis réessayez.');
     } finally {
       setPayLoading(false);
     }
   };
+
 
   if (loading) {
     return (
@@ -157,7 +165,7 @@ export default function PayInvoicePage() {
             </div>
           </div>
 
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-500">
             Un reçu vous sera envoyé à l&apos;adresse email fournie lors de la transaction.
           </p>
         </div>
@@ -182,11 +190,11 @@ export default function PayInvoicePage() {
 
         {/* Header */}
         <div className="text-center">
-          <p className="text-sm text-gray-400 mb-1">Paiement sécurisé — {org?.name}</p>
+          <p className="text-sm text-gray-500 mb-1">Paiement sécurisé — {org?.name}</p>
           <p className="text-4xl font-bold text-gray-900">{fmt(invoice.total, invoice.currency)}</p>
           <p className="text-sm text-gray-500 mt-1">Facture {invoice.number}</p>
           {invoice.dueDate && (
-            <p className="text-xs text-gray-400 mt-1">Échéance : {fmtDate(invoice.dueDate)}</p>
+            <p className="text-xs text-gray-500 mt-1">Échéance : {fmtDate(invoice.dueDate)}</p>
           )}
         </div>
 
@@ -197,7 +205,7 @@ export default function PayInvoicePage() {
           </div>
           {invoice.lines?.map((line, i) => (
             <div key={i} className="px-5 py-3 flex justify-between text-sm border-b border-gray-50 last:border-0">
-              <span className="text-gray-700">{line.description} {line.quantity > 1 && <span className="text-gray-400">×{line.quantity}</span>}</span>
+              <span className="text-gray-700">{line.description} {line.quantity > 1 && <span className="text-gray-500">×{line.quantity}</span>}</span>
               <span className="font-medium text-gray-900">{fmt(line.quantity * line.unitPrice, invoice.currency)}</span>
             </div>
           ))}
@@ -209,6 +217,19 @@ export default function PayInvoicePage() {
 
         {/* Choix méthode */}
         <form onSubmit={handlePay} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-4">
+          {invoice.demoPayments && (
+            <p className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-900">
+              <strong>Mode démonstration :</strong> aucun paiement réel n’est effectué.
+            </p>
+          )}
+          {invoice.onlinePayment === false && (
+            <p className="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 text-xs text-slate-700">
+              Le paiement en ligne n’est pas activé pour cette facture : réglez-la par virement auprès de l’émetteur.
+            </p>
+          )}
+          {payError && (
+            <p role="alert" className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">{payError}</p>
+          )}
           <h2 className="text-sm font-semibold text-gray-900">Choisir un mode de paiement</h2>
           <div className="space-y-2">
             {PAYMENT_METHODS.map((m) => (
@@ -233,7 +254,7 @@ export default function PayInvoicePage() {
                   <p className={`text-sm font-medium ${method === m.id ? 'text-indigo-700' : 'text-gray-900'}`}>
                     {m.label}
                   </p>
-                  <p className="text-xs text-gray-400">{m.desc}</p>
+                  <p className="text-xs text-gray-500">{m.desc}</p>
                 </div>
                 {method === m.id && (
                   <svg className="w-4 h-4 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
@@ -246,7 +267,7 @@ export default function PayInvoicePage() {
 
           <button
             type="submit"
-            disabled={payLoading}
+            disabled={payLoading || invoice.onlinePayment === false}
             className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-bold py-4 rounded-xl text-base transition-colors flex items-center justify-center gap-2"
           >
             {payLoading ? (
@@ -261,19 +282,23 @@ export default function PayInvoicePage() {
             )}
           </button>
 
-          <p className="text-center text-xs text-gray-400">
-            Paiement sécurisé · Vos données sont protégées
+          <p className="text-center text-xs text-gray-500">
+            Paiement sécurisé par Stripe · Vos données bancaires ne transitent pas par Fluxora
           </p>
         </form>
 
         {/* Info destinataire */}
-        <div className="text-center text-xs text-gray-400 space-y-1">
+        <div className="text-center text-xs text-gray-500 space-y-1">
           <p>Paiement destiné à <strong className="text-gray-600">{org?.name}</strong></p>
           {org?.email && <p>{org.email}</p>}
           {org?.siret && <p>SIRET : {org.siret}</p>}
         </div>
 
-        <p className="text-center text-xs text-gray-300">Propulsé par Fluxora</p>
+        <p className="text-center text-[11px] leading-relaxed text-gray-500">
+          En cas de retard de paiement : pénalités au taux BCE majoré de 10 points et indemnité forfaitaire
+          de 40 € pour frais de recouvrement (art. L441-10 C. com.).
+        </p>
+        <p className="text-center text-xs text-gray-500">Propulsé par Fluxora · <a href="/legal/confidentialite" className="underline">Confidentialité</a></p>
       </div>
     </div>
   );

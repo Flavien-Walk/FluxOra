@@ -1,139 +1,97 @@
+import { LegalHeader, Section, Table, Mail } from '../LegalParts';
+
 export const metadata = { title: 'Politique de confidentialité — Fluxora' };
 
 export default function Confidentialite() {
   return (
-    <article className="prose prose-slate max-w-none">
-      <div className="mb-10">
-        <span className="text-xs font-semibold text-indigo-600 uppercase tracking-widest">RGPD &amp; Confidentialité</span>
-        <h1 className="text-3xl font-bold text-slate-900 mt-2 mb-1">Politique de confidentialité</h1>
-        <p className="text-sm text-slate-400">Version 1.0 — Dernière mise à jour : mars 2026</p>
-      </div>
+    <article className="max-w-none">
+      <LegalHeader eyebrow="RGPD & Confidentialité" title="Politique de confidentialité" updated="septembre 2026" />
 
-      <section className="mb-8">
-        <h2 className="text-xl font-bold text-slate-800 mb-4">1. Responsable du traitement</h2>
-        <p className="text-slate-600 leading-relaxed">
-          Le responsable du traitement des données personnelles est <strong>Fluxora SAS</strong>,
-          dont le siège social est situé à [adresse], France. Contact DPO : <a href="mailto:dpo@fluxora.io" className="text-indigo-600">dpo@fluxora.io</a>
+      <Section title="1. Qui est responsable de vos données ?">
+        <p>
+          Fluxora est un projet étudiant réalisé dans le cadre du cursus Epitech, proposé en <strong>bêta non commerciale</strong>.
+          L&apos;équipe projet (voir les <a href="/legal/mentions-legales" className="text-indigo-600">mentions légales</a>) est responsable
+          des traitements décrits ici. Pour toute question ou pour exercer vos droits : <Mail />.
         </p>
-      </section>
+        <p>
+          Pour les données de <strong>vos propres clients</strong> que vous saisissez dans Fluxora (noms, emails, factures), vous êtes
+          responsable de traitement et Fluxora agit comme <strong>sous-traitant</strong> (art. 28 RGPD) : nous ne les utilisons que pour
+          vous fournir le service.
+        </p>
+      </Section>
 
-      <section className="mb-8">
-        <h2 className="text-xl font-bold text-slate-800 mb-4">2. Données collectées</h2>
-        <p className="text-slate-600 leading-relaxed">Nous collectons les catégories de données suivantes :</p>
-        <ul className="mt-3 space-y-2 text-slate-600">
-          <li><strong>Données d&apos;identification :</strong> nom, prénom, adresse email, numéro de téléphone</li>
-          <li><strong>Données professionnelles :</strong> nom de l&apos;entreprise, SIRET, adresse, TVA intracommunautaire</li>
-          <li><strong>Données financières :</strong> données de facturation, dépenses, flux de trésorerie (saisies par l&apos;utilisateur)</li>
-          <li><strong>Données de connexion :</strong> adresse IP, logs d&apos;accès, cookies techniques</li>
-          <li><strong>Données de paiement :</strong> gérées exclusivement par Stripe — Fluxora ne stocke aucun numéro de carte</li>
+      <Section title="2. Données traitées">
+        <ul className="list-disc pl-5 space-y-2">
+          <li><strong>Compte :</strong> nom, email, identifiant de connexion (géré par Clerk).</li>
+          <li><strong>Organisation :</strong> raison sociale, SIRET, adresse, n° de TVA, email et téléphone de contact.</li>
+          <li><strong>Données de gestion :</strong> clients, devis, factures, dépenses et justificatifs, écritures comptables, bénéficiaires (IBAN).</li>
+          <li><strong>Journal de sécurité :</strong> actions d&apos;écriture (date, utilisateur, action, résultat) et adresse IP tronquée.</li>
+          <li><strong>Assistant IA et Communication (facultatifs) :</strong> messages envoyés à l&apos;assistant, posts rédigés, et jeton de connexion LinkedIn (chiffré).</li>
+          <li><strong>Paiements :</strong> traités par Stripe ; Fluxora ne voit ni ne stocke aucun numéro de carte.</li>
         </ul>
-      </section>
+      </Section>
 
-      <section className="mb-8">
-        <h2 className="text-xl font-bold text-slate-800 mb-4">3. Finalités et bases légales</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-slate-600 border-collapse">
-            <thead>
-              <tr className="bg-slate-100">
-                <th className="text-left p-3 font-semibold text-slate-700 border border-slate-200">Finalité</th>
-                <th className="text-left p-3 font-semibold text-slate-700 border border-slate-200">Base légale</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className="p-3 border border-slate-200">Fourniture du service Fluxora</td>
-                <td className="p-3 border border-slate-200">Exécution du contrat</td>
-              </tr>
-              <tr className="bg-slate-50">
-                <td className="p-3 border border-slate-200">Facturation et gestion des abonnements</td>
-                <td className="p-3 border border-slate-200">Obligation légale / Exécution du contrat</td>
-              </tr>
-              <tr>
-                <td className="p-3 border border-slate-200">Sécurité et prévention de la fraude</td>
-                <td className="p-3 border border-slate-200">Intérêt légitime</td>
-              </tr>
-              <tr className="bg-slate-50">
-                <td className="p-3 border border-slate-200">Communications marketing</td>
-                <td className="p-3 border border-slate-200">Consentement</td>
-              </tr>
-              <tr>
-                <td className="p-3 border border-slate-200">Amélioration du service (analytics anonymisés)</td>
-                <td className="p-3 border border-slate-200">Intérêt légitime</td>
-              </tr>
-              <tr className="bg-slate-50">
-                <td className="p-3 border border-slate-200">Respect des obligations LCB-FT (AML)</td>
-                <td className="p-3 border border-slate-200">Obligation légale</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <Section title="3. Finalités et bases légales">
+        <Table
+          head={['Finalité', 'Base légale (art. 6 RGPD)']}
+          rows={[
+            ['Fournir le service (facturation, dépenses, trésorerie, TVA)', 'Exécution du contrat'],
+            ['Envoyer vos devis et factures par email à vos clients', 'Exécution du contrat'],
+            ['Assistant IA et rédaction de posts', 'Exécution du contrat — fonction facultative, désactivable'],
+            ['Suivi d’ouverture des emails envoyés à vos clients', 'Désactivé par défaut ; activable par vous, qui devez alors en informer vos clients'],
+            ['Sécurité du service et journal d’audit', 'Intérêt légitime (prévention de la fraude et des abus)'],
+            ['Conservation des pièces comptables', 'Obligation légale (C. com. L123-22)'],
+          ]}
+        />
+      </Section>
 
-      <section className="mb-8">
-        <h2 className="text-xl font-bold text-slate-800 mb-4">4. Sous-traitants et transferts</h2>
-        <p className="text-slate-600 leading-relaxed">Fluxora fait appel aux sous-traitants suivants :</p>
-        <ul className="mt-3 space-y-2 text-slate-600">
-          <li><strong>Clerk (auth) :</strong> authentification et gestion des sessions — USA (CCF)</li>
-          <li><strong>Stripe (paiement) :</strong> traitement des paiements — USA (CCF)</li>
-          <li><strong>MongoDB Atlas (BDD) :</strong> hébergement base de données — UE (Irlande)</li>
-          <li><strong>Vercel (frontend) :</strong> hébergement de l&apos;interface — USA (CCF)</li>
-          <li><strong>Render (backend) :</strong> hébergement de l&apos;API — USA (CCF)</li>
-          <li><strong>SendGrid (emails) :</strong> envoi d&apos;emails transactionnels — USA (CCF)</li>
+      <Section title="4. Destinataires et sous-traitants">
+        <Table
+          head={['Prestataire', 'Rôle', 'Localisation', 'Encadrement']}
+          rows={[
+            ['MongoDB Atlas (AWS)', 'Base de données', 'UE — Paris (eu-west-3)', 'DPA MongoDB'],
+            ['Render', 'API (serveur)', 'UE — Francfort', 'DPA Render ; société américaine : DPF / clauses types'],
+            ['Cloudflare', 'Réseau devant l’API (Render)', 'Mondial', 'DPF / clauses types'],
+            ['Vercel', 'Hébergement de l’interface', 'États-Unis / réseau mondial', 'DPF / clauses types'],
+            ['Clerk', 'Authentification', 'États-Unis', 'DPF / clauses types'],
+            ['Anthropic', 'Assistant IA (modèle Claude)', 'États-Unis', 'DPA Anthropic, clauses types ; fonction désactivable'],
+            ['Brevo', 'Envoi des emails', 'UE (France)', 'DPA Brevo'],
+            ['Stripe', 'Paiement des factures', 'UE / États-Unis', 'DPF / clauses types'],
+            ['Mindee', 'Lecture automatique des reçus (OCR)', 'UE (France)', 'DPA Mindee'],
+            ['LinkedIn, Unsplash', 'Publication de posts, photos (si vous les utilisez)', 'Irlande / États-Unis', 'Conditions de ces services'],
+          ]}
+        />
+        <p className="text-sm">DPF : EU-U.S. Data Privacy Framework (décision d&apos;adéquation du 10 juillet 2023). Clauses types : clauses contractuelles types de la Commission européenne (art. 46 RGPD).</p>
+      </Section>
+
+      <Section title="5. Durées de conservation">
+        <ul className="list-disc pl-5 space-y-2">
+          <li>Données du compte et de l&apos;organisation : tant que le compte existe ; supprimées à la suppression de l&apos;organisation.</li>
+          <li>Pièces comptables (factures, écritures) : c&apos;est à vous de les conserver <strong>10 ans</strong> — exportez-les avant de supprimer votre organisation.</li>
+          <li>Journal de sécurité : <strong>12 mois</strong>, puis suppression automatique.</li>
+          <li>Connexion LinkedIn : jusqu&apos;à déconnexion ou expiration (60 jours).</li>
         </ul>
-        <p className="text-slate-500 text-sm mt-3">
-          CCF = Clauses Contractuelles Types de la Commission Européenne. Tous les transferts hors UE
-          sont encadrés par des garanties appropriées conformément au RGPD (art. 46).
-        </p>
-      </section>
+      </Section>
 
-      <section className="mb-8">
-        <h2 className="text-xl font-bold text-slate-800 mb-4">5. Durée de conservation</h2>
-        <ul className="space-y-2 text-slate-600">
-          <li><strong>Données de compte :</strong> durée de l&apos;abonnement + 3 ans après résiliation</li>
-          <li><strong>Données comptables et financières :</strong> 10 ans (obligation légale)</li>
-          <li><strong>Logs de connexion :</strong> 12 mois</li>
-          <li><strong>Données de prospection :</strong> 3 ans après le dernier contact</li>
-        </ul>
-      </section>
+      <Section title="6. Vos droits">
+        <p>
+          Vous disposez des droits d&apos;accès, de rectification, d&apos;effacement, de limitation, d&apos;opposition et de portabilité
+          (art. 15 à 21 RGPD). Dans l&apos;application, <strong>Paramètres → Confidentialité</strong> permet d&apos;exporter toutes vos données
+          et de supprimer votre organisation. Pour toute autre demande : <Mail /> (réponse sous un mois).
+        </p>
+        <p>
+          Vous pouvez introduire une réclamation auprès de la CNIL : <a href="https://www.cnil.fr" className="text-indigo-600">www.cnil.fr</a>.
+        </p>
+      </Section>
 
-      <section className="mb-8">
-        <h2 className="text-xl font-bold text-slate-800 mb-4">6. Vos droits</h2>
-        <p className="text-slate-600 leading-relaxed">
-          Conformément au RGPD, vous disposez des droits suivants :
-        </p>
-        <ul className="mt-3 space-y-1 text-slate-600">
-          <li>Droit d&apos;accès à vos données (art. 15)</li>
-          <li>Droit de rectification (art. 16)</li>
-          <li>Droit à l&apos;effacement (art. 17)</li>
-          <li>Droit à la limitation du traitement (art. 18)</li>
-          <li>Droit à la portabilité des données (art. 20)</li>
-          <li>Droit d&apos;opposition (art. 21)</li>
-          <li>Droit de retirer votre consentement à tout moment</li>
+      <Section title="7. Sécurité">
+        <ul className="list-disc pl-5 space-y-2">
+          <li>Chiffrement des échanges (HTTPS) et de la base au repos ; jetons des réseaux sociaux chiffrés (AES-256-GCM).</li>
+          <li>Rôles par membre (lecteur, manager, finance, admin) et journal des actions d&apos;écriture.</li>
+          <li>Limitation du nombre de requêtes, en-têtes de sécurité, mises à jour des dépendances.</li>
+          <li>En cas de violation de données présentant un risque, notification à la CNIL sous 72 heures et information des personnes concernées si le risque est élevé (art. 33 et 34 RGPD).</li>
         </ul>
-        <p className="text-slate-600 leading-relaxed mt-3">
-          Pour exercer vos droits : <a href="mailto:dpo@fluxora.io" className="text-indigo-600">dpo@fluxora.io</a>
-        </p>
-        <p className="text-slate-600 leading-relaxed mt-3">
-          Vous pouvez également déposer une réclamation auprès de la CNIL :{' '}
-          <a href="https://www.cnil.fr" className="text-indigo-600" target="_blank" rel="noopener noreferrer">www.cnil.fr</a>
-        </p>
-      </section>
-
-      <section className="mb-8">
-        <h2 className="text-xl font-bold text-slate-800 mb-4">7. Sécurité</h2>
-        <p className="text-slate-600 leading-relaxed">
-          Fluxora met en œuvre les mesures techniques et organisationnelles suivantes pour protéger vos données :
-        </p>
-        <ul className="mt-3 space-y-1 text-slate-600">
-          <li>Chiffrement en transit : TLS 1.3</li>
-          <li>Chiffrement au repos : AES-256</li>
-          <li>Authentification forte (MFA) disponible</li>
-          <li>Accès aux données restreint par rôle (RBAC)</li>
-          <li>Audit logs de toutes les actions sensibles</li>
-          <li>Tests de sécurité réguliers</li>
-          <li>Plan de réponse aux incidents conforme au RGPD (notification CNIL sous 72h si violation)</li>
-        </ul>
-      </section>
+      </Section>
     </article>
   );
 }

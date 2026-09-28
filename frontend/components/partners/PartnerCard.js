@@ -96,7 +96,7 @@ export default function PartnerCard({ partner, isConnected, onConnect }) {
           <h3 className="text-[13px] font-semibold text-slate-800 leading-snug mb-1">
             {partner.tagline}
           </h3>
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
             {CAT_LABELS[partner.category] || partner.category}
           </span>
         </div>
@@ -121,7 +121,7 @@ export default function PartnerCard({ partner, isConnected, onConnect }) {
           </Link>
 
           {comingSoon ? (
-            <span className="flex-1 flex items-center justify-center px-3 py-2 rounded-xl bg-slate-50 text-[12px] font-medium text-slate-400 cursor-default">
+            <span className="flex-1 flex items-center justify-center px-3 py-2 rounded-xl bg-slate-50 text-[12px] font-medium text-slate-500 cursor-default">
               Bientôt
             </span>
           ) : isConnected ? (

@@ -1,5 +1,7 @@
 'use client';
 
+import { toast } from 'sonner';
+
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -76,7 +78,7 @@ export default function QuoteDetailPage() {
       setEmailOpen(false);
       mutate();
     } catch (err) {
-      alert(err.response?.data?.error || 'Erreur lors de l\'envoi.');
+      toast.error(err.response?.data?.error || 'Erreur lors de l\'envoi.');
     } finally {
       setLoading('');
     }
@@ -89,7 +91,7 @@ export default function QuoteDetailPage() {
       const { data } = await api.post(`/api/quotes/${id}/convert`);
       router.push(`/invoices/${data.invoice._id}`);
     } catch (err) {
-      alert(err.response?.data?.error || 'Erreur lors de la conversion.');
+      toast.error(err.response?.data?.error || 'Erreur lors de la conversion.');
       setLoading('');
     }
   };
@@ -210,7 +212,7 @@ export default function QuoteDetailPage() {
                   ? <Eye size={15} className="text-accent-500" />
                   : quote.status === 'email_opened'
                   ? <BellRing size={15} className="text-accent-500" />
-                  : <Clock size={15} className="text-slate-400" />}
+                  : <Clock size={15} className="text-slate-500" />}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-slate-800 mb-0.5">
@@ -261,7 +263,7 @@ export default function QuoteDetailPage() {
                 )}
               </div>
               <div className="text-right">
-                <p className="text-[10px] text-slate-400 uppercase font-semibold tracking-widest mb-1">Total TTC</p>
+                <p className="text-[10px] text-slate-500 uppercase font-semibold tracking-widest mb-1">Total TTC</p>
                 <p className="text-3xl font-bold text-slate-900 tabular-nums">{fmt(quote.total)}</p>
               </div>
             </div>
@@ -288,7 +290,7 @@ export default function QuoteDetailPage() {
                     <p className="text-sm text-slate-500">{quote.clientId.company}</p>
                   )}
                   {quote.clientId.email && (
-                    <p className="text-sm text-slate-400">{quote.clientId.email}</p>
+                    <p className="text-sm text-slate-500">{quote.clientId.email}</p>
                   )}
                 </div>
               </Link>
@@ -305,11 +307,11 @@ export default function QuoteDetailPage() {
             <table className="w-full text-sm">
               <thead className="bg-slate-50 border-b border-slate-100">
                 <tr>
-                  <th className="text-left px-6 py-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Description</th>
-                  <th className="text-center px-3 py-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Qté</th>
-                  <th className="text-right px-3 py-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">PU HT</th>
-                  <th className="text-center px-3 py-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">TVA</th>
-                  <th className="text-right px-6 py-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Total HT</th>
+                  <th className="text-left px-6 py-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Description</th>
+                  <th className="text-center px-3 py-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Qté</th>
+                  <th className="text-right px-3 py-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">PU HT</th>
+                  <th className="text-center px-3 py-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">TVA</th>
+                  <th className="text-right px-6 py-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Total HT</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -358,7 +360,7 @@ export default function QuoteDetailPage() {
           <Card>
             <CardHeader>
               <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                <Clock size={14} className="text-slate-400" /> Historique
+                <Clock size={14} className="text-slate-500" /> Historique
               </h3>
             </CardHeader>
             <CardBody>
@@ -393,7 +395,7 @@ export default function QuoteDetailPage() {
                           </span>
                           {ev.note && <p className="text-xs text-slate-500 mt-0.5">{ev.note}</p>}
                         </div>
-                        <time className="text-xs text-slate-400 whitespace-nowrap mt-0.5">
+                        <time className="text-xs text-slate-500 whitespace-nowrap mt-0.5">
                           {new Date(ev.timestamp).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}
                         </time>
                       </div>
@@ -427,10 +429,10 @@ export default function QuoteDetailPage() {
             Le devis <strong className="text-slate-800">{quote.number}</strong> sera envoyé par email au client.
           </p>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label htmlFor="quotes-id-page-email-destinataire" className="block text-sm font-medium text-slate-700 mb-1">
               Email destinataire
             </label>
-            <input
+            <input id="quotes-id-page-email-destinataire"
               type="email"
               value={emailOverride}
               onChange={(e) => setEmailOverride(e.target.value)}
@@ -438,7 +440,7 @@ export default function QuoteDetailPage() {
               className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
             />
             {clientEmail && (
-              <p className="text-xs text-slate-400 mt-1">Laissez vide pour utiliser {clientEmail}</p>
+              <p className="text-xs text-slate-500 mt-1">Laissez vide pour utiliser {clientEmail}</p>
             )}
           </div>
           <div className="flex justify-end gap-3">

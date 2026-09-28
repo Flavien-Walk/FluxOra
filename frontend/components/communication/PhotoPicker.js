@@ -45,7 +45,7 @@ export default function PhotoPicker({ image, options = [], onChange, unsplashCon
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold text-slate-600">Photo</p>
         {image?.url && (
-          <button onClick={() => onChange(null)} className="flex items-center gap-1 text-xs text-slate-400 hover:text-danger-600">
+          <button onClick={() => onChange(null)} className="flex items-center gap-1 text-xs text-slate-500 hover:text-danger-600">
             <X size={12} /> Retirer la photo
           </button>
         )}
@@ -54,7 +54,7 @@ export default function PhotoPicker({ image, options = [], onChange, unsplashCon
       {unsplashConfigured ? (
         <form onSubmit={search} className="flex gap-2">
           <div className="relative flex-1">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -67,7 +67,7 @@ export default function PhotoPicker({ image, options = [], onChange, unsplashCon
           </button>
         </form>
       ) : (
-        <p className="text-[11px] text-slate-400">
+        <p className="text-[11px] text-slate-500">
           Recherche Unsplash non configurée (UNSPLASH_ACCESS_KEY). Vous pouvez utiliser une URL d'image.
         </p>
       )}
@@ -96,13 +96,13 @@ export default function PhotoPicker({ image, options = [], onChange, unsplashCon
       )}
 
       {!photos.length && !image?.url && (
-        <div className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2.5 text-xs text-slate-400">
+        <div className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2.5 text-xs text-slate-500">
           <ImageOff size={14} /> Aucune photo — le post sera publié en texte seul.
         </div>
       )}
 
       {image?.source === 'unsplash' && image.creditName && (
-        <p className="text-[11px] text-slate-400">
+        <p className="text-[11px] text-slate-500">
           Photo : <a href={image.creditUrl} target="_blank" rel="noreferrer" className="underline">{image.creditName}</a> sur{' '}
           <a href="https://unsplash.com/?utm_source=fluxora&utm_medium=referral" target="_blank" rel="noreferrer" className="underline">Unsplash</a>
         </p>
