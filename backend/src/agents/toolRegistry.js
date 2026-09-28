@@ -8,6 +8,7 @@
  *                  check_draft_duplicate, list_late_invoices,
  *                  list_alerts, get_expense_categories
  * Outil workflow : prepare_workflow (stocke en mémoire pour confirmation)
+ * Outil marketing : prepare_social_post (brouillon LinkedIn + photos Unsplash)
  */
 
 const Client  = require('../models/Client');
@@ -15,6 +16,9 @@ const Invoice = require('../models/Invoice');
 const Quote   = require('../models/Quote');
 const Expense = require('../models/Expense');
 const Alert   = require('../models/Alert');
+const SocialPost = require('../models/SocialPost');
+const unsplash   = require('../services/social/unsplashService');
+const { getAccount } = require('../services/social/socialPostService');
 const {
   findInvoicesByAmount,
   findExpensesByVendorOrAmount,
@@ -147,6 +151,21 @@ const TOOL_DEFINITIONS = [
   },
 
   /* ── Workflow de création/modification ─────────────────────── */
+  /* ── Marketing : post LinkedIn ──────────────────────────────── */
+  {
+    name: 'prepare_social_post',
+    description: 'Enregistre un post LinkedIn rédigé par toi comme brouillon dans le module Communication et cherche des photos Unsplash pour l’illustrer. Appelle-le UNE fois, après avoir rédigé le post en suivant les règles de rédaction marketing.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        text:        { type: 'string', description: 'Post LinkedIn complet, prêt à publier (accroche, corps aéré, appel à l’action, 3-5 hashtags à la fin). 3000 caractères max.' },
+        image_query: { type: 'string', description: 'Requête photo Unsplash EN ANGLAIS, 2 à 4 mots concrets (ex. "team meeting office")' },
+        brief:       { type: 'string', description: 'Résumé de la demande de l’utilisateur en une phrase' },
+      },
+      required: ['text'],
+    },
+  },
+
   {
     name: 'prepare_workflow',
     description: 'Prépare et stocke un workflow complet (création ou mise à jour) pour confirmation utilisateur. Appelle cet outil quand tu as suffisamment de données pour agir. Pour une création : appelle APRÈS search_clients. Pour une mise à jour client : appelle après avoir localisé le client. Ne demande pas de confirmation textuelle — l\'interface affiche un bouton dédié.',
@@ -508,6 +527,43 @@ function exec_prepare_workflow(input, orgId, userId) {
 }
 
 /* ── Dispatch central ────────────────────────────────────────── */
+async function exec_prepare_social_post(input, orgId, userId) {
+  const text = String(input.text || '').trim().slice(0, 3000);
+  if (!text) return { ok: false, error: 'Texte du post vide.' };
+
+  const photos = await unsplash.searchPhotos(input.image_query, 6);
+  const post = await SocialPost.create({
+    organizationId: orgId,
+    createdBy: userId,
+    text,
+    brief: input.brief,
+    source: 'ai',
+    image: photos[0],
+    imageOptions: photos,
+  });
+  const account = await getAccount(orgId, userId, 'linkedin');
+  const linkedinConnected = Boolean(account && (!account.expiresAt || account.expiresAt > new Date()));
+
+  return {
+    ok: true,
+    postId: post._id.toString(),
+    characters: text.length,
+    photosFound: photos.length,
+    photosConfigured: unsplash.isConfigured(),
+    linkedinConnected,
+    objectCards: [{
+      id: `social_${post._id}`,
+      kind: 'social_post',
+      title: 'Brouillon LinkedIn',
+      subtitle: `${text.length} caractères${photos.length ? ` · ${photos.length} photo(s) proposée(s)` : ''}`,
+      badge: linkedinConnected ? 'Prêt à publier' : 'LinkedIn non connecté',
+      text,
+      imageUrl: photos[0]?.thumbUrl,
+      imageCredit: photos[0]?.creditName,
+    }],
+  };
+}
+
 async function executeTool(name, input, orgId, userId) {
   const t0 = Date.now();
   let result;
@@ -522,6 +578,7 @@ async function executeTool(name, input, orgId, userId) {
     case 'list_alerts':            result = await exec_list_alerts(input, orgId);             break;
     case 'get_expense_categories': result = await exec_get_expense_categories(input, orgId);  break;
     case 'prepare_workflow':       result =       exec_prepare_workflow(input, orgId, userId); break;
+    case 'prepare_social_post':    result = await exec_prepare_social_post(input, orgId, userId); break;
     default: result = { error: `Outil inconnu : ${name}` };
   }
   result._durationMs = Date.now() - t0;
@@ -543,6 +600,7 @@ function summarizeResult(toolName, result) {
     case 'list_alerts':            return `${result.count} alerte(s) ouverte(s)`;
     case 'get_expense_categories': return `${result.categories?.length || 0} catégorie(s)`;
     case 'prepare_workflow':       return result.ok ? result.summary : 'Workflow non préparé';
+    case 'prepare_social_post':    return result.ok ? `Brouillon LinkedIn (${result.characters} car., ${result.photosFound} photo(s))` : 'Post non enregistré';
     default: return JSON.stringify(result).slice(0, 80);
   }
 }

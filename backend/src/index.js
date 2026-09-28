@@ -36,6 +36,8 @@ app.use(express.json());
 
 // Routes publiques (sans auth) — AVANT le clerkMiddleware
 app.use('/api/public', require('./routes/public'));
+// Callback OAuth des réseaux sociaux (sécurisé par un state signé)
+app.use('/api/social', require('./routes/social').publicRouter);
 
 // Clerk middleware — parse le JWT sur chaque requête
 app.use(clerkMiddleware());
@@ -57,6 +59,7 @@ app.use('/api/transactions', require('./routes/transactions'));
 app.use('/api/webhooks',     require('./routes/webhooks'));
 app.use('/api/assistant',    require('./routes/assistant'));
 app.use('/api/investments',  require('./routes/investments'));
+app.use('/api/social',       require('./routes/social').router);
 
 // Gestion des erreurs globale
 app.use((err, req, res, next) => {
@@ -77,6 +80,12 @@ app.listen(PORT, () => {
     try { await updateMarketRates(); }
     catch (e) { console.error('[Cron] Erreur updateMarketRates:', e.message); }
   }, { timezone: 'Europe/Paris' });
+
+  // Publication des posts programmés (Communication) — vérification chaque minute
+  const { processScheduledPosts } = require('./services/social/socialPostService');
+  cron.schedule('* * * * *', () => {
+    processScheduledPosts().catch(e => console.error('[Cron] Erreur posts programmés:', e.message));
+  });
 
   // Fetch immédiat au démarrage si pas de données aujourd'hui
   updateMarketRates().catch(e => console.error('[MarketData] Init error:', e.message));

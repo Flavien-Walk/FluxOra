@@ -18,6 +18,7 @@ const {
   getPendingWorkflow, clearPendingWorkflow,
 } = require('./agentMemory');
 const { buildContext, buildSystemPrompt, chat: deterministicChat } = require('../services/assistantService');
+const { MARKETING_GUIDELINES } = require('./skills/marketingSkill');
 
 let _anthropic = null;
 const getAI = () => {
@@ -68,6 +69,7 @@ OUTILS DISPONIBLES :
 • list_alerts            — Lister les alertes comptables et financières ouvertes
 • get_expense_categories — Répartition des dépenses par catégorie (année en cours)
 • prepare_workflow       — Préparer un workflow complet pour confirmation utilisateur
+• prepare_social_post    — Enregistrer un post LinkedIn rédigé (brouillon + photos Unsplash)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 RÈGLE N°1 — CRÉATION DE DEVIS OU FACTURE
@@ -124,6 +126,20 @@ RÈGLE N°4 — MÉMOIRE ET CONTEXTE
 • "ce devis" / "la facture" / "l'ouvrir" → utilise lastEntityId / lastCreatedId en mémoire
 • Ne repose JAMAIS une question dont la réponse est déjà dans la mémoire ou le message
 • Si un workflow est en attente, un message de confirmation déclenche son exécution directe
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RÈGLE N°4bis — COMMUNICATION / POSTS LINKEDIN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Quand l'utilisateur veut écrire, rédiger ou publier un post (LinkedIn, réseaux sociaux, communication) :
+a. Si le sujet manque totalement → pose UNE seule question (sujet du post). Sinon, rédige directement.
+b. Si le post parle de l'activité (bilan, chiffres, nouveau client), appuie-toi UNIQUEMENT sur les données Fluxora
+   ci-dessus ou sur tes outils de recherche — jamais de chiffres inventés, et aucun nom de client sans accord explicite.
+c. Rédige le post en appliquant les règles ci-dessous, puis appelle prepare_social_post (text, image_query, brief).
+d. Réponse finale : 1-2 phrases (angle choisi + photo proposée). NE recopie PAS le post, il est affiché dans une carte.
+   NE dis PAS qu'il est publié : l'utilisateur publie avec le bouton, ou le modifie dans le module Communication.
+e. Si linkedinConnected=false dans le résultat, indique qu'il faut connecter LinkedIn dans Communication.
+f. Pour une modification (« plus court », « autre ton »…), réécris le post et rappelle prepare_social_post.
+${MARKETING_GUIDELINES}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 RÈGLE N°5 — QUALITÉ DES RÉPONSES
@@ -242,7 +258,7 @@ async function runAgentLoop(userId, orgId, messages, systemPrompt) {
   for (let i = 0; i < MAX_ITERATIONS; i++) {
     const response = await getAI().messages.create({
       model:       'claude-haiku-4-5-20251001',
-      max_tokens:  1400,
+      max_tokens:  2500,
       system:      systemPrompt,
       tools:       TOOL_DEFINITIONS,
       tool_choice: { type: 'auto' },
@@ -347,6 +363,20 @@ function buildSmartActions(internalLog, reply, ctx) {
       }
       return actions; // Une seule action possible quand un workflow est prêt
     }
+  }
+
+  /* ── 1bis. Post LinkedIn préparé → publier / modifier ───────── */
+  const socialEntries = internalLog.filter(e => e.tool === 'prepare_social_post' && e.rawResult?.ok);
+  const socialEntry   = socialEntries[socialEntries.length - 1];
+  if (socialEntry) {
+    const { postId, linkedinConnected } = socialEntry.rawResult;
+    if (linkedinConnected) {
+      actions.push({ id: 'publish_social_post', label: 'Publier sur LinkedIn', type: 'action', actionType: 'publish_social_post', payload: { postId }, style: 'confirm', icon: 'send' });
+    } else {
+      actions.push({ id: 'connect_linkedin', label: 'Connecter LinkedIn', type: 'redirect', path: '/communication', style: 'primary', icon: 'link' });
+    }
+    actions.push({ id: 'edit_social_post', label: 'Modifier / changer la photo', type: 'redirect', path: `/communication?post=${postId}`, style: 'secondary', icon: 'edit' });
+    return actions;
   }
 
   /* ── Extraire les résultats clés du journal ─────────────────── */

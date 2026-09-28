@@ -247,6 +247,27 @@ async function executeAction(userId, type, payload) {
       };
     }
 
+    /* ── Publication d'un post LinkedIn préparé par l'agent ─────── */
+    case 'publish_social_post': {
+      const { postId } = payload || {};
+      if (!postId) throw Object.assign(new Error('Post ID requis.'), { status: 400 });
+      const { publishSocialPost } = require('./social/socialPostService');
+      const post = await publishSocialPost(orgId, postId, userId);
+      return {
+        entityType: 'social_post',
+        entityId:   post._id.toString(),
+        message: {
+          content: post.externalUrl
+            ? `✅ Post publié sur LinkedIn : ${post.externalUrl}`
+            : '✅ Post publié sur LinkedIn.',
+          actions: [
+            { id: 'go_communication', label: 'Voir dans Communication', type: 'redirect', path: '/communication', style: 'secondary', icon: 'list' },
+          ],
+          journalEntry: { type: 'assistant_action', label: 'Post LinkedIn publié', status: 'success' },
+        },
+      };
+    }
+
     default:
       throw Object.assign(new Error(`Action inconnue : ${type}`), { status: 400 });
   }
