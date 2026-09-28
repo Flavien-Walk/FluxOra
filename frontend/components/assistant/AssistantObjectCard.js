@@ -10,8 +10,41 @@ const TONE_STYLES = {
   info: 'border-accent-200 bg-accent-50 text-accent-800',
 };
 
+/* Aperçu d'un brouillon LinkedIn préparé par l'agent (compétence marketing) */
+function SocialPostCard({ card }) {
+  return (
+    <div className="mt-2.5 overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-3.5 py-2">
+        <div className="min-w-0">
+          <p className="text-[12.5px] font-semibold text-slate-800">{card.title}</p>
+          {card.subtitle && <p className="text-[11px] text-slate-400">{card.subtitle}</p>}
+        </div>
+        {card.badge && (
+          <span className="shrink-0 rounded-full bg-[#0A66C2]/10 px-2 py-0.5 text-[10px] font-semibold text-[#0A66C2]">
+            {card.badge}
+          </span>
+        )}
+      </div>
+      <p className="max-h-48 overflow-y-auto whitespace-pre-line px-3.5 py-3 text-[12px] leading-relaxed text-slate-700">
+        {card.text}
+      </p>
+      {card.imageUrl && (
+        <div className="relative">
+          <img src={card.imageUrl} alt="" className="h-36 w-full object-cover" />
+          {card.imageCredit && (
+            <span className="absolute bottom-1.5 right-1.5 rounded bg-black/50 px-1.5 py-0.5 text-[9px] text-white">
+              Photo : {card.imageCredit} / Unsplash
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AssistantObjectCard({ card }) {
   if (!card) return null;
+  if (card.kind === 'social_post') return <SocialPostCard card={card} />;
 
   return (
     <div className={cn('mt-2.5 rounded-xl border px-3.5 py-3', TONE_STYLES[card.tone] || TONE_STYLES.default)}>

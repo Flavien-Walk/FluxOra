@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, Users, FileText, ClipboardList,
-  Receipt, BookOpen, CreditCard, ArrowUpRight, ArrowLeftRight, Landmark, TrendingUp,
+  Receipt, BookOpen, CreditCard, ArrowUpRight, ArrowLeftRight, Landmark, TrendingUp, Megaphone,
 } from 'lucide-react';
 
 // Navigation partagée entre la Sidebar (desktop) et la barre d'onglets (mobile)
@@ -39,6 +39,7 @@ export const NAV_GROUPS = [
     label: 'Croissance',
     items: [
       { href: '/investissements', label: 'Investissements', icon: TrendingUp },
+      { href: '/communication',   label: 'Communication',   icon: Megaphone },
     ],
   },
 ];
