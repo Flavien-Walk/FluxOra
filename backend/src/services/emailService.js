@@ -168,7 +168,12 @@ const invoiceEmailHtml = ({ invoice, org, client }) => {
       Pour toute question, contactez-nous à <strong>${org.email || 'contact@fluxora.app'}</strong>
     </p>
 
-    ${token ? `<img src="${serverUrl}/api/public/track/invoice/${token}" width="1" height="1" alt="" style="display:block;width:1px;height:1px;" />` : ''}
+    <p style="margin:16px 0 0;font-size:11px;line-height:1.5;color:#6b7280;text-align:center;">
+      En cas de retard de paiement : pénalités au taux d’intérêt appliqué par la BCE majoré de 10 points
+      et indemnité forfaitaire pour frais de recouvrement de 40 € (art. L441-10 du Code de commerce). Pas d’escompte pour paiement anticipé.
+    </p>
+
+    ${token && org.emailTrackingEnabled ? `<img src="${serverUrl}/api/public/track/invoice/${token}" width="1" height="1" alt="" style="display:block;width:1px;height:1px;" />` : ''}
   `;
 
   return baseTemplate({
@@ -305,7 +310,7 @@ const quoteEmailHtml = ({ quote, org, client }) => {
       Pour accepter ce devis ou pour toute question : <strong>${org.email || 'contact@fluxora.app'}</strong>
     </p>`}
 
-    ${token ? `<img src="${serverUrl}/api/public/track/quote/${token}" width="1" height="1" alt="" style="display:block;width:1px;height:1px;" />` : ''}
+    ${token && org.emailTrackingEnabled ? `<img src="${serverUrl}/api/public/track/quote/${token}" width="1" height="1" alt="" style="display:block;width:1px;height:1px;" />` : ''}
   `;
 
   return baseTemplate({

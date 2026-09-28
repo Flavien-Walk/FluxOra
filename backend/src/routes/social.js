@@ -102,6 +102,7 @@ router.delete('/linkedin', async (req, res) => {
 /* ── Rédaction IA (compétence marketing) ─────────────────────── */
 router.post('/ai/draft', async (req, res) => {
   const { brief, tone, audience } = req.body || {};
+  if (req.org.aiEnabled === false) return res.status(403).json({ error: 'L’IA est désactivée pour votre organisation.', code: 'AI_DISABLED' });
   if (!brief || String(brief).trim().length < 5) return res.status(400).json({ error: 'Décrivez le sujet du post (brief).' });
   try {
     const { variants, imageQuery } = await generateLinkedInDrafts({

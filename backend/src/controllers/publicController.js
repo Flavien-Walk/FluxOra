@@ -161,6 +161,8 @@ const getPublicInvoice = async (req, res) => {
     notes: invoice.notes,
     paidAt: invoice.paidAt,
     paymentMethod: invoice.paymentMethod,
+    demoPayments: process.env.DEMO_PAYMENTS === 'true',
+    onlinePayment: process.env.DEMO_PAYMENTS === 'true' || Boolean(process.env.STRIPE_SECRET_KEY),
     organization: invoice.organizationId,
     client: invoice.clientId,
     events: invoice.events,
@@ -174,7 +176,36 @@ const payInvoice = async (req, res) => {
   if (invoice.status === 'paid') return res.json({ message: 'Facture déjà réglée.', status: 'paid' });
   if (invoice.status === 'cancelled') return res.status(400).json({ error: 'Cette facture a été annulée.' });
 
-  const { method = 'card' } = req.body;
+  // ── Paiement réel : session Stripe Checkout (la facture passe « payée » uniquement via le webhook signé)
+  if (process.env.DEMO_PAYMENTS !== 'true') {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return res.status(503).json({ error: 'Le paiement en ligne n’est pas disponible pour cette facture. Contactez l’émetteur pour un règlement par virement.' });
+    }
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      line_items: [{
+        quantity: 1,
+        price_data: {
+          currency: (invoice.currency || 'EUR').toLowerCase(),
+          unit_amount: Math.round(invoice.total * 100),
+          product_data: { name: `Facture ${invoice.number}` },
+        },
+      }],
+      metadata: { invoiceId: String(invoice._id) },
+      success_url: `${clientUrl}/pay/${req.params.token}?paid=1`,
+      cancel_url: `${clientUrl}/pay/${req.params.token}`,
+    });
+    invoice.events.push({ type: 'payment_initiated', timestamp: new Date(), note: 'stripe_checkout' });
+    invoice.stripeSessionId = session.id;
+    await invoice.save();
+    return res.json({ checkoutUrl: session.url });
+  }
+
+  // ── Mode démonstration explicite (DEMO_PAYMENTS=true) : aucun argent n'est encaissé
+  const ALLOWED_METHODS = ['card', 'transfer', 'sepa', 'apple_pay', 'google_pay', 'wallet'];
+  const method = ALLOWED_METHODS.includes(req.body?.method) ? req.body.method : 'card';
 
   // Enregistrer payment_initiated
   invoice.events.push({ type: 'payment_initiated', timestamp: new Date(), note: method });
@@ -219,7 +250,8 @@ const payInvoice = async (req, res) => {
   }, 1500);
 
   res.json({
-    message: 'Paiement en cours de traitement.',
+    message: 'Paiement de démonstration en cours de traitement.',
+    demo: true,
     status: 'payment_pending',
     invoiceNumber: invoice.number,
     amount: invoice.total,

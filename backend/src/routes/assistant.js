@@ -3,6 +3,14 @@ const router       = express.Router();
 const { requireAuth }   = require('../middleware/auth');
 const { chat, getSuggestions, getRecentClients } = require('../services/assistantService');
 const { executeAction }        = require('../services/assistantActionService');
+const Organization = require('../models/Organization');
+
+// L'organisation peut désactiver l'IA (aucune donnée n'est alors envoyée au fournisseur IA)
+async function aiDisabled(userId) {
+  const org = await Organization.findOne({ $or: [{ clerkOwnerId: userId }, { 'members.clerkUserId': userId }] }, 'aiEnabled').lean();
+  return org && org.aiEnabled === false;
+}
+const AI_OFF = { error: 'L’assistant IA est désactivé pour votre organisation (Paramètres → Confidentialité).', code: 'AI_DISABLED' };
 
 /* ── Rate limit simple en mémoire (10 req/min par user) ─────── */
 const rateMap = new Map();
@@ -46,6 +54,7 @@ router.get('/suggestions', requireAuth, async (req, res) => {
 
 /* ── POST /api/assistant/chat ────────────────────────────────── */
 router.post('/chat', requireAuth, async (req, res) => {
+  if (await aiDisabled(req.userId)) return res.status(403).json(AI_OFF);
   const { messages } = req.body;
 
   if (!Array.isArray(messages) || messages.length === 0) {
@@ -88,6 +97,7 @@ router.post('/action', requireAuth, async (req, res) => {
 
 /* ── POST /api/assistant/agent ── Agent IA avec tool_use ─────── */
 router.post('/agent', requireAuth, async (req, res) => {
+  if (await aiDisabled(req.userId)) return res.status(403).json(AI_OFF);
   const { messages, context } = req.body;
 
   if (!Array.isArray(messages) || messages.length === 0) {

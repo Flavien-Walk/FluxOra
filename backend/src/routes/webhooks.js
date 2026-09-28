@@ -30,6 +30,8 @@ router.post('/stripe', async (req, res) => {
 
     const invoice = await Invoice.findById(invoiceId);
     if (!invoice) return res.json({ received: true });
+    // Idempotence : Stripe peut renvoyer le même événement plusieurs fois
+    if (invoice.status === 'paid') return res.json({ received: true, duplicate: true });
 
     // Mise à jour de la facture
     invoice.status = 'paid';

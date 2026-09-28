@@ -11,6 +11,9 @@ const organizationSchema = new mongoose.Schema(
     vatNumber: { type: String, trim: true },
     siret: { type: String, trim: true },
     currency: { type: String, default: 'EUR' },
+    // Confidentialité : suivi d'ouverture des emails (pixel) désactivé par défaut, IA activable/désactivable
+    emailTrackingEnabled: { type: Boolean, default: false },
+    aiEnabled: { type: Boolean, default: true },
     members: [
       {
         clerkUserId: { type: String, required: true },

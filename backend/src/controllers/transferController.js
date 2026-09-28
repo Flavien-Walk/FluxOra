@@ -2,6 +2,7 @@ const Transfer      = require('../models/Transfer');
 const Beneficiary   = require('../models/Beneficiary');
 const AccountingEntry = require('../models/AccountingEntry');
 const Organization  = require('../models/Organization');
+const { parseAmount, normalizeIban, normalizeBic, cleanText } = require('../utils/validation');
 
 const getUserOrg = async (userId) =>
   Organization.findOne({
@@ -23,12 +24,13 @@ const createBeneficiary = async (req, res) => {
   if (!org) return res.status(404).json({ error: 'Organisation introuvable.' });
 
   const { name, iban, bic, email } = req.body;
+  if (!cleanText(name)) return res.status(400).json({ error: 'Nom du bénéficiaire requis.' });
   const beneficiary = await Beneficiary.create({
     organizationId: org._id,
-    name,
-    iban: iban.replace(/\s/g, '').toUpperCase(),
-    bic:  bic  ? bic.replace(/\s/g, '').toUpperCase() : undefined,
-    email,
+    name: cleanText(name, 120),
+    iban: normalizeIban(iban),
+    bic:  normalizeBic(bic),
+    email: cleanText(email, 254),
     isVerified: true, // simulation — pas de vérification bancaire réelle
   });
 
@@ -66,7 +68,8 @@ const createTransfer = async (req, res) => {
   const org = await getUserOrg(req.userId);
   if (!org) return res.status(404).json({ error: 'Organisation introuvable.' });
 
-  const { beneficiaryId, amount, reference } = req.body;
+  const { beneficiaryId, reference } = req.body;
+  const amount = parseAmount(req.body.amount, { label: 'Montant du virement' });
 
   const beneficiary = await Beneficiary.findOne({ _id: beneficiaryId, organizationId: org._id });
   if (!beneficiary) return res.status(404).json({ error: 'Bénéficiaire introuvable.' });
@@ -75,8 +78,8 @@ const createTransfer = async (req, res) => {
   const transfer = await Transfer.create({
     organizationId: org._id,
     beneficiaryId,
-    amount:      Number(amount),
-    reference:   reference || `Virement vers ${beneficiary.name}`,
+    amount,
+    reference:   cleanText(reference) || `Virement vers ${beneficiary.name}`,
     status:      'processing',
     initiatedBy: req.userId,
   });
@@ -88,7 +91,7 @@ const createTransfer = async (req, res) => {
     description: reference || `Virement vers ${beneficiary.name}`,
     category:    'suppliers',
     type:        'debit',
-    amount:      Number(amount),
+    amount,
     currency:    'EUR',
     source:      'manual',
     sourceId:    transfer._id,
