@@ -1,5 +1,7 @@
 'use client';
 
+import { displayNumber } from '@/lib/documentPdf';
+
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useInvoices } from '@/hooks/useInvoices';
@@ -190,7 +192,7 @@ export default function InvoicesPage() {
                   >
                     {/* Numéro */}
                     <span className="col-span-2 text-sm font-mono font-semibold text-slate-900">
-                      {inv.number}
+                      {displayNumber(inv.number)}
                     </span>
 
                     {/* Client */}

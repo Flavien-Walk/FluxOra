@@ -1,5 +1,7 @@
 'use client';
 
+import LedgerSection from '@/components/accounting/LedgerSection';
+
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useAccounting } from '@/hooks/useAccounting';
@@ -128,6 +130,8 @@ export default function AccountingPage() {
     <>
       <Header title="Comptabilité" />
       <div className="flex-1 p-4 lg:p-6 space-y-6">
+        <LedgerSection />
+
 
         {/* KPI solde */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

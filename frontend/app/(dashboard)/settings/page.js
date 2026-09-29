@@ -9,6 +9,7 @@ import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Building2, User, CheckCircle, AlertCircle } from 'lucide-react';
 import PrivacySettings from '@/components/settings/PrivacySettings';
+import MembersSettings from '@/components/settings/MembersSettings';
 
 const fetcher = (url) => api.get(url).then((r) => r.data);
 
@@ -256,26 +257,8 @@ export default function SettingsPage() {
           </CardBody>
         </Card>
 
-        {/* Membres */}
-        {org?.members?.length > 0 && (
-          <Card>
-            <CardHeader>
-              <h2 className="text-sm font-semibold text-gray-700">Membres de l'organisation</h2>
-            </CardHeader>
-            <CardBody className="p-0">
-              <ul className="divide-y divide-gray-100">
-                {org.members.map((m) => (
-                  <li key={m.clerkUserId} className="flex items-center justify-between px-6 py-3">
-                    <p className="text-xs text-gray-700 font-mono">{m.clerkUserId}</p>
-                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full capitalize">
-                      {m.role}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </CardBody>
-          </Card>
-        )}
+        {/* Membres : noms, rôles, invitations */}
+        {org && <MembersSettings />}
 
         {/* Confidentialité : suivi des emails, IA, export et suppression (RGPD) */}
         {org && <PrivacySettings org={org} isOwner={org.clerkOwnerId === user?.id} onChange={mutate} />}

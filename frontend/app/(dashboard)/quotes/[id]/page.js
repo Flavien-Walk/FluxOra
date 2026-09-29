@@ -1,5 +1,8 @@
 'use client';
 
+import { downloadDocumentPdf } from '@/lib/documentPdf';
+import { useOrganization } from '@/hooks/useOrganization';
+
 import { toast } from 'sonner';
 
 import { useState } from 'react';
@@ -19,6 +22,7 @@ import {
   ArrowLeft, Pencil, Trash2, Send, FileText, Mail,
   Clock, Copy, CheckCircle2, XCircle, AlertCircle,
   Eye, BellRing,
+  Download,
 } from 'lucide-react';
 
 const EVENT_CONFIG = {
@@ -40,6 +44,7 @@ export default function QuoteDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const { quote, isLoading, mutate } = useQuote(id);
+  const { organization } = useOrganization();
   const [editOpen, setEditOpen] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
   const [loading, setLoading] = useState('');
@@ -151,6 +156,9 @@ export default function QuoteDetailPage() {
                 <Mail size={14} /> {isWaiting ? 'Renvoyer' : 'Envoyer par email'}
               </Button>
             )}
+            <Button variant="secondary" size="sm" onClick={() => downloadDocumentPdf('quote', quote, organization, quote.clientId)}>
+              <Download size={14} /> PDF
+            </Button>
             {canConvert && (
               <Button size="sm" onClick={handleConvert} loading={loading === 'convert'}>
                 <FileText size={14} /> Convertir en facture

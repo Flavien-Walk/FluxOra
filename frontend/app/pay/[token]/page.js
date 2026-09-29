@@ -1,5 +1,7 @@
 'use client';
 
+import { downloadDocumentPdf } from '@/lib/documentPdf';
+
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 
@@ -294,6 +296,10 @@ export default function PayInvoicePage() {
           {org?.siret && <p>SIRET : {org.siret}</p>}
         </div>
 
+        <button type="button" onClick={() => downloadDocumentPdf('invoice', invoice, invoice.organization || {}, invoice.client || {})}
+          className="mx-auto block rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+          Télécharger la facture (PDF)
+        </button>
         <p className="text-center text-[11px] leading-relaxed text-gray-500">
           En cas de retard de paiement : pénalités au taux BCE majoré de 10 points et indemnité forfaitaire
           de 40 € pour frais de recouvrement (art. L441-10 C. com.).

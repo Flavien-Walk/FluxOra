@@ -1,6 +1,8 @@
 'use client';
 
 import ServerWakeLoader from '@/components/ui/ServerWakeLoader';
+import ForecastCard from '@/components/dashboard/ForecastCard';
+import AgingCard from '@/components/dashboard/AgingCard';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -195,7 +197,7 @@ export default function DashboardPage() {
         ══════════════════════════════════════════════════ */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
-            label="Chiffre d'affaires"
+            label="Chiffre d'affaires HT"
             value={sumLoading ? '…' : fmt(summary?.revenue?.total)}
             numericValue={sumLoading ? null : (summary?.revenue?.total ?? 0)}
             formatter={fmt}
@@ -208,7 +210,7 @@ export default function DashboardPage() {
             value={sumLoading ? '…' : fmt(summary?.cashflowNet)}
             numericValue={sumLoading ? null : (summary?.cashflowNet ?? 0)}
             formatter={fmt}
-            sub={cashflowPositive ? 'Solde positif ✓' : 'Solde négatif'}
+            sub={`Ce mois : encaissé ${fmt(summary?.cashflow?.in)} − dépenses ${fmt(summary?.cashflow?.out)}`}
             icon={Wallet}
             color={cashflowPositive ? 'indigo' : 'red'}
           />
@@ -298,6 +300,12 @@ export default function DashboardPage() {
         {/* ══════════════════════════════════════════════════
             GRAPHIQUE + ACTIONS RAPIDES
         ══════════════════════════════════════════════════ */}
+        {/* Trésorerie prévisionnelle & impayés */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+          <ForecastCard />
+          <AgingCard />
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
           {/* Graphique CA — 2/3 */}
@@ -305,7 +313,7 @@ export default function DashboardPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-sm font-semibold text-slate-800">Chiffre d'affaires</h2>
+                  <h2 className="text-sm font-semibold text-slate-800">Chiffre d'affaires HT</h2>
                   <p className="text-xs text-slate-500 mt-0.5">Évolution sur 6 mois</p>
                 </div>
                 {!sumLoading && summary?.revenue?.total > 0 && (

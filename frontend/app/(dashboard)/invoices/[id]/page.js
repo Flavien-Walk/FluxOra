@@ -14,10 +14,13 @@ import Badge from '@/components/ui/Badge';
 import Modal from '@/components/ui/Modal';
 import InvoiceForm from '@/components/modules/InvoiceForm';
 import ReminderBlock from '@/components/reminders/ReminderBlock';
+import CreditNotePanel from '@/components/invoices/CreditNotePanel';
+import { useOrganization } from '@/hooks/useOrganization';
+import { downloadDocumentPdf, displayNumber } from '@/lib/documentPdf';
 import { cn } from '@/lib/utils';
 import {
   ArrowLeft, Pencil, Trash2, Send, CreditCard, Mail, Clock,
-  CheckCircle2, User, FileText,
+  CheckCircle2, User, FileText, Download,
 } from 'lucide-react';
 
 const EVENT_CONFIG = {
@@ -39,6 +42,7 @@ export default function InvoiceDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const { invoice, isLoading, mutate } = useInvoice(id);
+  const { organization } = useOrganization();
   const [editOpen,       setEditOpen]      = useState(false);
   const [emailOpen,      setEmailOpen]     = useState(false);
   const [loading,        setLoading]       = useState('');
@@ -100,12 +104,13 @@ export default function InvoiceDetailPage() {
   const isSent   = invoice.status === 'sent';
   const isPaid   = invoice.status === 'paid';
   const canEdit  = isDraft;
-  const canDelete = isDraft || invoice.status === 'cancelled';
+  const canDelete = isDraft; // une facture émise se conserve (correction par avoir)
+  const canMarkPaid = ['sent', 'email_opened', 'viewed', 'late', 'payment_pending'].includes(invoice.status);
   const clientEmail = invoice.clientId?.email;
 
   return (
     <>
-      <Header title={invoice.number} />
+      <Header title={displayNumber(invoice.number)} />
       <div className="flex-1 p-4 lg:p-6 max-w-3xl space-y-5">
 
         {/* Navigation + actions */}
@@ -119,17 +124,20 @@ export default function InvoiceDetailPage() {
                 <Pencil size={14} /> Modifier
               </Button>
             )}
-            {!isPaid && (
+            {!isPaid && invoice.status !== 'cancelled' && (
               <Button variant="secondary" size="sm" onClick={() => { setEmailOverride(clientEmail || ''); setEmailOpen(true); }}>
                 <Mail size={14} /> Envoyer par email
               </Button>
             )}
             {isDraft && (
-              <Button size="sm" onClick={() => updateStatus('sent')} loading={loading === 'sent'}>
+              <Button size="sm" onClick={() => updateStatus('sent')} loading={loading === 'sent'} title="Le numéro définitif est attribué à l’émission">
                 <Send size={14} /> Marquer envoyée
               </Button>
             )}
-            {isSent && (
+            <Button variant="secondary" size="sm" onClick={() => downloadDocumentPdf('invoice', invoice, organization, invoice.clientId)}>
+              <Download size={14} /> PDF
+            </Button>
+            {canMarkPaid && (
               <Button size="sm" variant="secondary" onClick={() => updateStatus('paid')} loading={loading === 'paid'}>
                 <CreditCard size={14} /> Marquer payée
               </Button>
@@ -158,7 +166,7 @@ export default function InvoiceDetailPage() {
                   <div className="w-9 h-9 rounded-xl bg-accent-50 flex items-center justify-center">
                     <FileText size={16} className="text-accent-600" strokeWidth={1.75} />
                   </div>
-                  <h2 className="text-2xl font-bold font-mono text-slate-900">{invoice.number}</h2>
+                  <h2 className="text-2xl font-bold font-mono text-slate-900">{displayNumber(invoice.number)}</h2>
                   <Badge status={invoice.status} />
                 </div>
                 <p className="text-sm text-slate-500">
@@ -254,6 +262,9 @@ export default function InvoiceDetailPage() {
           </Card>
         )}
 
+        {/* Avoirs (correction / annulation d'une facture émise) */}
+        {!isDraft && <CreditNotePanel invoice={invoice} org={organization} onChange={mutate} />}
+
         {/* Relances automatiques */}
         {!isPaid && invoice.status !== 'cancelled' && (
           <ReminderBlock doc={invoice} docType="invoice" mutate={mutate} />
@@ -308,7 +319,7 @@ export default function InvoiceDetailPage() {
       <Modal open={emailOpen} onClose={() => setEmailOpen(false)} title="Envoyer la facture par email">
         <form onSubmit={handleSendEmail} className="space-y-4">
           <p className="text-sm text-slate-600">
-            La facture <strong className="text-slate-900">{invoice.number}</strong> ({fmt(invoice.total)}) sera envoyée par email.
+            La facture <strong className="text-slate-900">{displayNumber(invoice.number)}</strong> ({fmt(invoice.total)}) sera envoyée par email.
           </p>
           <div>
             <label htmlFor="invoices-id-page-email-destinataire" className="block text-sm font-medium text-slate-700 mb-1">Email destinataire</label>
