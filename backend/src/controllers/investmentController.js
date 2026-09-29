@@ -154,8 +154,8 @@ const deleteInvestment = async (req, res) => {
 // GET /api/investments/market/equities — actions Euronext Paris / Euronext Growth (cours différés)
 const getEquities = async (req, res) => {
   try {
-    const { segment, q, market, top, sort, page, limit } = req.query;
-    res.json(await equities.listStocks({ segment, q: String(q || '').slice(0, 60), market, top, sort, page, limit }));
+    const { segment, q, market, top, sort, order, page, limit } = req.query;
+    res.json(await equities.listStocks({ segment, q: String(q || '').slice(0, 60), market, top, sort, order, page, limit }));
   } catch (err) {
     console.error('[Marchés]', err.message);
     res.status(503).json({ error: 'Données de marché momentanément indisponibles. Réessayez dans un instant.' });

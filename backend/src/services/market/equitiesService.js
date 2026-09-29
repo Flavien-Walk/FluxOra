@@ -317,14 +317,28 @@ async function getSegmentStocks(segmentKey) {
   return all;
 }
 
-const SORTS = {
-  marketCap: (a, b) => (b.marketCapEur ?? -1) - (a.marketCapEur ?? -1),
-  change: (a, b) => (b.changePercent ?? -Infinity) - (a.changePercent ?? -Infinity),
-  changeAsc: (a, b) => (a.changePercent ?? Infinity) - (b.changePercent ?? Infinity),
-  volume: (a, b) => ((b.volume ?? 0) * (b.price ?? 0)) - ((a.volume ?? 0) * (a.price ?? 0)),
-  name: (a, b) => a.name.localeCompare(b.name, 'fr'),
-  score: (a, b) => (b.score ?? -1) - (a.score ?? -1),
+// Tri par colonne : valeur à comparer ; sens croissant ou décroissant, valeurs manquantes toujours en fin de liste
+const SORT_VALUES = {
+  marketCap: (s) => s.marketCapEur,
+  score: (s) => s.score,
+  change: (s) => s.changePercent,
+  price: (s) => s.priceEur ?? s.price,
+  volume: (s) => (s.volume != null && s.price != null ? s.volume * (s.priceEur ?? s.price) : null),
+  time: (s) => (s.time ? new Date(s.time).getTime() : null),
+  name: (s) => s.name,
 };
+const DEFAULT_ORDER = { name: 'asc' }; // les autres colonnes : décroissant par défaut
+
+function comparator(sort, order) {
+  const get = SORT_VALUES[sort] || SORT_VALUES.marketCap;
+  const dir = (order || DEFAULT_ORDER[sort] || 'desc') === 'asc' ? 1 : -1;
+  return (a, b) => {
+    const va = get(a); const vb = get(b);
+    const na = va == null || Number.isNaN(va); const nb = vb == null || Number.isNaN(vb);
+    if (na || nb) return na === nb ? 0 : na ? 1 : -1;
+    return (typeof va === 'string' ? va.localeCompare(vb, 'fr') : va - vb) * dir;
+  };
+}
 
 const TOPS = [40, 120, 200];
 
@@ -334,9 +348,10 @@ const setScoreProvider = (fn) => { scoreProvider = fn; };
 
 /**
  * Liste filtrée / triée / paginée.
- * @param {{ segment?: string, q?: string, market?: string, top?: number, sort?: string, page?: number, limit?: number }} opts
+ * @param {{ segment?: string, q?: string, market?: string, top?: number, sort?: string, order?: 'asc'|'desc', page?: number, limit?: number }} opts
  */
-async function listStocks({ segment = 'growth', q = '', market = '', top, sort = 'marketCap', page = 1, limit = 50 } = {}) {
+async function listStocks({ segment = 'growth', q = '', market = '', top, sort = 'marketCap', order, page = 1, limit = 50 } = {}) {
+  if (sort === 'changeAsc') { sort = 'change'; order = 'asc'; } // ancien libellé de tri
   const segmentKey = SEGMENTS[segment] ? segment : 'growth';
   const all = await getSegmentStocks(segmentKey);
   const topN = TOPS.includes(Number(top)) ? Number(top) : null;
@@ -349,7 +364,7 @@ async function listStocks({ segment = 'growth', q = '', market = '', top, sort =
     .filter((s) => !topN || (s.rank && s.rank <= topN))
     .filter((s) => !query || s.name.toLowerCase().includes(query) || s.rawName.toLowerCase().includes(query)
       || s.symbol.toLowerCase().includes(query) || s.isin.toLowerCase().includes(query))
-    .sort(SORTS[sort] || SORTS.marketCap);
+    .sort(comparator(sort, order === 'asc' || order === 'desc' ? order : undefined));
 
   const withChange = all.filter((s) => s.changePercent != null);
   const places = [...new Set(all.map((s) => s.mic))];
