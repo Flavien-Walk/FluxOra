@@ -93,8 +93,8 @@ async function fetchECBRate(seriesKey) {
 // ─── Fetch NAV ETF depuis yahoo-finance2 ──────────────────────────────────────
 async function fetchETFPrice(ticker) {
   try {
-    const yf = require('yahoo-finance2').default;
-    const quote = await yf.quote(ticker, {}, { validateResult: false });
+    const { yahoo } = require('./market/yahooClient');
+    const quote = await yahoo.quote(ticker, {}, { validateResult: false });
     return {
       price: quote.regularMarketPrice || null,
       changePercent: quote.regularMarketChangePercent || null

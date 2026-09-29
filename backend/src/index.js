@@ -107,6 +107,10 @@ app.listen(PORT, () => {
     processScheduledPosts().catch(e => console.error('[Cron] Erreur posts programmés:', e.message));
   });
 
+  // Préchargement des valeurs Euronext Growth (liste + cours) pour une première page rapide
+  require('./services/market/euronextGrowthService').listStocks({ limit: 10 })
+    .catch(e => console.error('[EuronextGrowth] préchargement :', e.message));
+
   // Fetch immédiat au démarrage si pas de données aujourd'hui
   updateMarketRates().catch(e => console.error('[MarketData] Init error:', e.message));
 });

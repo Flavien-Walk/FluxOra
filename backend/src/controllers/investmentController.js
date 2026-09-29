@@ -2,6 +2,7 @@ const Investment = require('../models/Investment');
 const Organization = require('../models/Organization');
 const AccountingEntry = require('../models/AccountingEntry');
 const { getProductsWithRates, getLatestRates } = require('../services/marketDataService');
+const euronextGrowth = require('../services/market/euronextGrowthService');
 
 const getUserOrg = async (userId) =>
   Organization.findOne({ $or: [{ clerkOwnerId: userId }, { 'members.clerkUserId': userId }] });
@@ -150,4 +151,28 @@ const deleteInvestment = async (req, res) => {
   res.json({ success: true });
 };
 
-module.exports = { getProducts, getRates, getInvestments, createInvestment, withdrawInvestment, deleteInvestment };
+// GET /api/investments/market/euronext-growth — actions Euronext Growth (cours différés)
+const getEuronextGrowth = async (req, res) => {
+  try {
+    const { q, market, sort, page, limit } = req.query;
+    res.json(await euronextGrowth.listStocks({ q: String(q || '').slice(0, 60), market, sort, page, limit }));
+  } catch (err) {
+    console.error('[EuronextGrowth]', err.message);
+    res.status(503).json({ error: 'Données de marché momentanément indisponibles. Réessayez dans un instant.' });
+  }
+};
+
+// GET /api/investments/market/euronext-growth/:isin — fiche valeur + historique
+const getEuronextGrowthStock = async (req, res) => {
+  if (!/^[A-Z]{2}[A-Z0-9]{10}$/.test(req.params.isin)) return res.status(400).json({ error: 'ISIN invalide.' });
+  try {
+    const stock = await euronextGrowth.getStock(req.params.isin, req.query.range);
+    if (!stock) return res.status(404).json({ error: 'Valeur introuvable sur Euronext Growth.' });
+    res.json({ stock });
+  } catch (err) {
+    console.error('[EuronextGrowth]', err.message);
+    res.status(503).json({ error: 'Données de marché momentanément indisponibles.' });
+  }
+};
+
+module.exports = { getProducts, getRates, getInvestments, createInvestment, withdrawInvestment, deleteInvestment, getEuronextGrowth, getEuronextGrowthStock };
