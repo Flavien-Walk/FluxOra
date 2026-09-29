@@ -119,6 +119,12 @@ app.listen(PORT, () => {
   const advisor = require('./services/advisor/advisorService');
   require('./services/market/equitiesService').setScoreProvider(advisor.getScoreMap);
   setTimeout(() => advisor.init().catch((e) => console.error('[Conseiller] init :', e.message)), 120_000);
+  // Portefeuilles virtuels : valorisation de clôture chaque soir de séance (historique de performance)
+  cron.schedule('45 17 * * 1-5', async () => {
+    try { console.log('[Portefeuilles]', await require('./services/virtualWalletService').snapshotAll(require('./controllers/stockSimulationController').computePortfolio)); }
+    catch (e) { console.error('[Cron] Erreur portefeuilles :', e.message); }
+  }, { timezone: 'Europe/Paris' });
+
   cron.schedule('30 6 * * 0', () => { // chaque dimanche : valeurs de plus de 7 jours uniquement
     advisor.buildUniverse().catch((e) => console.error('[Cron] Erreur conseiller :', e.message));
   }, { timezone: 'Europe/Paris' });

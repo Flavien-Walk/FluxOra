@@ -6,6 +6,7 @@ const advisor = require('../services/advisor/advisorService');
 const { optimize } = require('../services/advisor/portfolioService');
 const { FAMILIES, VARIABLES } = require('../services/advisor/variables');
 const { simulateBuy, getUserOrg } = require('./stockSimulationController');
+const { getWallet } = require('../services/virtualWalletService');
 
 const DISCLAIMER = 'Score quantitatif et pédagogique calculé automatiquement à partir de données publiques (Yahoo Finance, presse). '
   + 'Ce n’est pas un conseil en investissement : investir en actions comporte un risque de perte en capital.';
@@ -58,6 +59,10 @@ const investPortfolio = async (req, res) => {
   if (!org) return res.status(404).json({ error: 'Organisation introuvable.' });
   const amountEur = Number(req.body?.amountEur);
   if (!Number.isFinite(amountEur) || amountEur < 1000) return res.status(400).json({ error: 'Montant minimum : 1 000 €.' });
+  const { cash } = await getWallet(org._id);
+  if (amountEur > cash) {
+    return res.status(409).json({ error: `Solde insuffisant : ${cash.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })} disponibles dans le portefeuille virtuel.` });
+  }
   const pf = await optimize({ size: Number(req.body?.size) || 15, minScore: Number(req.body?.minScore) || 55 });
   if (!pf.ready) return res.status(409).json({ error: pf.message });
 

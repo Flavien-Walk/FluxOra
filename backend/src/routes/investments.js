@@ -33,6 +33,8 @@ router.post('/advisor/refresh', requireAuth, advisorCtl.refresh);
 // Simulation d'investissement en actions (aucun ordre réel)
 router.get('/stocks', requireAuth, stockSim.getPortfolio);
 router.post('/stocks', requireAuth, stockSim.buy);
+router.post('/stocks/wallet/deposit', requireAuth, stockSim.deposit);
+router.post('/stocks/wallet/reset', requireAuth, stockSim.resetWallet);
 router.post('/stocks/:id/sell', requireAuth, stockSim.sell);
 router.delete('/stocks/:id', requireAuth, stockSim.remove);
 
