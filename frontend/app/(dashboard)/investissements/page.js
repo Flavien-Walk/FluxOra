@@ -14,6 +14,7 @@ import Header from '@/components/layout/Header';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
+import EuronextGrowthMarket from '@/components/investments/EuronextGrowthMarket';
 import { cn } from '@/lib/utils';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -353,16 +354,17 @@ export default function InvestissementsPage() {
         )}
 
         {/* ── Tabs ───────────────────────────────────────────────────────────── */}
-        <div className="flex gap-1 bg-slate-100 rounded-xl p-1 w-fit">
+        <div className="flex gap-1 bg-slate-100 rounded-xl p-1 w-full sm:w-fit overflow-x-auto">
           {[
             { key: 'catalogue', label: 'Catalogue', icon: BarChart3 },
+            { key: 'market', label: 'Marché Euronext Growth', icon: TrendingUp },
             { key: 'portfolio', label: 'Mon portefeuille', icon: Wallet },
           ].map(({ key, label, icon: Icon }) => (
             <button
               key={key}
               onClick={() => setTab(key)}
               className={cn(
-                'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
+                'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap',
                 tab === key
                   ? 'bg-accent-600 text-white shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
@@ -378,6 +380,9 @@ export default function InvestissementsPage() {
             </button>
           ))}
         </div>
+
+        {/* ── MARCHÉ EURONEXT GROWTH ─────────────────────────────────────────── */}
+        {tab === 'market' && <EuronextGrowthMarket />}
 
         {/* ── CATALOGUE ──────────────────────────────────────────────────────── */}
         {tab === 'catalogue' && (
