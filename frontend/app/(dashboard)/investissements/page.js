@@ -15,6 +15,7 @@ import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import EquitiesMarket from '@/components/investments/EquitiesMarket';
+import StockPortfolio from '@/components/investments/StockPortfolio';
 import { cn } from '@/lib/utils';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -382,7 +383,7 @@ export default function InvestissementsPage() {
         </div>
 
         {/* ── MARCHÉS ACTIONS (Euronext Paris / Growth) ──────────────────────── */}
-        {tab === 'market' && <EquitiesMarket />}
+        {tab === 'market' && <EquitiesMarket onInvested={() => setTab('portfolio')} />}
 
         {/* ── CATALOGUE ──────────────────────────────────────────────────────── */}
         {tab === 'catalogue' && (
@@ -430,7 +431,11 @@ export default function InvestissementsPage() {
 
         {/* ── PORTEFEUILLE ───────────────────────────────────────────────────── */}
         {tab === 'portfolio' && (
-          <div>
+          <div className="space-y-6">
+            {/* Actions : portefeuille simulé */}
+            <StockPortfolio onBrowse={() => setTab('market')} />
+
+            <h2 className="text-sm font-semibold text-slate-900">Placements de trésorerie</h2>
             {loadingPortfolio ? (
               <div className="space-y-3">
                 {[1, 2, 3].map(i => (

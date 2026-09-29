@@ -6,6 +6,7 @@ import { Search, Clock, TrendingUp, TrendingDown, ChevronLeft, ChevronRight, Inf
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import api from '@/lib/api';
 import Modal from '@/components/ui/Modal';
+import StockInvestPanel from './StockInvestPanel';
 import { cn } from '@/lib/utils';
 
 const fetcher = async (url) => (await api.get(url)).data;
@@ -62,7 +63,7 @@ function useDebounced(value, delay = 300) {
 }
 
 /* ─── Fiche valeur ─────────────────────────────────────────────────────────── */
-function StockDetail({ isin, onClose }) {
+function StockDetail({ isin, onClose, onInvested }) {
   const [range, setRange] = useState('1mo');
   const { data, error, isLoading } = useSWR(isin ? `/api/investments/market/equities/${isin}?range=${range}` : null, fetcher);
   const s = data?.stock;
@@ -132,6 +133,8 @@ function StockDetail({ isin, onClose }) {
             ))}
           </dl>
 
+          <StockInvestPanel stock={s} onInvested={() => { onClose(); onInvested?.(); }} />
+
           <p className="text-xs text-slate-500">
             Dernier cours : {fmtTime(s.time)} · {s.source === 'yahoo' ? `différé de ${s.delayMinutes ?? 15} min (Yahoo Finance)` : 'clôture de la dernière séance (Euronext)'}.
             Informations fournies à titre indicatif : ceci n&apos;est pas un conseil en investissement.
@@ -143,7 +146,7 @@ function StockDetail({ isin, onClose }) {
 }
 
 /* ─── Liste du marché ──────────────────────────────────────────────────────── */
-export default function EquitiesMarket() {
+export default function EquitiesMarket({ onInvested }) {
   const [segment, setSegment] = useState('paris');
   const [top, setTop] = useState('40');
   const [q, setQ] = useState('');
@@ -254,6 +257,7 @@ export default function EquitiesMarket() {
                   <th scope="col" className="px-4 py-2.5 text-right font-semibold">Volume</th>
                   <th scope="col" className="px-4 py-2.5 text-right font-semibold">Capitalisation</th>
                   <th scope="col" className="px-4 py-2.5 text-right font-semibold">Heure</th>
+                  <th scope="col" className="px-4 py-2.5"><span className="sr-only">Actions</span></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -271,6 +275,12 @@ export default function EquitiesMarket() {
                     <td className="px-4 py-2.5 text-right tabular-nums text-slate-700">{fmtCompact(s.volume)}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums text-slate-700">{fmtCompact(s.marketCap, s.marketCapCurrency || s.currency)}</td>
                     <td className="px-4 py-2.5 text-right text-xs text-slate-500">{fmtTime(s.time)}</td>
+                    <td className="px-4 py-2.5 text-right">
+                      <button onClick={() => setSelected(s.isin)} aria-label={`Investir dans ${s.name}`}
+                        className="rounded-lg bg-accent-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-accent-700">
+                        Investir
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -287,6 +297,7 @@ export default function EquitiesMarket() {
                     <span className="text-right">
                       <span className="block font-semibold tabular-nums text-slate-900">{fmtPrice(s.price, s.currency)}</span>
                       <Change value={s.changePercent} className="text-xs" />
+                      <span className="mt-0.5 block text-[11px] font-semibold text-accent-700">Investir ›</span>
                     </span>
                   </button>
                 </li>
@@ -316,7 +327,7 @@ export default function EquitiesMarket() {
         officielle. Informations à titre indicatif, sans valeur de conseil en investissement.
       </p>
 
-      <StockDetail isin={selected} onClose={() => setSelected(null)} />
+      <StockDetail isin={selected} onClose={() => setSelected(null)} onInvested={onInvested} />
     </div>
   );
 }
