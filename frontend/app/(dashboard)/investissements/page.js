@@ -14,7 +14,7 @@ import Header from '@/components/layout/Header';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
-import EuronextGrowthMarket from '@/components/investments/EuronextGrowthMarket';
+import EquitiesMarket from '@/components/investments/EquitiesMarket';
 import { cn } from '@/lib/utils';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -357,7 +357,7 @@ export default function InvestissementsPage() {
         <div className="flex gap-1 bg-slate-100 rounded-xl p-1 w-full sm:w-fit overflow-x-auto">
           {[
             { key: 'catalogue', label: 'Catalogue', icon: BarChart3 },
-            { key: 'market', label: 'Marché Euronext Growth', icon: TrendingUp },
+            { key: 'market', label: 'Marchés actions', icon: TrendingUp },
             { key: 'portfolio', label: 'Mon portefeuille', icon: Wallet },
           ].map(({ key, label, icon: Icon }) => (
             <button
@@ -381,8 +381,8 @@ export default function InvestissementsPage() {
           ))}
         </div>
 
-        {/* ── MARCHÉ EURONEXT GROWTH ─────────────────────────────────────────── */}
-        {tab === 'market' && <EuronextGrowthMarket />}
+        {/* ── MARCHÉS ACTIONS (Euronext Paris / Growth) ──────────────────────── */}
+        {tab === 'market' && <EquitiesMarket />}
 
         {/* ── CATALOGUE ──────────────────────────────────────────────────────── */}
         {tab === 'catalogue' && (

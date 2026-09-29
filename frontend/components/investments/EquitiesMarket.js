@@ -10,11 +10,23 @@ import { cn } from '@/lib/utils';
 
 const fetcher = async (url) => (await api.get(url)).data;
 
+const SEGMENTS = [
+  { id: 'paris', label: 'Euronext Paris', hint: 'Grandes et moyennes valeurs (L’Oréal, Crédit Agricole…)' },
+  { id: 'growth', label: 'Euronext Growth', hint: 'PME et ETI en croissance' },
+];
+
+const TOPS = [
+  { id: '', label: 'Toutes les sociétés' },
+  { id: '40', label: 'Top 40 (≈ CAC 40)' },
+  { id: '120', label: 'Top 120 (≈ SBF 120)' },
+  { id: '200', label: 'Top 200' },
+];
+
 const SORTS = [
+  { id: 'marketCap', label: 'Capitalisation' },
   { id: 'change', label: 'Plus fortes hausses' },
   { id: 'changeAsc', label: 'Plus fortes baisses' },
   { id: 'volume', label: 'Plus échangées (montant)' },
-  { id: 'marketCap', label: 'Capitalisation' },
   { id: 'name', label: 'Nom (A → Z)' },
 ];
 
@@ -52,7 +64,7 @@ function useDebounced(value, delay = 300) {
 /* ─── Fiche valeur ─────────────────────────────────────────────────────────── */
 function StockDetail({ isin, onClose }) {
   const [range, setRange] = useState('1mo');
-  const { data, error, isLoading } = useSWR(isin ? `/api/investments/market/euronext-growth/${isin}?range=${range}` : null, fetcher);
+  const { data, error, isLoading } = useSWR(isin ? `/api/investments/market/equities/${isin}?range=${range}` : null, fetcher);
   const s = data?.stock;
   const first = s?.history?.[0]?.close;
   const last = s?.history?.at(-1)?.close;
@@ -69,7 +81,7 @@ function StockDetail({ isin, onClose }) {
               <p className="text-3xl font-bold text-slate-900 tabular-nums">{fmtPrice(s.price, s.currency)}</p>
               <div className="mt-1 flex items-center gap-3 text-sm">
                 <Change value={s.changePercent} />
-                <span className="text-slate-500">Euronext Growth {s.market} · {s.isin}</span>
+                <span className="text-slate-500">{s.segment === 'paris' ? 'Euronext Paris' : `Euronext Growth ${s.market}`} · {s.isin}{s.rank ? ` · n° ${s.rank} par capitalisation` : ''}</span>
               </div>
             </div>
             <div className="flex gap-1 rounded-lg bg-slate-100 p-1" role="group" aria-label="Période du graphique">
@@ -110,7 +122,7 @@ function StockDetail({ isin, onClose }) {
             {[
               ['Performance période', <Change key="p" value={perf} />],
               ['Volume', fmtCompact(s.volume)],
-              ['Capitalisation', fmtCompact(s.marketCap, s.currency)],
+              ['Capitalisation', fmtCompact(s.marketCap, s.marketCapCurrency || s.currency)],
               ['Plus haut / bas jour', s.dayHigh != null ? `${fmtPrice(s.dayHigh, s.currency)} / ${fmtPrice(s.dayLow, s.currency)}` : '—'],
             ].map(([label, value]) => (
               <div key={label} className="rounded-lg bg-slate-50 px-3 py-2">
@@ -131,22 +143,31 @@ function StockDetail({ isin, onClose }) {
 }
 
 /* ─── Liste du marché ──────────────────────────────────────────────────────── */
-export default function EuronextGrowthMarket() {
+export default function EquitiesMarket() {
+  const [segment, setSegment] = useState('paris');
+  const [top, setTop] = useState('40');
   const [q, setQ] = useState('');
   const [market, setMarket] = useState('');
-  const [sort, setSort] = useState('change');
+  const [sort, setSort] = useState('marketCap');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState(null);
   const query = useDebounced(q);
 
-  useEffect(() => { setPage(1); }, [query, market, sort]);
+  useEffect(() => { setPage(1); }, [query, market, sort, top, segment]);
+
+  const changeSegment = (id) => {
+    setSegment(id);
+    setMarket('');
+    setTop(id === 'paris' ? '40' : '');
+  };
 
   const url = useMemo(() => {
-    const p = new URLSearchParams({ sort, page: String(page), limit: '25' });
+    const p = new URLSearchParams({ segment, sort, page: String(page), limit: '25' });
     if (query) p.set('q', query);
     if (market) p.set('market', market);
-    return `/api/investments/market/euronext-growth?${p}`;
-  }, [query, market, sort, page]);
+    if (top) p.set('top', top);
+    return `/api/investments/market/equities?${p}`;
+  }, [segment, query, market, sort, page, top]);
 
   // Rafraîchissement automatique toutes les 60 s (cours différés de 15 min)
   const { data, error, isLoading } = useSWR(url, fetcher, { refreshInterval: 60_000, keepPreviousData: true });
@@ -154,6 +175,18 @@ export default function EuronextGrowthMarket() {
 
   return (
     <div className="space-y-4">
+      {/* Choix du marché */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2" role="group" aria-label="Marché">
+        {SEGMENTS.map((sg) => (
+          <button key={sg.id} onClick={() => changeSegment(sg.id)} aria-pressed={segment === sg.id}
+            className={cn('rounded-xl border px-4 py-3 text-left transition',
+              segment === sg.id ? 'border-accent-500 bg-accent-50 ring-1 ring-accent-500' : 'border-slate-200 bg-white hover:border-slate-300')}>
+            <span className={cn('block text-sm font-semibold', segment === sg.id ? 'text-accent-700' : 'text-slate-900')}>{sg.label}</span>
+            <span className="text-xs text-slate-500">{sg.hint}</span>
+          </button>
+        ))}
+      </div>
+
       {/* Bandeau source */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-900">
@@ -161,7 +194,7 @@ export default function EuronextGrowthMarket() {
         </span>
         {summary && (
           <>
-            <span className="text-slate-700"><b className="tabular-nums">{summary.total}</b> sociétés Euronext Growth</span>
+            <span className="text-slate-700"><b className="tabular-nums">{summary.total}</b> sociétés {summary.segmentLabel}</span>
             <span className="text-emerald-700 tabular-nums">▲ {summary.up} en hausse</span>
             <span className="text-red-700 tabular-nums">▼ {summary.down} en baisse</span>
           </>
@@ -179,10 +212,15 @@ export default function EuronextGrowthMarket() {
           <input id="eg-search" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nom, code ou ISIN…"
             className="w-full h-10 pl-9 pr-3 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-accent-500" />
         </div>
-        <label htmlFor="eg-market" className="sr-only">Marché</label>
-        <select id="eg-market" value={market} onChange={(e) => setMarket(e.target.value)}
+        <label htmlFor="eg-top" className="sr-only">Taille</label>
+        <select id="eg-top" value={top} onChange={(e) => setTop(e.target.value)}
           className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
-          <option value="">Tous les marchés</option>
+          {TOPS.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+        </select>
+        <label htmlFor="eg-market" className="sr-only">Place de cotation</label>
+        <select id="eg-market" value={market} hidden={segment === 'paris'} onChange={(e) => setMarket(e.target.value)}
+          className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
+          <option value="">Toutes les places</option>
           {summary?.markets?.map((m) => <option key={m.mic} value={m.mic}>{m.label} ({m.count})</option>)}
         </select>
         <label htmlFor="eg-sort" className="sr-only">Trier par</label>
@@ -209,6 +247,7 @@ export default function EuronextGrowthMarket() {
             <table className="hidden md:table w-full text-sm">
               <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
+                  <th scope="col" className="px-4 py-2.5 text-right font-semibold w-12">Rang</th>
                   <th scope="col" className="px-4 py-2.5 text-left font-semibold">Société</th>
                   <th scope="col" className="px-4 py-2.5 text-right font-semibold">Cours</th>
                   <th scope="col" className="px-4 py-2.5 text-right font-semibold">Variation</th>
@@ -220,6 +259,7 @@ export default function EuronextGrowthMarket() {
               <tbody className="divide-y divide-slate-100">
                 {data?.stocks?.map((s) => (
                   <tr key={`${s.isin}-${s.mic}`} className="hover:bg-slate-50">
+                    <td className="px-4 py-2.5 text-right tabular-nums text-slate-500">{s.rank ?? '—'}</td>
                     <td className="px-4 py-2.5">
                       <button onClick={() => setSelected(s.isin)} className="text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded">
                         <span className="block font-medium text-slate-900">{s.name}</span>
@@ -229,7 +269,7 @@ export default function EuronextGrowthMarket() {
                     <td className="px-4 py-2.5 text-right font-semibold tabular-nums text-slate-900">{fmtPrice(s.price, s.currency)}</td>
                     <td className="px-4 py-2.5 text-right"><Change value={s.changePercent} /></td>
                     <td className="px-4 py-2.5 text-right tabular-nums text-slate-700">{fmtCompact(s.volume)}</td>
-                    <td className="px-4 py-2.5 text-right tabular-nums text-slate-700">{fmtCompact(s.marketCap, s.currency)}</td>
+                    <td className="px-4 py-2.5 text-right tabular-nums text-slate-700">{fmtCompact(s.marketCap, s.marketCapCurrency || s.currency)}</td>
                     <td className="px-4 py-2.5 text-right text-xs text-slate-500">{fmtTime(s.time)}</td>
                   </tr>
                 ))}
@@ -241,7 +281,7 @@ export default function EuronextGrowthMarket() {
                 <li key={`${s.isin}-${s.mic}`}>
                   <button onClick={() => setSelected(s.isin)} className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left active:bg-slate-50">
                     <span className="min-w-0">
-                      <span className="block truncate font-medium text-slate-900">{s.name}</span>
+                      <span className="block truncate font-medium text-slate-900">{s.rank ? `${s.rank}. ` : ''}{s.name}</span>
                       <span className="text-xs text-slate-500">{s.symbol} · {s.market}</span>
                     </span>
                     <span className="text-right">
@@ -271,7 +311,9 @@ export default function EuronextGrowthMarket() {
       <p className="flex items-start gap-2 text-xs text-slate-500">
         <Info size={13} className="mt-0.5 flex-shrink-0" aria-hidden="true" />
         Sources : liste officielle Euronext (live.euronext.com) et cotations Yahoo Finance, différées de 15 minutes ;
-        à défaut, cours de clôture de la dernière séance. Informations à titre indicatif, sans valeur de conseil en investissement.
+        à défaut, cours de clôture de la dernière séance. Le rang et les « Top 40 / 120 / 200 » sont calculés sur la
+        capitalisation boursière (convertie en euros) : ils approchent le CAC 40 et le SBF 120 sans en être la composition
+        officielle. Informations à titre indicatif, sans valeur de conseil en investissement.
       </p>
 
       <StockDetail isin={selected} onClose={() => setSelected(null)} />
