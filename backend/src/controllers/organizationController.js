@@ -116,6 +116,7 @@ const ORG_MODELS = () => ({
   socialPosts: require('../models/SocialPost'),
   socialAccounts: require('../models/SocialAccount'),
   auditLogs: require('../models/AuditLog'),
+  simulatedPositions: require('../models/SimulatedPosition'),
 });
 
 const findMyOrg = (userId) =>

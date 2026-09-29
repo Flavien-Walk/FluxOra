@@ -180,6 +180,7 @@ async function fetchQuotes(list) {
   const rates = await fetchFxToEur([...new Set([...bySymbol.values()].map((q) => q.currency))]);
   for (const q of bySymbol.values()) {
     const rate = rates[q.currency];
+    q.fxToEur = rate || null;
     q.marketCapEur = q.marketCap && rate ? q.marketCap * rate : null;
   }
   return bySymbol;
@@ -210,6 +211,8 @@ function merge(stock, q) {
       marketCap: q.marketCap ?? null,
       marketCapCurrency: q.currency || stock.currency,
       marketCapEur: q.marketCapEur ?? null,
+      fxToEur: q.fxToEur ?? (stock.currency === 'EUR' ? 1 : null),
+      priceEur: q.fxToEur ? q.regularMarketPrice * q.fxToEur : null,
       dayHigh: q.regularMarketDayHigh ?? null,
       dayLow: q.regularMarketDayLow ?? null,
       previousClose: q.regularMarketPreviousClose ?? null,
@@ -226,6 +229,8 @@ function merge(stock, q) {
     volume: stock.eod.volume,
     marketCap: null,
     marketCapEur: null,
+    fxToEur: stock.currency === 'EUR' ? 1 : null,
+    priceEur: stock.currency === 'EUR' ? stock.eod.price : null,
     time: stock.eod.time,
     source: 'euronext',
     delayMinutes: null,
@@ -294,14 +299,19 @@ async function listStocks({ segment = 'growth', q = '', market = '', top, sort =
   };
 }
 
-// Fiche valeur + historique (graphique)
-async function getStock(isin, range = '1mo') {
-  let stock = null;
+// Valeur au dernier cours connu (sans historique), tous segments confondus
+async function findStock(isin) {
   for (const key of Object.keys(SEGMENTS)) {
     const all = await getSegmentStocks(key);
-    stock = all.find((s) => s.isin === isin);
-    if (stock) break;
+    const stock = all.find((s) => s.isin === isin);
+    if (stock) return stock;
   }
+  return null;
+}
+
+// Fiche valeur + historique (graphique)
+async function getStock(isin, range = '1mo') {
+  const stock = await findStock(isin);
   if (!stock) return null;
   const RANGES = { '5d': [5, '30m'], '1mo': [31, '1d'], '6mo': [183, '1d'], '1y': [366, '1wk'] };
   const [days, interval] = RANGES[range] || RANGES['1mo'];
@@ -315,4 +325,4 @@ async function getStock(isin, range = '1mo') {
   return { ...stock, history, range };
 }
 
-module.exports = { listStocks, getStock, SEGMENTS, MARKETS, cleanName, titleCase };
+module.exports = { listStocks, getStock, findStock, SEGMENTS, MARKETS, cleanName, titleCase };
