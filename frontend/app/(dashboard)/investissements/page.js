@@ -16,6 +16,7 @@ import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import EquitiesMarket from '@/components/investments/EquitiesMarket';
 import StockPortfolio from '@/components/investments/StockPortfolio';
+import AdvisorPortfolio from '@/components/investments/AdvisorPortfolio';
 import { cn } from '@/lib/utils';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -359,6 +360,7 @@ export default function InvestissementsPage() {
           {[
             { key: 'catalogue', label: 'Catalogue', icon: BarChart3 },
             { key: 'market', label: 'Marchés actions', icon: TrendingUp },
+            { key: 'advisor', label: 'Conseiller', icon: Zap },
             { key: 'portfolio', label: 'Mon portefeuille', icon: Wallet },
           ].map(({ key, label, icon: Icon }) => (
             <button
@@ -384,6 +386,9 @@ export default function InvestissementsPage() {
 
         {/* ── MARCHÉS ACTIONS (Euronext Paris / Growth) ──────────────────────── */}
         {tab === 'market' && <EquitiesMarket onInvested={() => setTab('portfolio')} />}
+
+        {/* ── CONSEILLER (Score Fluxora + portefeuille optimisé) ─────────────── */}
+        {tab === 'advisor' && <AdvisorPortfolio onInvested={() => setTab('portfolio')} />}
 
         {/* ── CATALOGUE ──────────────────────────────────────────────────────── */}
         {tab === 'catalogue' && (

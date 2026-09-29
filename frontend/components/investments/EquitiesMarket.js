@@ -7,6 +7,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import api from '@/lib/api';
 import Modal from '@/components/ui/Modal';
 import StockInvestPanel from './StockInvestPanel';
+import StockScorePanel from './StockScorePanel';
 import { cn } from '@/lib/utils';
 
 const fetcher = async (url) => (await api.get(url)).data;
@@ -25,6 +26,7 @@ const TOPS = [
 
 const SORTS = [
   { id: 'marketCap', label: 'Capitalisation' },
+  { id: 'score', label: 'Score Fluxora' },
   { id: 'change', label: 'Plus fortes hausses' },
   { id: 'changeAsc', label: 'Plus fortes baisses' },
   { id: 'volume', label: 'Plus échangées (montant)' },
@@ -54,6 +56,13 @@ function Change({ value, className }) {
       {up ? '+' : ''}{value.toFixed(2)} %
     </span>
   );
+}
+
+// Pastille du Score Fluxora (libellé + couleur, jamais la couleur seule)
+function ScoreBadge({ score }) {
+  if (score == null) return <span className="text-xs text-slate-500">—</span>;
+  const cls = score >= 70 ? 'bg-emerald-100 text-emerald-900' : score >= 55 ? 'bg-emerald-50 text-emerald-800' : score >= 45 ? 'bg-amber-50 text-amber-900' : 'bg-red-50 text-red-800';
+  return <span className={cn('inline-block rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums', cls)} title="Score Fluxora (50 indicateurs)">{Math.round(score)} %</span>;
 }
 
 function useDebounced(value, delay = 300) {
@@ -132,6 +141,8 @@ function StockDetail({ isin, onClose, onInvested }) {
               </div>
             ))}
           </dl>
+
+          <StockScorePanel isin={s.isin} />
 
           <StockInvestPanel stock={s} onInvested={() => { onClose(); onInvested?.(); }} />
 
@@ -254,6 +265,7 @@ export default function EquitiesMarket({ onInvested }) {
                   <th scope="col" className="px-4 py-2.5 text-left font-semibold">Société</th>
                   <th scope="col" className="px-4 py-2.5 text-right font-semibold">Cours</th>
                   <th scope="col" className="px-4 py-2.5 text-right font-semibold">Variation</th>
+                  <th scope="col" className="px-4 py-2.5 text-right font-semibold">Score</th>
                   <th scope="col" className="px-4 py-2.5 text-right font-semibold">Volume</th>
                   <th scope="col" className="px-4 py-2.5 text-right font-semibold">Capitalisation</th>
                   <th scope="col" className="px-4 py-2.5 text-right font-semibold">Heure</th>
@@ -272,6 +284,7 @@ export default function EquitiesMarket({ onInvested }) {
                     </td>
                     <td className="px-4 py-2.5 text-right font-semibold tabular-nums text-slate-900">{fmtPrice(s.price, s.currency)}</td>
                     <td className="px-4 py-2.5 text-right"><Change value={s.changePercent} /></td>
+                    <td className="px-4 py-2.5 text-right"><ScoreBadge score={s.score} /></td>
                     <td className="px-4 py-2.5 text-right tabular-nums text-slate-700">{fmtCompact(s.volume)}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums text-slate-700">{fmtCompact(s.marketCap, s.marketCapCurrency || s.currency)}</td>
                     <td className="px-4 py-2.5 text-right text-xs text-slate-500">{fmtTime(s.time)}</td>
@@ -293,6 +306,7 @@ export default function EquitiesMarket({ onInvested }) {
                     <span className="min-w-0">
                       <span className="block truncate font-medium text-slate-900">{s.rank ? `${s.rank}. ` : ''}{s.name}</span>
                       <span className="text-xs text-slate-500">{s.symbol} · {s.market}</span>
+                      {s.score != null && <span className="ml-2"><ScoreBadge score={s.score} /></span>}
                     </span>
                     <span className="text-right">
                       <span className="block font-semibold tabular-nums text-slate-900">{fmtPrice(s.price, s.currency)}</span>
