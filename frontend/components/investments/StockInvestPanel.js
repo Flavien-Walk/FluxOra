@@ -7,7 +7,7 @@ import { useSWRConfig } from 'swr';
 import { ShoppingCart, History } from 'lucide-react';
 import api from '@/lib/api';
 import Button from '@/components/ui/Button';
-import { stockSimulationApi } from '@/hooks/useStockSimulation';
+import { stockSimulationApi, useStockPortfolio } from '@/hooks/useStockSimulation';
 import { cn } from '@/lib/utils';
 
 const fetcher = async (url) => (await api.get(url)).data;
@@ -24,6 +24,8 @@ export default function StockInvestPanel({ stock, onInvested }) {
   const [amount, setAmount] = useState('1000');
   const [busy, setBusy] = useState(false);
   const priceEur = stock.priceEur;
+  const { wallet } = useStockPortfolio();
+  const cash = wallet?.cashEur;
 
   // Historique 1 an pour la simulation rétrospective
   const { data: hist } = useSWR(`/api/investments/market/equities/${stock.isin}?range=1y`, fetcher);
@@ -32,6 +34,7 @@ export default function StockInvestPanel({ stock, onInvested }) {
   const quantity = priceEur ? Math.max(Math.floor((amountEur - fees(amountEur)) / priceEur), 0) : 0;
   const gross = quantity * (priceEur || 0);
   const total = quantity ? gross + fees(gross) : 0;
+  const overBudget = cash != null && total > cash;
 
   // Valeur aujourd'hui du même montant investi il y a 1 mois / 6 mois / 1 an (cours de la devise de cotation)
   const backtest = useMemo(() => {
@@ -76,7 +79,14 @@ export default function StockInvestPanel({ stock, onInvested }) {
       </div>
 
       <div>
-        <label htmlFor="invest-amount" className="block text-xs font-medium text-slate-600 mb-1">Montant à investir (€)</label>
+        <div className="mb-1 flex flex-wrap items-baseline justify-between gap-x-2">
+          <label htmlFor="invest-amount" className="text-xs font-medium text-slate-600">Montant à investir (€)</label>
+          {cash != null && (
+            <button type="button" onClick={() => setAmount(String(Math.floor(cash)))} className="text-xs text-slate-500 hover:text-accent-700">
+              Disponible : <span className="font-semibold tabular-nums">{eur(cash)}</span>
+            </button>
+          )}
+        </div>
         <input id="invest-amount" type="number" min="1" step="100" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)}
           className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm tabular-nums focus:outline-none focus:ring-2 focus:ring-accent-500" />
         <div className="mt-2 flex flex-wrap gap-1.5">
@@ -125,7 +135,12 @@ export default function StockInvestPanel({ stock, onInvested }) {
         </div>
       )}
 
-      <Button onClick={invest} loading={busy} disabled={!quantity} className="w-full">
+      {overBudget && (
+        <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          Solde insuffisant dans votre portefeuille virtuel ({eur(cash)} disponibles). Réduisez le montant ou ajoutez du capital depuis l’onglet Portefeuille.
+        </p>
+      )}
+      <Button onClick={invest} loading={busy} disabled={!quantity || overBudget} className="w-full">
         <ShoppingCart size={15} aria-hidden="true" /> {quantity ? `Investir ${eur(total)} (simulation)` : 'Montant insuffisant pour une action'}
       </Button>
     </section>
