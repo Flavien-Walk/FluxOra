@@ -108,9 +108,9 @@ const deleteInvoice = async (req, res) => {
   if (!org) return res.status(404).json({ error: 'Organisation introuvable.' });
   const invoice = await Invoice.findOneAndDelete({
     _id: req.params.id, organizationId: org._id,
-    status: { $in: ['draft', 'cancelled'] },
+    status: 'draft', // une facture émise (même annulée par avoir) doit être conservée
   });
-  if (!invoice) return res.status(404).json({ error: 'Facture introuvable ou non supprimable.' });
+  if (!invoice) return res.status(404).json({ error: 'Seul un brouillon peut être supprimé. Pour une facture émise, émettez un avoir.' });
   res.json({ message: 'Facture supprimée.' });
 };
 
