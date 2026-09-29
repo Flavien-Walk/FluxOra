@@ -39,7 +39,7 @@ const getMyOrganization = async (req, res) => {
 
 // PUT /api/organizations/:id
 const updateOrganization = async (req, res) => {
-  const { name, email, phone, address, vatNumber, siret, currency, emailTrackingEnabled, aiEnabled } = req.body;
+  const { name, email, phone, address, vatNumber, siret, currency, emailTrackingEnabled, aiEnabled, autoRemindersEnabled } = req.body;
 
   const org = await Organization.findById(req.params.id);
   if (!org) return res.status(404).json({ error: 'Organisation introuvable.' });
@@ -54,6 +54,7 @@ const updateOrganization = async (req, res) => {
   for (const [k, v] of Object.entries(updates)) if (v !== undefined) org[k] = v;
   if (typeof emailTrackingEnabled === 'boolean') org.emailTrackingEnabled = emailTrackingEnabled;
   if (typeof aiEnabled === 'boolean') org.aiEnabled = aiEnabled;
+  if (typeof autoRemindersEnabled === 'boolean') org.autoRemindersEnabled = autoRemindersEnabled;
   await org.save();
   res.json(org);
 };

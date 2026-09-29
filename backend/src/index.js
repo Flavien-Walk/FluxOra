@@ -107,6 +107,13 @@ app.listen(PORT, () => {
     processScheduledPosts().catch(e => console.error('[Cron] Erreur posts programmés:', e.message));
   });
 
+  // Relances automatiques (factures impayées, devis) — chaque jour à 9 h, organisations volontaires uniquement
+  const { runAutomaticReminders } = require('./services/reminderService');
+  cron.schedule('0 9 * * *', async () => {
+    try { console.log('[Relances]', await runAutomaticReminders()); }
+    catch (e) { console.error('[Cron] Erreur relances :', e.message); }
+  }, { timezone: 'Europe/Paris' });
+
   // Préchargement des valeurs Euronext Growth (liste + cours) pour une première page rapide
   require('./services/market/euronextGrowthService').listStocks({ limit: 10 })
     .catch(e => console.error('[EuronextGrowth] préchargement :', e.message));

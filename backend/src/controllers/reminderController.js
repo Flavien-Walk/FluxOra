@@ -1,104 +1,43 @@
 const Quote = require('../models/Quote');
 const Invoice = require('../models/Invoice');
+const Organization = require('../models/Organization');
+const { sendDocumentReminder } = require('../services/reminderService');
 
-const REMINDER_TYPE_LABELS = {
-  quote_reminder: 'Rappel commercial',
-  expiry_warning: 'Rappel avant expiration',
-  post_expiry: 'Relance après expiration',
-  before_due: 'Rappel avant échéance',
-  on_due: 'Rappel jour échéance',
-  overdue_1: '1ère relance impayée',
-  overdue_2: '2ème relance impayée',
-  overdue_3: 'Dernière relance',
+const getUserOrg = (userId) =>
+  Organization.findOne({ $or: [{ clerkOwnerId: userId }, { 'members.clerkUserId': userId }] });
+
+// Réglages de relance d'un document (champs autorisés uniquement)
+const updateReminders = (Model, allowed, notFound) => async (req, res) => {
+  const org = await getUserOrg(req.userId);
+  if (!org) return res.status(404).json({ error: 'Organisation introuvable.' });
+  const doc = await Model.findOne({ _id: req.params.id, organizationId: org._id });
+  if (!doc) return res.status(404).json({ error: notFound });
+  if (!doc.reminderConfig) doc.set('reminderConfig', {});
+  allowed.forEach((k) => { if (req.body[k] !== undefined) doc.reminderConfig[k] = req.body[k]; });
+  doc.markModified('reminderConfig');
+  await doc.save();
+  res.json(doc);
 };
 
-const updateQuoteReminders = async (req, res) => {
+// Envoi manuel d'une relance (email réel via Brevo)
+const sendReminder = (Model, docType, defaultType, notFound) => async (req, res) => {
+  const org = await getUserOrg(req.userId);
+  if (!org) return res.status(404).json({ error: 'Organisation introuvable.' });
+  const doc = await Model.findOne({ _id: req.params.id, organizationId: org._id }).populate('clientId');
+  if (!doc) return res.status(404).json({ error: notFound });
   try {
-    const { organizationId } = req.auth;
-    const quote = await Quote.findOne({ _id: req.params.id, organizationId });
-    if (!quote) return res.status(404).json({ error: 'Devis introuvable' });
-    const allowed = ['enabled', 'firstReminderDays', 'beforeExpiryDays', 'afterExpiryEnabled'];
-    allowed.forEach((k) => { if (req.body[k] !== undefined) quote.reminderConfig[k] = req.body[k]; });
-    quote.markModified('reminderConfig');
-    await quote.save();
-    res.json(quote);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
+    const { historyEntry } = await sendDocumentReminder({
+      docType, doc, org, type: req.body?.type || defaultType, overrideEmail: req.body?.overrideEmail,
+    });
+    res.json({ success: true, historyEntry });
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message || 'Envoi impossible.' });
   }
 };
 
-const sendQuoteReminder = async (req, res) => {
-  try {
-    const { organizationId } = req.auth;
-    const quote = await Quote.findOne({ _id: req.params.id, organizationId }).populate('clientId');
-    if (!quote) return res.status(404).json({ error: 'Devis introuvable' });
-    const { type = 'quote_reminder', overrideEmail, subject } = req.body;
-    const recipientEmail = overrideEmail || quote.clientId?.email;
-    if (!recipientEmail) return res.status(400).json({ error: 'Email destinataire manquant' });
-
-    // Log reminder in history
-    if (!quote.reminderConfig) quote.set('reminderConfig', {});
-    const historyEntry = {
-      type,
-      sentAt: new Date(),
-      subject: subject || `Rappel — ${quote.number}`,
-      recipientEmail,
-      status: 'sent',
-      note: REMINDER_TYPE_LABELS[type] || type,
-    };
-    quote.reminderConfig.history = [...(quote.reminderConfig.history || []), historyEntry];
-    quote.events.push({ type: 'reminder_sent', timestamp: new Date(), note: REMINDER_TYPE_LABELS[type] || type });
-    quote.markModified('reminderConfig');
-    await quote.save();
-
-    res.json({ success: true, historyEntry, quote });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-};
-
-const updateInvoiceReminders = async (req, res) => {
-  try {
-    const { organizationId } = req.auth;
-    const invoice = await Invoice.findOne({ _id: req.params.id, organizationId });
-    if (!invoice) return res.status(404).json({ error: 'Facture introuvable' });
-    const allowed = ['enabled', 'beforeDueDays', 'onDueDayEnabled', 'afterDueDays'];
-    allowed.forEach((k) => { if (req.body[k] !== undefined) invoice.reminderConfig[k] = req.body[k]; });
-    invoice.markModified('reminderConfig');
-    await invoice.save();
-    res.json(invoice);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-};
-
-const sendInvoiceReminder = async (req, res) => {
-  try {
-    const { organizationId } = req.auth;
-    const invoice = await Invoice.findOne({ _id: req.params.id, organizationId }).populate('clientId');
-    if (!invoice) return res.status(404).json({ error: 'Facture introuvable' });
-    const { type = 'overdue_1', overrideEmail, subject } = req.body;
-    const recipientEmail = overrideEmail || invoice.clientId?.email;
-    if (!recipientEmail) return res.status(400).json({ error: 'Email destinataire manquant' });
-
-    if (!invoice.reminderConfig) invoice.set('reminderConfig', {});
-    const historyEntry = {
-      type,
-      sentAt: new Date(),
-      subject: subject || `Rappel — ${invoice.number}`,
-      recipientEmail,
-      status: 'sent',
-      note: REMINDER_TYPE_LABELS[type] || type,
-    };
-    invoice.reminderConfig.history = [...(invoice.reminderConfig.history || []), historyEntry];
-    invoice.events.push({ type: 'reminder_sent', timestamp: new Date(), note: REMINDER_TYPE_LABELS[type] || type });
-    invoice.markModified('reminderConfig');
-    await invoice.save();
-
-    res.json({ success: true, historyEntry, invoice });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-};
+const updateQuoteReminders = updateReminders(Quote, ['enabled', 'firstReminderDays', 'beforeExpiryDays', 'afterExpiryEnabled'], 'Devis introuvable.');
+const updateInvoiceReminders = updateReminders(Invoice, ['enabled', 'beforeDueDays', 'onDueDayEnabled', 'afterDueDays'], 'Facture introuvable.');
+const sendQuoteReminder = sendReminder(Quote, 'quote', 'quote_reminder', 'Devis introuvable.');
+const sendInvoiceReminder = sendReminder(Invoice, 'invoice', 'overdue_1', 'Facture introuvable.');
 
 module.exports = { updateQuoteReminders, sendQuoteReminder, updateInvoiceReminders, sendInvoiceReminder };

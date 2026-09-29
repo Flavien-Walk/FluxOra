@@ -323,6 +323,9 @@ const quoteEmailHtml = ({ quote, org, client }) => {
 
 // ─── Envoi via Brevo ──────────────────────────────────────────────────────────
 const sendEmail = async ({ to, toName, subject, html }) => {
+  if (!process.env.BREVO_API_KEY) {
+    throw new Error('Envoi d’emails non configuré : BREVO_API_KEY manquante sur le serveur.');
+  }
   const senderEmail = process.env.BREVO_SENDER_EMAIL || 'noreply@fluxora.app';
   const senderName = process.env.BREVO_SENDER_NAME || 'Fluxora';
 
@@ -377,4 +380,64 @@ const sendQuoteEmail = async ({ quote, org, client, overrideEmail }) => {
   });
 };
 
-module.exports = { sendInvoiceEmail, sendQuoteEmail };
+// ─── Relances (factures impayées, devis en attente) ──────────────────────────
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// Textes par type de relance : [objet, paragraphe principal]
+const REMINDER_COPY = {
+  before_due: (d) => [`Rappel : facture ${d.number} à régler le ${fmtDate(d.dueDate)}`,
+    `Petit rappel : la facture <strong>${esc(d.number)}</strong> d’un montant de <strong>${fmt(d.total, d.currency)}</strong> arrive à échéance le <strong>${fmtDate(d.dueDate)}</strong>.`],
+  on_due: (d) => [`Facture ${d.number} : échéance aujourd’hui`,
+    `La facture <strong>${esc(d.number)}</strong> d’un montant de <strong>${fmt(d.total, d.currency)}</strong> arrive à échéance aujourd’hui.`],
+  overdue_1: (d) => [`Relance : facture ${d.number} en attente de règlement`,
+    `Sauf erreur de notre part, la facture <strong>${esc(d.number)}</strong> d’un montant de <strong>${fmt(d.total, d.currency)}</strong>, échue le <strong>${fmtDate(d.dueDate)}</strong>, n’a pas encore été réglée. Si le paiement est en cours, merci de ne pas tenir compte de ce message.`],
+  overdue_2: (d) => [`2ᵉ relance : facture ${d.number} impayée`,
+    `Malgré notre précédent rappel, la facture <strong>${esc(d.number)}</strong> d’un montant de <strong>${fmt(d.total, d.currency)}</strong>, échue le <strong>${fmtDate(d.dueDate)}</strong>, reste impayée. Nous vous remercions de procéder à son règlement dans les meilleurs délais.`],
+  overdue_3: (d) => [`Dernière relance : facture ${d.number}`,
+    `La facture <strong>${esc(d.number)}</strong> d’un montant de <strong>${fmt(d.total, d.currency)}</strong>, échue le <strong>${fmtDate(d.dueDate)}</strong>, demeure impayée. Sans règlement de votre part sous 8 jours, nous serons contraints d’engager une procédure de recouvrement. Pour rappel, tout retard entraîne des pénalités et une indemnité forfaitaire de 40 € (art. L441-10 du Code de commerce).`],
+  quote_reminder: (d) => [`Votre devis ${d.number} — avez-vous pu le consulter ?`,
+    `Nous revenons vers vous au sujet du devis <strong>${esc(d.number)}</strong> d’un montant de <strong>${fmt(d.total, d.currency)}</strong>. Avez-vous pu en prendre connaissance ? Nous restons disponibles pour toute question.`],
+  expiry_warning: (d) => [`Votre devis ${d.number} expire le ${fmtDate(d.expiryDate)}`,
+    `Le devis <strong>${esc(d.number)}</strong> d’un montant de <strong>${fmt(d.total, d.currency)}</strong> reste valable jusqu’au <strong>${fmtDate(d.expiryDate)}</strong>. Vous pouvez l’accepter en ligne en un clic.`],
+  post_expiry: (d) => [`Votre devis ${d.number} a expiré`,
+    `Le devis <strong>${esc(d.number)}</strong> a expiré le <strong>${fmtDate(d.expiryDate)}</strong>. Souhaitez-vous que nous vous en proposions une version mise à jour ?`],
+};
+
+/**
+ * Envoie une relance par email.
+ * @param {{ docType: 'invoice'|'quote', doc, org, client, type: string, to: string }} p
+ * @returns {{ subject }}
+ */
+const sendReminderEmail = async ({ docType, doc, org, client, type, to }) => {
+  const copy = REMINDER_COPY[type];
+  if (!copy) throw new Error(`Type de relance inconnu : ${type}`);
+  const [subject, paragraph] = copy(doc);
+  const clientUrl = getClientUrl();
+  const isInvoice = docType === 'invoice';
+  const ctaUrl = isInvoice ? `${clientUrl}/pay/${doc.trackingToken}` : `${clientUrl}/q/${doc.trackingToken}`;
+  const ctaLabel = isInvoice ? `Régler la facture — ${fmt(doc.total, doc.currency)}` : 'Consulter et accepter le devis';
+  const pixel = org.emailTrackingEnabled && doc.trackingToken
+    ? `<img src="${getServerUrl()}/api/public/track/${isInvoice ? 'invoice' : 'quote'}/${doc.trackingToken}" width="1" height="1" alt="" style="display:block;width:1px;height:1px;" />`
+    : '';
+
+  const bodyHtml = `
+    <p style="margin:0 0 16px;font-size:15px;color:#111827;">Bonjour ${esc(client?.name || '')},</p>
+    <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#374151;">${paragraph}</p>
+    ${doc.trackingToken ? `
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;"><tr><td align="center">
+      <a href="${ctaUrl}" style="display:inline-block;background:#4f46e5;color:#fff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:10px;">${ctaLabel}</a>
+    </td></tr></table>` : ''}
+    <p style="margin:0;font-size:14px;color:#374151;">Cordialement,<br /><strong>${esc(org.name)}</strong>${org.email ? `<br /><span style="color:#6b7280;">${esc(org.email)}</span>` : ''}</p>
+    ${pixel}
+  `;
+
+  await sendEmail({
+    to,
+    toName: client?.name,
+    subject: `${subject} — ${org.name}`,
+    html: baseTemplate({ title: subject, preheader: subject, bodyHtml, orgName: org.name }),
+  });
+  return { subject };
+};
+
+module.exports = { sendInvoiceEmail, sendQuoteEmail, sendReminderEmail };

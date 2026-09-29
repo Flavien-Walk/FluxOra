@@ -14,6 +14,8 @@ const organizationSchema = new mongoose.Schema(
     // Confidentialité : suivi d'ouverture des emails (pixel) désactivé par défaut, IA activable/désactivable
     emailTrackingEnabled: { type: Boolean, default: false },
     aiEnabled: { type: Boolean, default: true },
+    // Relances automatiques par email (factures impayées, devis) : désactivées par défaut
+    autoRemindersEnabled: { type: Boolean, default: false },
     members: [
       {
         clerkUserId: { type: String, required: true },
