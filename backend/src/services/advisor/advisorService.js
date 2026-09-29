@@ -115,10 +115,10 @@ async function buildUniverse({ force = false } = {}) {
   try {
     const stocks = await getUniverseStocks();
     state.progress = { done: 0, total: stocks.length, startedAt: new Date(), finishedAt: null };
-    await pool(stocks, 3, async (s) => {
+    await pool(stocks, 1, async (s) => {
       try { await analyze(s, { force }); } catch (e) { console.error('[Conseiller]', s.yahooSymbol, e.message); }
       state.progress.done++;
-      await sleep(150);
+      await sleep(1200); // ménage Yahoo : les cours des marchés restent prioritaires
     });
     await refreshRanking();
     state.progress.finishedAt = new Date();

@@ -163,19 +163,38 @@ async function fetchFxToEur(currencies) {
   return rates;
 }
 
+// Diagnostic exposé par /api/health
+const health = { lastSuccessAt: null, lastErrorAt: null, lastError: null, failedBatches: 0 };
+const sleepMs = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function quoteBatch(batch) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      return await yahoo.quote(batch, {}, { validateResult: false });
+    } catch (err) {
+      Object.assign(health, { lastErrorAt: new Date(), lastError: err.message });
+      if (attempt === 3) throw err;
+      await sleepMs(1500 * attempt); // attente croissante avant nouvel essai (limitation de débit)
+    }
+  }
+  return [];
+}
+
 async function fetchQuotes(list) {
   const bySymbol = new Map();
   for (let i = 0; i < list.length; i += YAHOO_BATCH) {
     const batch = list.slice(i, i + YAHOO_BATCH).map((s) => s.yahooSymbol);
     try {
-      const result = await yahoo.quote(batch, {}, { validateResult: false });
+      const result = await quoteBatch(batch);
       for (const q of [].concat(result || [])) {
         if (q?.symbol && q.regularMarketPrice != null) bySymbol.set(q.symbol, q);
       }
     } catch (err) {
+      health.failedBatches++;
       console.error('[Marchés] Yahoo lot', i / YAHOO_BATCH, ':', err.message);
     }
   }
+  if (bySymbol.size) health.lastSuccessAt = new Date();
   // Capitalisation convertie en euros pour le classement
   const rates = await fetchFxToEur([...new Set([...bySymbol.values()].map((q) => q.currency))]);
   for (const q of bySymbol.values()) {
@@ -191,7 +210,15 @@ async function getQuotes(segmentKey, list) {
   if (qc.bySymbol.size && Date.now() - qc.at < QUOTES_TTL) return qc.bySymbol;
   if (!qc.promise) {
     qc.promise = fetchQuotes(list)
-      .then((bySymbol) => { Object.assign(qc, { at: Date.now(), bySymbol, promise: null }); return bySymbol; })
+      .then((fresh) => {
+        // Fusion : les valeurs absentes de la nouvelle réponse gardent leur dernier cours connu
+        const merged = new Map(qc.bySymbol);
+        for (const [k, v] of fresh) merged.set(k, v);
+        // Échec massif (limitation Yahoo) : on garde l'ancien cache et on réessaie plus vite
+        const ok = fresh.size >= Math.min(qc.bySymbol.size, list.length) * 0.5;
+        Object.assign(qc, { at: ok ? Date.now() : Date.now() - QUOTES_TTL + 15_000, bySymbol: merged, promise: null });
+        return merged;
+      })
       .catch(() => { qc.promise = null; return qc.bySymbol; });
   }
   // Première fois : on attend ; ensuite on sert l'ancien cache pendant le rafraîchissement
@@ -332,4 +359,9 @@ async function getStock(isin, range = '1mo') {
   return { ...stock, history, range };
 }
 
-module.exports = { listStocks, getStock, findStock, setScoreProvider, SEGMENTS, MARKETS, cleanName, titleCase };
+const getMarketHealth = () => ({
+  ...health,
+  quotes: Object.fromEntries(Object.entries(cache).map(([k, c]) => [k, { cached: c.quotes.bySymbol.size, universe: c.universe.list.length, at: c.quotes.at ? new Date(c.quotes.at) : null }])),
+});
+
+module.exports = { listStocks, getStock, findStock, setScoreProvider, getMarketHealth, SEGMENTS, MARKETS, cleanName, titleCase };

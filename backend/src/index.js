@@ -118,7 +118,7 @@ app.listen(PORT, () => {
   // Conseiller : scores injectés dans les marchés, univers recalculé chaque nuit (6 h 30) et au démarrage si besoin
   const advisor = require('./services/advisor/advisorService');
   require('./services/market/equitiesService').setScoreProvider(advisor.getScoreMap);
-  setTimeout(() => advisor.init().catch((e) => console.error('[Conseiller] init :', e.message)), 20_000);
+  setTimeout(() => advisor.init().catch((e) => console.error('[Conseiller] init :', e.message)), 120_000);
   cron.schedule('30 6 * * 1-5', () => {
     advisor.buildUniverse({ force: true }).catch((e) => console.error('[Cron] Erreur conseiller :', e.message));
   }, { timezone: 'Europe/Paris' });
