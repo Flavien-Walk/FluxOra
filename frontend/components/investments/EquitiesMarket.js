@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import useSWR from 'swr';
-import { Search, Clock, TrendingUp, TrendingDown, ChevronLeft, ChevronRight, Info } from 'lucide-react';
+import { Search, Clock, TrendingUp, TrendingDown, ChevronLeft, ChevronRight, Info, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import api from '@/lib/api';
 import Modal from '@/components/ui/Modal';
@@ -24,14 +24,43 @@ const TOPS = [
   { id: '200', label: 'Top 200' },
 ];
 
+// Tris proposés dans la liste déroulante (valeur « colonne:sens »)
 const SORTS = [
-  { id: 'marketCap', label: 'Capitalisation' },
-  { id: 'score', label: 'Score Fluxora' },
-  { id: 'change', label: 'Plus fortes hausses' },
-  { id: 'changeAsc', label: 'Plus fortes baisses' },
-  { id: 'volume', label: 'Plus échangées (montant)' },
-  { id: 'name', label: 'Nom (A → Z)' },
+  { id: 'marketCap:desc', label: 'Capitalisation' },
+  { id: 'score:desc', label: 'Score Fluxora' },
+  { id: 'change:desc', label: 'Plus fortes hausses' },
+  { id: 'change:asc', label: 'Plus fortes baisses' },
+  { id: 'volume:desc', label: 'Plus échangées (montant)' },
+  { id: 'name:asc', label: 'Nom (A → Z)' },
 ];
+
+// Colonnes triables du tableau : un clic trie, un second clic inverse le sens
+const COLUMNS = [
+  { key: 'name', label: 'Société', align: 'left', defaultOrder: 'asc' },
+  { key: 'price', label: 'Cours' },
+  { key: 'change', label: 'Variation' },
+  { key: 'score', label: 'Score' },
+  { key: 'volume', label: 'Volume' },
+  { key: 'marketCap', label: 'Capitalisation' },
+  { key: 'time', label: 'Heure' },
+];
+
+function SortHeader({ col, sort, order, onSort }) {
+  const active = sort === col.key;
+  const Icon = !active ? ArrowUpDown : order === 'asc' ? ArrowUp : ArrowDown;
+  return (
+    <th scope="col" aria-sort={active ? (order === 'asc' ? 'ascending' : 'descending') : 'none'}
+      className={cn('px-4 py-2.5 font-semibold', col.align === 'left' ? 'text-left' : 'text-right')}>
+      <button type="button" onClick={() => onSort(col)}
+        title={`Trier par ${col.label.toLowerCase()}`}
+        className={cn('inline-flex items-center gap-1 uppercase tracking-wide rounded hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500',
+          active && 'text-slate-900', col.align !== 'left' && 'flex-row-reverse')}>
+        {col.label}
+        <Icon size={12} aria-hidden="true" className={active ? 'text-accent-600' : 'opacity-40'} />
+      </button>
+    </th>
+  );
+}
 
 const RANGES = [
   { id: '5d', label: '5 j' },
@@ -163,11 +192,12 @@ export default function EquitiesMarket({ onInvested }) {
   const [q, setQ] = useState('');
   const [market, setMarket] = useState('');
   const [sort, setSort] = useState('marketCap');
+  const [order, setOrder] = useState('desc');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState(null);
   const query = useDebounced(q);
 
-  useEffect(() => { setPage(1); }, [query, market, sort, top, segment]);
+  useEffect(() => { setPage(1); }, [query, market, sort, order, top, segment]);
 
   const changeSegment = (id) => {
     setSegment(id);
@@ -175,13 +205,21 @@ export default function EquitiesMarket({ onInvested }) {
     setTop(id === 'paris' ? '40' : '');
   };
 
+  // Clic sur un en-tête : même colonne → sens inversé ; autre colonne → sens par défaut
+  const sortBy = (col) => {
+    if (sort === col.key) setOrder((o) => (o === 'asc' ? 'desc' : 'asc'));
+    else { setSort(col.key); setOrder(col.defaultOrder || 'desc'); }
+  };
+  const sortValue = `${sort}:${order}`;
+  const customSort = !SORTS.some((o) => o.id === sortValue);
+
   const url = useMemo(() => {
-    const p = new URLSearchParams({ segment, sort, page: String(page), limit: '25' });
+    const p = new URLSearchParams({ segment, sort, order, page: String(page), limit: '25' });
     if (query) p.set('q', query);
     if (market) p.set('market', market);
     if (top) p.set('top', top);
     return `/api/investments/market/equities?${p}`;
-  }, [segment, query, market, sort, page, top]);
+  }, [segment, query, market, sort, order, page, top]);
 
   // Rafraîchissement automatique toutes les 60 s (cours différés de 15 min)
   const { data, error, isLoading } = useSWR(url, fetcher, { refreshInterval: 60_000, keepPreviousData: true });
@@ -238,8 +276,13 @@ export default function EquitiesMarket({ onInvested }) {
           {summary?.markets?.map((m) => <option key={m.mic} value={m.mic}>{m.label} ({m.count})</option>)}
         </select>
         <label htmlFor="eg-sort" className="sr-only">Trier par</label>
-        <select id="eg-sort" value={sort} onChange={(e) => setSort(e.target.value)}
+        <select id="eg-sort" value={sortValue} onChange={(e) => { const [k, o] = e.target.value.split(':'); setSort(k); setOrder(o); }}
           className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
+          {customSort && (
+            <option value={sortValue}>
+              {COLUMNS.find((c) => c.key === sort)?.label} ({order === 'asc' ? 'croissant' : 'décroissant'})
+            </option>
+          )}
           {SORTS.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
         </select>
       </div>
@@ -262,13 +305,7 @@ export default function EquitiesMarket({ onInvested }) {
               <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th scope="col" className="px-4 py-2.5 text-right font-semibold w-12">Rang</th>
-                  <th scope="col" className="px-4 py-2.5 text-left font-semibold">Société</th>
-                  <th scope="col" className="px-4 py-2.5 text-right font-semibold">Cours</th>
-                  <th scope="col" className="px-4 py-2.5 text-right font-semibold">Variation</th>
-                  <th scope="col" className="px-4 py-2.5 text-right font-semibold">Score</th>
-                  <th scope="col" className="px-4 py-2.5 text-right font-semibold">Volume</th>
-                  <th scope="col" className="px-4 py-2.5 text-right font-semibold">Capitalisation</th>
-                  <th scope="col" className="px-4 py-2.5 text-right font-semibold">Heure</th>
+                  {COLUMNS.map((col) => <SortHeader key={col.key} col={col} sort={sort} order={order} onSort={sortBy} />)}
                   <th scope="col" className="px-4 py-2.5"><span className="sr-only">Actions</span></th>
                 </tr>
               </thead>
