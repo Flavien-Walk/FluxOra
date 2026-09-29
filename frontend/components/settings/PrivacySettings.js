@@ -104,6 +104,14 @@ export default function PrivacySettings({ org, isOwner, onChange }) {
           description="Ajoute un pixel invisible aux devis et factures envoyés pour savoir s’ils ont été ouverts. Si vous l’activez, informez-en vos clients."
         />
         <Toggle
+          id="privacy-auto-reminders"
+          checked={Boolean(org.autoRemindersEnabled)}
+          disabled={saving === 'autoRemindersEnabled'}
+          onChange={(v) => update('autoRemindersEnabled', v)}
+          label="Relances automatiques par email"
+          description="Chaque jour à 9 h, Fluxora envoie les rappels prévus (avant échéance, jour J, J+5, J+15…) pour les factures impayées et les devis en attente. Les relances manuelles restent toujours possibles."
+        />
+        <Toggle
           id="privacy-ai"
           checked={org.aiEnabled !== false}
           disabled={saving === 'aiEnabled'}

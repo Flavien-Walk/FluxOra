@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import api from '@/lib/api';
+import { toast } from 'sonner';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import {
   computeQuoteTimeline, computeInvoiceTimeline, computeRiskScore,
@@ -228,11 +229,13 @@ export default function ReminderBlock({ doc, docType, mutate }) {
   const handleSendReminder = async (reminderType) => {
     setSendingType(reminderType);
     try {
-      await api.post(`${apiBase}/${doc._id}/send-reminder`, { type: reminderType });
+      const { data } = await api.post(`${apiBase}/${doc._id}/send-reminder`, { type: reminderType });
       setLastSent(reminderType);
+      toast.success(`Relance envoyée à ${data?.historyEntry?.recipientEmail || 'votre client'}.`);
       mutate();
     } catch (err) {
-      alert(err.response?.data?.error || 'Erreur lors de l\'envoi');
+      mutate();
+      toast.error(err.response?.data?.error || 'Erreur lors de l\'envoi');
     } finally {
       setSendingType('');
     }
