@@ -119,8 +119,8 @@ app.listen(PORT, () => {
   const advisor = require('./services/advisor/advisorService');
   require('./services/market/equitiesService').setScoreProvider(advisor.getScoreMap);
   setTimeout(() => advisor.init().catch((e) => console.error('[Conseiller] init :', e.message)), 120_000);
-  cron.schedule('30 6 * * 1-5', () => {
-    advisor.buildUniverse({ force: true }).catch((e) => console.error('[Cron] Erreur conseiller :', e.message));
+  cron.schedule('30 6 * * 0', () => { // chaque dimanche : valeurs de plus de 7 jours uniquement
+    advisor.buildUniverse().catch((e) => console.error('[Cron] Erreur conseiller :', e.message));
   }, { timezone: 'Europe/Paris' });
 
   // Préchargement des marchés actions (liste + cours) pour une première page rapide

@@ -14,7 +14,7 @@ const { VARIABLES, priceMetrics } = require('./variables');
 const { buildDistributions, scoreValues } = require('./scoringService');
 const { fetchNews } = require('./newsService');
 
-const ANALYSIS_TTL = 24 * 3600 * 1000;
+const ANALYSIS_TTL = 7 * 24 * 3600 * 1000; // fondamentaux trimestriels : 7 jours suffisent
 const MODULES = ['financialData', 'defaultKeyStatistics', 'summaryDetail', 'assetProfile', 'earningsTrend', 'majorHoldersBreakdown'];
 
 const state = {
@@ -48,6 +48,10 @@ async function analyze(stock, { force = false } = {}) {
     fetchNews(stock.name),
   ]);
 
+  // Yahoo indisponible (limitation) : on garde l'analyse précédente plutôt que d'enregistrer des données vides
+  const yahooOk = Boolean(qs?.financialData || qs?.summaryDetail) && (chart?.quotes || []).length > 0;
+  if (!yahooOk && cached) return cached;
+
   const closes = (chart?.quotes || []).map((q) => q.close).filter((v) => typeof v === 'number' && v > 0);
   const avgVolume = qs.summaryDetail?.averageVolume ?? qs.summaryDetail?.averageDailyVolume10Day;
   const px = {
@@ -74,6 +78,7 @@ async function analyze(stock, { force = false } = {}) {
     news: news.items, newsScore: news.count ? news.score : null,
     computedAt: new Date(),
   };
+  if (!yahooOk) return { ...doc, partial: true }; // non enregistré : sera recalculé quand Yahoo répondra
   return StockAnalysis.findOneAndUpdate({ yahooSymbol: stock.yahooSymbol }, doc, { upsert: true, new: true, setDefaultsOnInsert: true }).lean();
 }
 
@@ -89,7 +94,7 @@ async function getUniverseStocks() {
 // Distributions de l'univers (depuis les analyses en base, cache 1 h)
 async function getDistributions() {
   if (state.dist && Date.now() - state.distAt < 3600_000) return state.dist;
-  const docs = await StockAnalysis.find({ computedAt: { $gte: new Date(Date.now() - 7 * 86400_000) } }, 'values sector').lean();
+  const docs = await StockAnalysis.find({ computedAt: { $gte: new Date(Date.now() - 14 * 86400_000) } }, 'values sector').lean();
   state.dist = buildDistributions(docs);
   state.distAt = Date.now();
   state.universeSize = docs.length;
@@ -99,7 +104,7 @@ async function getDistributions() {
 async function refreshRanking() {
   state.distAt = 0;
   const dist = await getDistributions();
-  const docs = await StockAnalysis.find({ computedAt: { $gte: new Date(Date.now() - 7 * 86400_000) } }).lean();
+  const docs = await StockAnalysis.find({ computedAt: { $gte: new Date(Date.now() - 14 * 86400_000) } }).lean();
   state.ranking = docs.map((d) => {
     const s = scoreValues(d.values, dist, { sector: d.sector });
     return { isin: d.isin, yahooSymbol: d.yahooSymbol, name: d.name, segment: d.segment, market: d.market, sector: d.sector,
@@ -133,7 +138,7 @@ async function buildUniverse({ force = false } = {}) {
 async function init() {
   const fresh = await StockAnalysis.countDocuments({ computedAt: { $gte: new Date(Date.now() - ANALYSIS_TTL) } });
   await refreshRanking();
-  if (fresh < 100) buildUniverse().catch((e) => console.error('[Conseiller] calcul :', e.message));
+  if (fresh < 100) buildUniverse().catch((e) => console.error('[Conseiller] calcul :', e.message)); // ne recalcule que les valeurs de plus de 7 jours
 }
 
 // Résumé rédigé par l'IA (facultatif, si ANTHROPIC_API_KEY est configurée), mis en cache 24 h

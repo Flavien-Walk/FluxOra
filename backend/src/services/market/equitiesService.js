@@ -15,6 +15,7 @@
  *    d'utilisation d'Euronext et de Yahoo.
  */
 const { yahoo } = require('./yahooClient');
+const MarketRef = require('../../models/MarketRef');
 
 // Places de cotation : code MIC → libellé et suffixe Yahoo
 const MARKETS = {
@@ -55,7 +56,35 @@ const YAHOO_BATCH = 50;
 const cache = Object.fromEntries(Object.keys(SEGMENTS).map((k) => [k, {
   universe: { at: 0, list: [], promise: null },
   quotes: { at: 0, bySymbol: new Map(), promise: null },
+  refs: { at: 0, bySymbol: new Map() },
 }]));
+
+// Références (nom, nombre d'actions) : sauvegardées après un succès Yahoo, relues au besoin (secours)
+async function saveRefs(bySymbol, list) {
+  const isinBySymbol = new Map(list.map((s) => [s.yahooSymbol, s.isin]));
+  const ops = [...bySymbol.values()].map((q) => ({
+    updateOne: {
+      filter: { yahooSymbol: q.symbol },
+      update: { $set: {
+        yahooSymbol: q.symbol, isin: isinBySymbol.get(q.symbol), longName: q.longName, shortName: q.shortName,
+        sharesOutstanding: q.sharesOutstanding, marketCap: q.marketCap, currency: q.currency, fxToEur: q.fxToEur, updatedAt: new Date(),
+      } },
+      upsert: true,
+    },
+  }));
+  if (ops.length) await MarketRef.bulkWrite(ops, { ordered: false }).catch((e) => console.error('[Marchés] références :', e.message));
+}
+
+async function getRefs(segmentKey, list) {
+  const rc = cache[segmentKey].refs;
+  if (rc.bySymbol.size && Date.now() - rc.at < 30 * 60_000) return rc.bySymbol;
+  try {
+    const docs = await MarketRef.find({ yahooSymbol: { $in: list.map((s) => s.yahooSymbol) } }).lean();
+    rc.bySymbol = new Map(docs.map((d) => [d.yahooSymbol, d]));
+    rc.at = Date.now();
+  } catch { /* base indisponible */ }
+  return rc.bySymbol;
+}
 
 const num = (v) => {
   const n = parseFloat(String(v ?? '').replace(',', '.'));
@@ -164,7 +193,8 @@ async function fetchFxToEur(currencies) {
 }
 
 // Diagnostic exposé par /api/health
-const health = { lastSuccessAt: null, lastErrorAt: null, lastError: null, failedBatches: 0 };
+const health = { lastSuccessAt: null, lastErrorAt: null, lastError: null, failedBatches: 0, blockedUntil: null };
+const BLOCK_PAUSE = 5 * 60_000; // disjoncteur : pause après une limitation (429)
 const sleepMs = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function quoteBatch(batch) {
@@ -173,6 +203,7 @@ async function quoteBatch(batch) {
       return await yahoo.quote(batch, {}, { validateResult: false });
     } catch (err) {
       Object.assign(health, { lastErrorAt: new Date(), lastError: err.message });
+      if (/429|too many/i.test(err.message)) { health.blockedUntil = new Date(Date.now() + BLOCK_PAUSE); throw err; }
       if (attempt === 3) throw err;
       await sleepMs(1500 * attempt); // attente croissante avant nouvel essai (limitation de débit)
     }
@@ -192,6 +223,7 @@ async function fetchQuotes(list) {
     } catch (err) {
       health.failedBatches++;
       console.error('[Marchés] Yahoo lot', i / YAHOO_BATCH, ':', err.message);
+      if (health.blockedUntil && Date.now() < health.blockedUntil.getTime()) break; // inutile d'insister
     }
   }
   if (bySymbol.size) health.lastSuccessAt = new Date();
@@ -208,6 +240,8 @@ async function fetchQuotes(list) {
 async function getQuotes(segmentKey, list) {
   const qc = cache[segmentKey].quotes;
   if (qc.bySymbol.size && Date.now() - qc.at < QUOTES_TTL) return qc.bySymbol;
+  // Yahoo en pause (limitation) : secours immédiat (cours Euronext + références mémorisées)
+  if (health.blockedUntil && Date.now() < health.blockedUntil.getTime()) return qc.bySymbol;
   if (!qc.promise) {
     qc.promise = fetchQuotes(list)
       .then((fresh) => {
@@ -216,17 +250,22 @@ async function getQuotes(segmentKey, list) {
         for (const [k, v] of fresh) merged.set(k, v);
         // Échec massif (limitation Yahoo) : on garde l'ancien cache et on réessaie plus vite
         const ok = fresh.size >= Math.min(qc.bySymbol.size, list.length) * 0.5;
+        if (fresh.size && Date.now() - (qc.refsSavedAt || 0) > 6 * 3600_000) {
+          qc.refsSavedAt = Date.now();
+          saveRefs(fresh, list);
+        }
         Object.assign(qc, { at: ok ? Date.now() : Date.now() - QUOTES_TTL + 15_000, bySymbol: merged, promise: null });
         return merged;
       })
       .catch(() => { qc.promise = null; return qc.bySymbol; });
   }
-  // Première fois : on attend ; ensuite on sert l'ancien cache pendant le rafraîchissement
-  return qc.bySymbol.size ? qc.bySymbol : qc.promise;
+  // Première fois : on attend au plus 8 s ; ensuite on sert l'ancien cache pendant le rafraîchissement
+  if (qc.bySymbol.size) return qc.bySymbol;
+  return Promise.race([qc.promise, new Promise((r) => setTimeout(() => r(qc.bySymbol), 8000))]);
 }
 
 // Fusionne référentiel Euronext et cours Yahoo
-function merge(stock, q) {
+function merge(stock, q, ref) {
   if (q) {
     return {
       ...stock,
@@ -248,16 +287,21 @@ function merge(stock, q) {
       delayMinutes: q.exchangeDataDelayedBy ?? 15,
     };
   }
+  // Secours : cours Euronext ; nom et capitalisation reconstitués depuis les références mémorisées
+  const fx = ref?.fxToEur ?? (stock.currency === 'EUR' ? 1 : null);
+  const cap = ref?.sharesOutstanding && stock.eod.price ? ref.sharesOutstanding * stock.eod.price : ref?.marketCap ?? null;
   return {
     ...stock,
+    name: cleanName(ref?.longName) || cleanName(ref?.shortName) || stock.name,
     price: stock.eod.price,
     change: null,
     changePercent: null, // pas de clôture précédente fiable dans l'export Euronext
     volume: stock.eod.volume,
-    marketCap: null,
-    marketCapEur: null,
-    fxToEur: stock.currency === 'EUR' ? 1 : null,
-    priceEur: stock.currency === 'EUR' ? stock.eod.price : null,
+    marketCap: cap,
+    marketCapCurrency: ref?.currency || stock.currency,
+    marketCapEur: cap && fx ? cap * fx : null,
+    fxToEur: fx,
+    priceEur: fx && stock.eod.price ? stock.eod.price * fx : null,
     time: stock.eod.time,
     source: 'euronext',
     delayMinutes: null,
@@ -267,8 +311,8 @@ function merge(stock, q) {
 // Toutes les valeurs d'un segment, fusionnées et classées par capitalisation (rang 1 = la plus grosse)
 async function getSegmentStocks(segmentKey) {
   const list = await getUniverse(segmentKey);
-  const bySymbol = await getQuotes(segmentKey, list);
-  const all = list.map((s) => merge(s, bySymbol.get(s.yahooSymbol)));
+  const [bySymbol, refs] = await Promise.all([getQuotes(segmentKey, list), getRefs(segmentKey, list)]);
+  const all = list.map((s) => merge(s, bySymbol.get(s.yahooSymbol), refs.get(s.yahooSymbol)));
   [...all].filter((s) => s.marketCapEur).sort((a, b) => b.marketCapEur - a.marketCapEur).forEach((s, i) => { s.rank = i + 1; });
   return all;
 }
