@@ -21,6 +21,15 @@ router.get('/rates', requireAuth, getRates);
 router.get('/market/equities', requireAuth, getEquities);
 router.get('/market/equities/:isin', requireAuth, getEquity);
 
+// Conseiller : Score Fluxora (50 variables) et portefeuille optimisé
+const advisorCtl = require('../controllers/advisorController');
+router.get('/advisor/methodology', requireAuth, advisorCtl.getMethodology);
+router.get('/advisor/ranking', requireAuth, advisorCtl.getRanking);
+router.get('/advisor/score/:isin', requireAuth, advisorCtl.getScore);
+router.get('/advisor/portfolio', requireAuth, advisorCtl.getPortfolio);
+router.post('/advisor/portfolio/invest', requireAuth, advisorCtl.investPortfolio);
+router.post('/advisor/refresh', requireAuth, advisorCtl.refresh);
+
 // Simulation d'investissement en actions (aucun ordre réel)
 router.get('/stocks', requireAuth, stockSim.getPortfolio);
 router.post('/stocks', requireAuth, stockSim.buy);

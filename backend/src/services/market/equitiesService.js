@@ -252,9 +252,14 @@ const SORTS = {
   changeAsc: (a, b) => (a.changePercent ?? Infinity) - (b.changePercent ?? Infinity),
   volume: (a, b) => ((b.volume ?? 0) * (b.price ?? 0)) - ((a.volume ?? 0) * (a.price ?? 0)),
   name: (a, b) => a.name.localeCompare(b.name, 'fr'),
+  score: (a, b) => (b.score ?? -1) - (a.score ?? -1),
 };
 
 const TOPS = [40, 120, 200];
+
+// Scores du conseiller (injectés au démarrage pour éviter une dépendance circulaire)
+let scoreProvider = () => new Map();
+const setScoreProvider = (fn) => { scoreProvider = fn; };
 
 /**
  * Liste filtrée / triée / paginée.
@@ -266,6 +271,8 @@ async function listStocks({ segment = 'growth', q = '', market = '', top, sort =
   const topN = TOPS.includes(Number(top)) ? Number(top) : null;
   const query = q.trim().toLowerCase();
 
+  const scores = scoreProvider();
+  all.forEach((s) => { s.score = scores.get(s.isin) ?? null; });
   const rows = all
     .filter((s) => !market || s.mic === market)
     .filter((s) => !topN || (s.rank && s.rank <= topN))
@@ -325,4 +332,4 @@ async function getStock(isin, range = '1mo') {
   return { ...stock, history, range };
 }
 
-module.exports = { listStocks, getStock, findStock, SEGMENTS, MARKETS, cleanName, titleCase };
+module.exports = { listStocks, getStock, findStock, setScoreProvider, SEGMENTS, MARKETS, cleanName, titleCase };

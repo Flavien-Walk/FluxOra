@@ -69,35 +69,36 @@ const getPortfolio = async (req, res) => {
   });
 };
 
-// POST /api/investments/stocks — achat simulé { isin, amountEur } ou { isin, quantity }
-const buy = async (req, res) => {
-  const org = await getUserOrg(req.userId);
-  if (!org) return res.status(404).json({ error: 'Organisation introuvable.' });
-  const { isin } = req.body || {};
-  if (!/^[A-Z]{2}[A-Z0-9]{10}$/.test(isin || '')) return res.status(400).json({ error: 'ISIN invalide.' });
+const httpError = (status, message) => Object.assign(new Error(message), { status });
 
+/**
+ * Achat simulé réutilisable (achat unitaire ou portefeuille du conseiller).
+ * @returns la position créée, valorisée
+ */
+async function simulateBuy(org, userId, { isin, amountEur, quantity: qty }) {
+  if (!/^[A-Z]{2}[A-Z0-9]{10}$/.test(isin || '')) throw httpError(400, 'ISIN invalide.');
   const stock = await equities.findStock(isin);
-  if (!stock) return res.status(404).json({ error: 'Valeur introuvable.' });
-  if (!stock.priceEur) return res.status(409).json({ error: 'Cours indisponible pour cette valeur : réessayez plus tard.' });
+  if (!stock) throw httpError(404, 'Valeur introuvable.');
+  if (!stock.priceEur) throw httpError(409, 'Cours indisponible pour cette valeur : réessayez plus tard.');
 
-  let quantity = Number.parseInt(req.body.quantity, 10);
+  let quantity = Number.parseInt(qty, 10);
   if (!quantity) {
-    const amountEur = Number(req.body.amountEur);
-    if (!Number.isFinite(amountEur) || amountEur <= 0) return res.status(400).json({ error: 'Indiquez un montant ou un nombre d’actions.' });
+    const amount = Number(amountEur);
+    if (!Number.isFinite(amount) || amount <= 0) throw httpError(400, 'Indiquez un montant ou un nombre d’actions.');
     // Montant disponible pour les actions une fois les frais retirés
-    quantity = Math.floor((amountEur - fees(amountEur)) / stock.priceEur);
+    quantity = Math.floor((amount - fees(amount)) / stock.priceEur);
   }
   if (!Number.isFinite(quantity) || quantity < 1) {
-    return res.status(400).json({ error: `Montant insuffisant : une action coûte ${stock.priceEur.toFixed(2)} € (hors frais).` });
+    throw httpError(400, `Montant insuffisant : une action ${stock.name} coûte ${stock.priceEur.toFixed(2)} € (hors frais).`);
   }
 
   const grossEur = round2(quantity * stock.priceEur);
-  if (grossEur > MAX_ORDER_EUR) return res.status(400).json({ error: 'Montant trop élevé pour une simulation.' });
+  if (grossEur > MAX_ORDER_EUR) throw httpError(400, 'Montant trop élevé pour une simulation.');
   const feeEur = fees(grossEur);
 
   const position = await SimulatedPosition.create({
     organizationId: org._id,
-    createdBy: req.userId,
+    createdBy: userId,
     isin: stock.isin,
     symbol: stock.symbol,
     yahooSymbol: stock.yahooSymbol,
@@ -111,7 +112,19 @@ const buy = async (req, res) => {
     fees: feeEur,
     investedEur: round2(grossEur + feeEur),
   });
-  res.status(201).json({ position: valuePosition(position.toObject(), stock) });
+  return valuePosition(position.toObject(), stock);
+}
+
+// POST /api/investments/stocks — achat simulé { isin, amountEur } ou { isin, quantity }
+const buy = async (req, res) => {
+  const org = await getUserOrg(req.userId);
+  if (!org) return res.status(404).json({ error: 'Organisation introuvable.' });
+  try {
+    const position = await simulateBuy(org, req.userId, req.body || {});
+    res.status(201).json({ position });
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message });
+  }
 };
 
 // POST /api/investments/stocks/:id/sell — vente simulée de toute la position
@@ -147,4 +160,4 @@ const remove = async (req, res) => {
   res.json({ ok: true });
 };
 
-module.exports = { getPortfolio, buy, sell, remove, FEE_RATE, FEE_MIN };
+module.exports = { getPortfolio, buy, sell, remove, simulateBuy, getUserOrg, FEE_RATE, FEE_MIN };

@@ -115,6 +115,14 @@ app.listen(PORT, () => {
     catch (e) { console.error('[Cron] Erreur relances :', e.message); }
   }, { timezone: 'Europe/Paris' });
 
+  // Conseiller : scores injectés dans les marchés, univers recalculé chaque nuit (6 h 30) et au démarrage si besoin
+  const advisor = require('./services/advisor/advisorService');
+  require('./services/market/equitiesService').setScoreProvider(advisor.getScoreMap);
+  setTimeout(() => advisor.init().catch((e) => console.error('[Conseiller] init :', e.message)), 20_000);
+  cron.schedule('30 6 * * 1-5', () => {
+    advisor.buildUniverse({ force: true }).catch((e) => console.error('[Cron] Erreur conseiller :', e.message));
+  }, { timezone: 'Europe/Paris' });
+
   // Préchargement des marchés actions (liste + cours) pour une première page rapide
   const equities = require('./services/market/equitiesService');
   Promise.all(['paris', 'growth'].map((segment) => equities.listStocks({ segment, limit: 10 })))
