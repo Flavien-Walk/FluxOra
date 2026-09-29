@@ -2,7 +2,7 @@ const Investment = require('../models/Investment');
 const Organization = require('../models/Organization');
 const AccountingEntry = require('../models/AccountingEntry');
 const { getProductsWithRates, getLatestRates } = require('../services/marketDataService');
-const euronextGrowth = require('../services/market/euronextGrowthService');
+const equities = require('../services/market/equitiesService');
 
 const getUserOrg = async (userId) =>
   Organization.findOne({ $or: [{ clerkOwnerId: userId }, { 'members.clerkUserId': userId }] });
@@ -151,28 +151,28 @@ const deleteInvestment = async (req, res) => {
   res.json({ success: true });
 };
 
-// GET /api/investments/market/euronext-growth — actions Euronext Growth (cours différés)
-const getEuronextGrowth = async (req, res) => {
+// GET /api/investments/market/equities — actions Euronext Paris / Euronext Growth (cours différés)
+const getEquities = async (req, res) => {
   try {
-    const { q, market, sort, page, limit } = req.query;
-    res.json(await euronextGrowth.listStocks({ q: String(q || '').slice(0, 60), market, sort, page, limit }));
+    const { segment, q, market, top, sort, page, limit } = req.query;
+    res.json(await equities.listStocks({ segment, q: String(q || '').slice(0, 60), market, top, sort, page, limit }));
   } catch (err) {
-    console.error('[EuronextGrowth]', err.message);
+    console.error('[Marchés]', err.message);
     res.status(503).json({ error: 'Données de marché momentanément indisponibles. Réessayez dans un instant.' });
   }
 };
 
-// GET /api/investments/market/euronext-growth/:isin — fiche valeur + historique
-const getEuronextGrowthStock = async (req, res) => {
+// GET /api/investments/market/equities/:isin — fiche valeur + historique
+const getEquity = async (req, res) => {
   if (!/^[A-Z]{2}[A-Z0-9]{10}$/.test(req.params.isin)) return res.status(400).json({ error: 'ISIN invalide.' });
   try {
-    const stock = await euronextGrowth.getStock(req.params.isin, req.query.range);
-    if (!stock) return res.status(404).json({ error: 'Valeur introuvable sur Euronext Growth.' });
+    const stock = await equities.getStock(req.params.isin, req.query.range);
+    if (!stock) return res.status(404).json({ error: 'Valeur introuvable.' });
     res.json({ stock });
   } catch (err) {
-    console.error('[EuronextGrowth]', err.message);
+    console.error('[Marchés]', err.message);
     res.status(503).json({ error: 'Données de marché momentanément indisponibles.' });
   }
 };
 
-module.exports = { getProducts, getRates, getInvestments, createInvestment, withdrawInvestment, deleteInvestment, getEuronextGrowth, getEuronextGrowthStock };
+module.exports = { getProducts, getRates, getInvestments, createInvestment, withdrawInvestment, deleteInvestment, getEquities, getEquity };

@@ -114,9 +114,10 @@ app.listen(PORT, () => {
     catch (e) { console.error('[Cron] Erreur relances :', e.message); }
   }, { timezone: 'Europe/Paris' });
 
-  // Préchargement des valeurs Euronext Growth (liste + cours) pour une première page rapide
-  require('./services/market/euronextGrowthService').listStocks({ limit: 10 })
-    .catch(e => console.error('[EuronextGrowth] préchargement :', e.message));
+  // Préchargement des marchés actions (liste + cours) pour une première page rapide
+  const equities = require('./services/market/equitiesService');
+  Promise.all(['paris', 'growth'].map((segment) => equities.listStocks({ segment, limit: 10 })))
+    .catch(e => console.error('[Marchés] préchargement :', e.message));
 
   // Fetch immédiat au démarrage si pas de données aujourd'hui
   updateMarketRates().catch(e => console.error('[MarketData] Init error:', e.message));

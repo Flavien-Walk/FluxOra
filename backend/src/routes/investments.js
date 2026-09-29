@@ -8,17 +8,17 @@ const {
   createInvestment,
   withdrawInvestment,
   deleteInvestment,
-  getEuronextGrowth,
-  getEuronextGrowthStock,
+  getEquities,
+  getEquity,
 } = require('../controllers/investmentController');
 
 // Taux & catalogue (auth requis pour cohérence multi-tenant)
 router.get('/products', requireAuth, getProducts);
 router.get('/rates', requireAuth, getRates);
 
-// Marché : actions Euronext Growth (cours différés de 15 min)
-router.get('/market/euronext-growth', requireAuth, getEuronextGrowth);
-router.get('/market/euronext-growth/:isin', requireAuth, getEuronextGrowthStock);
+// Marchés actions : Euronext Paris et Euronext Growth (cours différés de 15 min)
+router.get('/market/equities', requireAuth, getEquities);
+router.get('/market/equities/:isin', requireAuth, getEquity);
 
 // Portefeuille
 router.get('/', requireAuth, getInvestments);
