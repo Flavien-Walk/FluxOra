@@ -68,6 +68,7 @@ app.use('/api/organizations', requireRole('admin'), require('./routes/organizati
 app.use('/api/clients',       requireRole('manager'), require('./routes/clients'));
 app.use('/api/invoices',      requireRole('manager'), require('./routes/invoices'));
 app.use('/api/quotes',        requireRole('manager'), require('./routes/quotes'));
+app.use('/api/credit-notes',  requireRole('manager'), require('./routes/creditNotes'));
 app.use('/api/expenses',      requireRole('manager'), require('./routes/expenses'));
 app.use('/api/accounting',    requireRole('finance'), require('./routes/accounting'));
 app.use('/api/dashboard', require('./routes/dashboard'));

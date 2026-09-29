@@ -16,6 +16,15 @@ const organizationSchema = new mongoose.Schema(
     aiEnabled: { type: Boolean, default: true },
     // Relances automatiques par email (factures impayées, devis) : désactivées par défaut
     autoRemindersEnabled: { type: Boolean, default: false },
+    // Invitations en attente (personnes sans compte Fluxora au moment de l'invitation)
+    invites: [
+      {
+        email: { type: String, lowercase: true, trim: true },
+        role: { type: String, enum: ['admin', 'finance', 'manager', 'viewer'], default: 'viewer' },
+        invitedAt: { type: Date, default: Date.now },
+        invitedBy: { type: String },
+      },
+    ],
     members: [
       {
         clerkUserId: { type: String, required: true },

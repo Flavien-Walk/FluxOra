@@ -118,7 +118,7 @@ const refuseQuote = async (req, res) => {
 // GET /api/public/track/invoice/:token — pixel de tracking email
 const trackInvoiceOpen = async (req, res) => {
   try {
-    const invoice = await Invoice.findOne({ trackingToken: req.params.token });
+    const invoice = await Invoice.findOne({ trackingToken: req.params.token, status: { $ne: 'draft' } });
     if (invoice && !invoice.events.some((e) => e.type === 'email_opened')) {
       invoice.events.push({ type: 'email_opened', timestamp: new Date() });
       if (invoice.status === 'sent') {
@@ -132,7 +132,7 @@ const trackInvoiceOpen = async (req, res) => {
 
 // GET /api/public/invoices/:token — page facture client
 const getPublicInvoice = async (req, res) => {
-  const invoice = await Invoice.findOne({ trackingToken: req.params.token })
+  const invoice = await Invoice.findOne({ trackingToken: req.params.token, status: { $ne: 'draft' } })
     .populate('clientId', 'name email company address')
     .populate('organizationId', 'name email address phone siret vatNumber');
 
@@ -171,7 +171,7 @@ const getPublicInvoice = async (req, res) => {
 
 // POST /api/public/invoices/:token/pay — paiement simulé
 const payInvoice = async (req, res) => {
-  const invoice = await Invoice.findOne({ trackingToken: req.params.token });
+  const invoice = await Invoice.findOne({ trackingToken: req.params.token, status: { $ne: 'draft' } });
   if (!invoice) return res.status(404).json({ error: 'Facture introuvable.' });
   if (invoice.status === 'paid') return res.json({ message: 'Facture déjà réglée.', status: 'paid' });
   if (invoice.status === 'cancelled') return res.status(400).json({ error: 'Cette facture a été annulée.' });

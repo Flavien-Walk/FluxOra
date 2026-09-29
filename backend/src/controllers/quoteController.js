@@ -3,21 +3,14 @@ const Invoice = require('../models/Invoice');
 const Organization = require('../models/Organization');
 const Client = require('../models/Client');
 const { sendQuoteEmail } = require('../services/emailService');
+const { nextNumber, draftNumber } = require('../services/numberingService');
 
 const getUserOrg = async (userId) =>
   Organization.findOne({
     $or: [{ clerkOwnerId: userId }, { 'members.clerkUserId': userId }],
   });
 
-const generateQuoteNumber = async (orgId) => {
-  const year = new Date().getFullYear();
-  const count = await Quote.countDocuments({
-    organizationId: orgId,
-    number: { $regex: `^DEV-${year}-` },
-  });
-  const seq = String(count + 1).padStart(3, '0');
-  return `DEV-${year}-${seq}`;
-};
+const generateQuoteNumber = (orgId) => nextNumber(orgId, 'DEV');
 
 // GET /api/quotes
 const getQuotes = async (req, res) => {
@@ -150,14 +143,8 @@ const convertToInvoice = async (req, res) => {
   if (!quote) return res.status(404).json({ error: 'Devis introuvable.' });
   if (quote.invoiceId) return res.status(400).json({ error: 'Ce devis a déjà été converti en facture.' });
 
-  // Génère numéro facture
-  const year = new Date().getFullYear();
-  const count = await Invoice.countDocuments({
-    organizationId: org._id,
-    number: { $regex: `^FAC-${year}-` },
-  });
-  const seq = String(count + 1).padStart(3, '0');
-  const invoiceNumber = `FAC-${year}-${seq}`;
+  // Facture créée en brouillon : numéro définitif attribué à l'émission
+  const invoiceNumber = draftNumber();
 
   const invoice = await Invoice.create({
     organizationId: org._id,

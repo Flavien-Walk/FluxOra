@@ -3,21 +3,13 @@ const Payment = require('../models/Payment');
 const AccountingEntry = require('../models/AccountingEntry');
 const Organization = require('../models/Organization');
 const { sendInvoiceEmail } = require('../services/emailService');
+const { issueInvoice, draftNumber } = require('../services/numberingService');
 
 const getUserOrg = async (userId) =>
   Organization.findOne({
     $or: [{ clerkOwnerId: userId }, { 'members.clerkUserId': userId }],
   });
 
-const generateInvoiceNumber = async (orgId) => {
-  const year = new Date().getFullYear();
-  const count = await Invoice.countDocuments({
-    organizationId: orgId,
-    number: { $regex: `^FAC-${year}-` },
-  });
-  const seq = String(count + 1).padStart(3, '0');
-  return `FAC-${year}-${seq}`;
-};
 
 const getInvoices = async (req, res) => {
   const org = await getUserOrg(req.userId);
@@ -47,7 +39,8 @@ const createInvoice = async (req, res) => {
   const org = await getUserOrg(req.userId);
   if (!org) return res.status(404).json({ error: 'Organisation introuvable.' });
   const { clientId, lines, dueDate, notes, currency } = req.body;
-  const number = await generateInvoiceNumber(org._id);
+  // Numéro provisoire : le numéro définitif est attribué à l'émission
+  const number = draftNumber();
   const invoice = await Invoice.create({
     organizationId: org._id, clientId, number, lines, dueDate, notes,
     currency: currency || org.currency || 'EUR', status: 'draft',
@@ -64,11 +57,30 @@ const updateInvoice = async (req, res) => {
 
   const { lines, dueDate, notes, status, clientId } = req.body;
   const wasUnpaid = invoice.status !== 'paid';
+  const isDraft = invoice.status === 'draft';
+
+  // Une facture émise ne se modifie plus : seule l'échéance, les notes et le passage en « payée » restent possibles.
+  if (!isDraft && (lines || clientId)) {
+    return res.status(400).json({ error: 'Une facture émise ne peut plus être modifiée : émettez un avoir puis une nouvelle facture.' });
+  }
+  if (status === 'cancelled') {
+    return res.status(400).json({ error: 'Pour annuler une facture émise, émettez un avoir.' });
+  }
+  if (status && !['draft', 'sent', 'paid'].includes(status)) {
+    return res.status(400).json({ error: 'Statut non autorisé.' });
+  }
   if (lines) invoice.lines = lines;
   if (dueDate) invoice.dueDate = dueDate;
   if (notes !== undefined) invoice.notes = notes;
-  if (status) invoice.status = status;
   if (clientId) invoice.clientId = clientId;
+  if (status) {
+    if (status === 'draft' && !isDraft) return res.status(400).json({ error: 'Une facture émise ne peut pas redevenir un brouillon.' });
+    if (status !== 'draft' && isDraft) {
+      await issueInvoice(invoice);
+      if (status === 'sent') invoice.sentAt = new Date();
+    }
+    invoice.status = status;
+  }
 
   if (status === 'paid' && wasUnpaid) {
     invoice.paidAt = new Date();
@@ -108,6 +120,9 @@ const sendEmail = async (req, res) => {
   const invoice = await Invoice.findOne({ _id: req.params.id, organizationId: org._id }).populate('clientId');
   if (!invoice) return res.status(404).json({ error: 'Facture introuvable.' });
   const { overrideEmail } = req.body;
+  if (invoice.status === 'cancelled') return res.status(400).json({ error: 'Cette facture est annulée.' });
+  // Numéro définitif avant envoi (le client reçoit la facture numérotée)
+  if (invoice.status === 'draft') { await issueInvoice(invoice); await invoice.save(); }
   await sendInvoiceEmail({ invoice, org, client: invoice.clientId, overrideEmail });
   invoice.events.push({ type: 'sent', timestamp: new Date() });
   if (invoice.status === 'draft') {

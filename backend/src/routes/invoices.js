@@ -21,4 +21,7 @@ const { updateInvoiceReminders, sendInvoiceReminder } = require('../controllers/
 router.put('/:id/reminders', requireAuth, updateInvoiceReminders);
 router.post('/:id/send-reminder', requireAuth, sendInvoiceReminder);
 
+const { createCreditNote } = require('../controllers/creditNoteController');
+router.post('/:id/credit-note', requireAuth, createCreditNote);
+
 module.exports = router;

@@ -15,7 +15,7 @@ const eventSchema = new mongoose.Schema(
   {
     type: {
       type: String,
-      enum: ['created', 'sent', 'email_opened', 'viewed', 'payment_initiated', 'paid', 'late', 'reminder_sent'],
+      enum: ['created', 'sent', 'email_opened', 'viewed', 'payment_initiated', 'paid', 'late', 'reminder_sent', 'cancelled', 'credited'],
       required: true,
     },
     timestamp: { type: Date, default: Date.now },
@@ -97,5 +97,8 @@ invoiceSchema.pre('save', function (next) {
   this.total = Math.round((subtotal + vatAmount) * 100) / 100;
   next();
 });
+
+// Un numéro de facture est unique au sein d'une organisation
+invoiceSchema.index({ organizationId: 1, number: 1 }, { unique: true });
 
 module.exports = mongoose.model('Invoice', invoiceSchema);

@@ -88,4 +88,23 @@ const deleteEntry = async (req, res) => {
   res.json({ message: 'Écriture supprimée.' });
 };
 
-module.exports = { getEntries, createEntry, deleteEntry };
+// GET /api/accounting/balance?year= — balance des comptes (partie double, PCG)
+const getBalance = async (req, res) => {
+  const org = await getUserOrg(req.userId);
+  if (!org) return res.status(404).json({ error: 'Organisation introuvable.' });
+  const { getTrialBalance } = require('../services/accounting/ledgerService');
+  res.json(await getTrialBalance(org._id, req.query.year));
+};
+
+// GET /api/accounting/fec?year= — fichier des écritures comptables (FEC)
+const downloadFec = async (req, res) => {
+  const org = await getUserOrg(req.userId);
+  if (!org) return res.status(404).json({ error: 'Organisation introuvable.' });
+  const { buildFec } = require('../services/accounting/ledgerService');
+  const { filename, content } = await buildFec(org, req.query.year);
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.send(content);
+};
+
+module.exports = { getEntries, createEntry, deleteEntry, getBalance, downloadFec };

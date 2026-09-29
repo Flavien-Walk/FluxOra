@@ -20,17 +20,9 @@ const getUserOrg = (userId) =>
 
 /* ── Générateurs de numéros (même logique que les controllers) ── */
 
-async function generateQuoteNumber(orgId) {
-  const year  = new Date().getFullYear();
-  const count = await Quote.countDocuments({ organizationId: orgId, number: { $regex: `^DEV-${year}-` } });
-  return `DEV-${year}-${String(count + 1).padStart(3, '0')}`;
-}
-
-async function generateInvoiceNumber(orgId) {
-  const year  = new Date().getFullYear();
-  const count = await Invoice.countDocuments({ organizationId: orgId, number: { $regex: `^FAC-${year}-` } });
-  return `FAC-${year}-${String(count + 1).padStart(3, '0')}`;
-}
+const { nextNumber, draftNumber, issueInvoice } = require('./numberingService');
+const generateQuoteNumber = (orgId) => nextNumber(orgId, 'DEV');
+const generateInvoiceNumber = async () => draftNumber(); // provisoire jusqu'à l'émission
 
 /* ── Exécuteur central ───────────────────────────────────────── */
 
@@ -120,6 +112,12 @@ async function executeAction(userId, type, payload) {
               : await Quote.findById(docForEmail._id).lean();
 
             if (workflow.type === 'create_invoice') {
+              // Numéro définitif attribué avant l'envoi au client
+              const toIssue = await Invoice.findById(docForEmail._id);
+              await issueInvoice(toIssue);
+              await toIssue.save();
+              freshDoc.number = toIssue.number;
+              number = toIssue.number;
               await emailSvc.sendInvoiceEmail({
                 invoice:       freshDoc,
                 org,

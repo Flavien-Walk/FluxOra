@@ -51,4 +51,6 @@ quoteSchema.pre('save', function (next) {
   next();
 });
 
+quoteSchema.index({ organizationId: 1, number: 1 }, { unique: true });
+
 module.exports = mongoose.model('Quote', quoteSchema);

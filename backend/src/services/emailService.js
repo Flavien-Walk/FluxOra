@@ -440,4 +440,23 @@ const sendReminderEmail = async ({ docType, doc, org, client, type, to }) => {
   return { subject };
 };
 
-module.exports = { sendInvoiceEmail, sendQuoteEmail, sendReminderEmail };
+// ─── Invitation d'un collaborateur ────────────────────────────────────────────
+const sendInvitationEmail = async ({ org, email, roleLabel }) => {
+  const url = `${getClientUrl()}/sign-up`;
+  const bodyHtml = `
+    <p style="margin:0 0 16px;font-size:15px;color:#111827;">Bonjour,</p>
+    <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#374151;">
+      Vous êtes invité(e) à rejoindre <strong>${esc(org.name)}</strong> sur Fluxora avec le rôle <strong>${esc(roleLabel)}</strong>.
+      Créez votre compte avec cette adresse email (<strong>${esc(email)}</strong>) : vous serez rattaché(e) automatiquement.
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;"><tr><td align="center">
+      <a href="${url}" style="display:inline-block;background:#4f46e5;color:#fff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:10px;">Rejoindre ${esc(org.name)}</a>
+    </td></tr></table>`;
+  await sendEmail({
+    to: email,
+    subject: `Invitation à rejoindre ${org.name} sur Fluxora`,
+    html: baseTemplate({ title: `Invitation — ${org.name}`, preheader: `Rejoignez ${org.name} sur Fluxora`, bodyHtml, orgName: org.name }),
+  });
+};
+
+module.exports = { sendInvoiceEmail, sendQuoteEmail, sendReminderEmail, sendInvitationEmail };

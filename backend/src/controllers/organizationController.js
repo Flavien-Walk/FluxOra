@@ -4,9 +4,9 @@ const Organization = require('../models/Organization');
 const createOrganization = async (req, res) => {
   const { name, email, phone, address, vatNumber, siret, currency } = req.body;
 
-  const existing = await Organization.findOne({ clerkOwnerId: req.userId });
+  const existing = await Organization.findOne({ $or: [{ clerkOwnerId: req.userId }, { 'members.clerkUserId': req.userId }] });
   if (existing) {
-    return res.status(400).json({ error: 'Vous avez déjà une organisation.' });
+    return res.status(400).json({ error: 'Vous faites déjà partie d’une organisation.' });
   }
 
   const org = await Organization.create({
@@ -33,8 +33,13 @@ const getMyOrganization = async (req, res) => {
     ],
   });
 
-  if (!org) return res.status(404).json({ error: 'Organisation introuvable.' });
-  res.json(org);
+  if (org) return res.json(org);
+
+  // Première connexion d'une personne invitée : rattachement automatique
+  const { acceptPendingInvite } = require('./memberController');
+  const joined = await acceptPendingInvite(req.userId);
+  if (joined) return res.json(joined);
+  return res.status(404).json({ error: 'Organisation introuvable.' });
 };
 
 // PUT /api/organizations/:id
@@ -117,6 +122,7 @@ const ORG_MODELS = () => ({
   socialAccounts: require('../models/SocialAccount'),
   auditLogs: require('../models/AuditLog'),
   simulatedPositions: require('../models/SimulatedPosition'),
+  creditNotes: require('../models/CreditNote'),
 });
 
 const findMyOrg = (userId) =>
