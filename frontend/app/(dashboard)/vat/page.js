@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useVatSummary, useVatDeclarations, createVatDeclaration, updateCreditOption } from '@/hooks/useVat';
+import { useVatSummary, useVatDeclarations, useVatOperations, createVatDeclaration, updateCreditOption, downloadVatPdf } from '@/hooks/useVat';
 import { useOrganization } from '@/hooks/useOrganization';
 import { Card, CardHeader, CardBody, StatCard } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -11,10 +11,11 @@ import Badge from '@/components/ui/Badge';
 import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import {
   AlertCircle, TrendingUp, TrendingDown, Landmark, Scale, Coins,
-  CheckCircle, RefreshCw, Archive, FileDown, ShieldAlert, Receipt
+  CheckCircle, RefreshCw, Archive, FileDown, ShieldAlert, Receipt,
+  ChevronLeft, ChevronRight, List
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { subMonths, subYears, startOfYear, endOfYear, startOfMonth, endOfMonth } from 'date-fns';
+import { addMonths, addYears, format, subMonths, subYears, startOfYear, endOfYear, startOfMonth, endOfMonth } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -338,6 +339,64 @@ function CreditOptionManager({ decl, mutate }) {
   );
 }
 
+// ─── Composant : détail des opérations ───────────────────────────────────────
+const OPERATION_TYPES = {
+  sale:     { label: 'Vente', variant: 'info' },
+  purchase: { label: 'Achat', variant: 'purple' },
+  asset:    { label: 'Immo.', variant: 'purple' },
+};
+
+function OperationsTable({ fromDate, toDate }) {
+  const { operations, isLoading, error } = useVatOperations(fromDate, toDate, true);
+
+  return (
+    <Card>
+      <CardHeader>
+        <h3 className="font-semibold text-gray-800">Détail des opérations</h3>
+      </CardHeader>
+      <CardBody className="p-0">
+        {isLoading ? (
+          <div className="p-5"><Skeleton className="h-24 w-full" /></div>
+        ) : error ? (
+          <p className="p-5 text-sm text-red-700">Impossible de charger les opérations.</p>
+        ) : operations.length === 0 ? (
+          <p className="text-sm text-gray-500 text-center py-8">Aucune opération sur cette période.</p>
+        ) : (
+          <div className="overflow-x-auto max-h-[500px]">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 bg-gray-50">
+                <tr className="border-b border-gray-100">
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Date</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Type</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Tiers</th>
+                  <th className="text-right px-3 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">HT</th>
+                  <th className="text-right px-3 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">TVA</th>
+                  <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">TTC</th>
+                </tr>
+              </thead>
+              <tbody>
+                {operations.map((op) => (
+                  <tr key={op.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                    <td className="px-5 py-3 text-gray-600 whitespace-nowrap">{fmtDate(op.date)}</td>
+                    <td className="px-3 py-3"><Badge variant={OPERATION_TYPES[op.type].variant}>{OPERATION_TYPES[op.type].label}</Badge></td>
+                    <td className="px-3 py-3 text-gray-900">
+                      <p className="font-medium">{op.thirdParty}</p>
+                      <p className="text-xs text-gray-500">{op.label}</p>
+                    </td>
+                    <td className="px-3 py-3 text-right text-gray-600 tabular-nums">{fmt(op.amountHT)}</td>
+                    <td className="px-3 py-3 text-right font-medium text-gray-900 tabular-nums">{fmt(op.vatAmount)}</td>
+                    <td className="px-5 py-3 text-right text-gray-600 tabular-nums">{fmt(op.amountTTC)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardBody>
+    </Card>
+  );
+}
+
 // ─── Composant : historique déclarations ─────────────────────────────────────
 function DeclarationsHistory({ mutate }) {
   const { declarations, isLoading } = useVatDeclarations();
@@ -400,6 +459,8 @@ export default function VatPage() {
   const [dateRange, setDateRange] = useState();
   const [isCreating, setIsCreating] = useState(false);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const [isReportLoading, setIsReportLoading] = useState(false);
+  const [showOperations, setShowOperations] = useState(false);
 
   const { organization } = useOrganization();
 
@@ -414,8 +475,21 @@ export default function VatPage() {
     }
   }, [regime]);
 
-  const fromDate = dateRange?.from?.toISOString().split('T')[0];
-  const toDate   = dateRange?.to?.toISOString().split('T')[0];
+  // Date locale : toISOString() décalerait la période d'un jour en France (UTC+1/+2)
+  const fromDate = dateRange?.from && format(dateRange.from, 'yyyy-MM-dd');
+  const toDate   = dateRange?.to && format(dateRange.to, 'yyyy-MM-dd');
+
+  // Période précédente / suivante : un mois en CA3, une année en CA12
+  const shiftPeriod = (step) => {
+    if (!dateRange?.from) return;
+    if (regime === 'CA3') {
+      const month = addMonths(dateRange.from, step);
+      setDateRange({ from: startOfMonth(month), to: endOfMonth(month) });
+    } else {
+      const year = addYears(dateRange.from, step);
+      setDateRange({ from: startOfYear(year), to: endOfYear(year) });
+    }
+  };
 
   const { summary, completionStats, expenses, collectedVAT_details, isLoading, error } = useVatSummary(fromDate, toDate);
   const { declarations, mutate: mutateDeclarations } = useVatDeclarations();
@@ -452,6 +526,18 @@ export default function VatPage() {
     }
   };
 
+  const handleDownloadReport = async () => {
+    setIsReportLoading(true);
+    try {
+      await downloadVatPdf(fromDate, toDate);
+    } catch (e) {
+      toast.error('Erreur lors du téléchargement du relevé.');
+      console.error(e);
+    } finally {
+      setIsReportLoading(false);
+    }
+  };
+
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-5xl mx-auto space-y-8">
@@ -466,7 +552,15 @@ export default function VatPage() {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <RegimeSwitcher regime={regime} setRegime={setRegime} />
-            <DateRangePicker range={dateRange} onSelectRange={setDateRange} />
+            <div className="flex items-center gap-1">
+              <Button variant="outline" size="sm" onClick={() => shiftPeriod(-1)} aria-label="Période précédente">
+                <ChevronLeft size={16} />
+              </Button>
+              <DateRangePicker range={dateRange} onSelectRange={setDateRange} />
+              <Button variant="outline" size="sm" onClick={() => shiftPeriod(1)} aria-label="Période suivante">
+                <ChevronRight size={16} />
+              </Button>
+            </div>
             <Button onClick={handleCreateDeclaration} disabled={isCreating || !summary} variant="outline">
               {isCreating ? 'Sauvegarde...' : 'Sauvegarder'}
             </Button>
@@ -477,6 +571,9 @@ export default function VatPage() {
             >
               <FileDown className="w-4 h-4" />
               {isPdfLoading ? 'Génération...' : 'Générer mon PDF'}
+            </Button>
+            <Button onClick={handleDownloadReport} disabled={isReportLoading || !summary} variant="outline">
+              {isReportLoading ? 'Téléchargement...' : 'Relevé détaillé'}
             </Button>
           </div>
         </header>
@@ -559,6 +656,15 @@ export default function VatPage() {
                 </dl>
               </CardBody>
             </Card>
+
+            {/* ── Détail des opérations ─────────────────────────────────────── */}
+            <div className="space-y-4">
+              <Button variant="outline" onClick={() => setShowOperations((v) => !v)} className="flex items-center gap-2">
+                <List size={16} />
+                {showOperations ? 'Masquer les opérations' : 'Voir les opérations'}
+              </Button>
+              {showOperations && <OperationsTable fromDate={fromDate} toDate={toDate} />}
+            </div>
 
             {/* ── Bouton PDF (aussi en bas) ──────────────────────────────────── */}
             <div className="flex justify-center">

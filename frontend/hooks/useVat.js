@@ -27,6 +27,37 @@ export function useVatSummary(from, to) {
 }
 
 /**
+ * Hook pour récupérer les opérations d'une période (chargées seulement si enabled).
+ */
+export function useVatOperations(from, to, enabled) {
+  const url = enabled && from && to ? `/api/vat/details?from=${from}&to=${to}` : null;
+  const { data, error, isLoading } = useSWR(url, fetcher, {
+    revalidateOnFocus: false,
+  });
+
+  return {
+    operations: data?.operations || [],
+    isLoading,
+    error,
+  };
+}
+
+/**
+ * Télécharge le relevé de TVA généré par le serveur.
+ */
+export const downloadVatPdf = async (from, to) => {
+  const { data } = await api.get(`/api/vat/pdf?from=${from}&to=${to}`, { responseType: 'blob' });
+  const url = window.URL.createObjectURL(data);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `releve-tva-${from}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+};
+
+/**
  * Hook pour récupérer la liste des déclarations de TVA passées.
  */
 export function useVatDeclarations() {
