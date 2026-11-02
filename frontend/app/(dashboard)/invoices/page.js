@@ -13,6 +13,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import { SkeletonTable } from '@/components/ui/Skeleton';
 import InvoiceForm from '@/components/modules/InvoiceForm';
 import { FilePlus, FileText, ChevronRight, Search, X } from 'lucide-react';
+import { getNextInvoiceReminder, computeRiskScore } from '@/lib/reminderUtils';
 
 const FILTERS = [
   { label: 'Toutes',     value: '' },
@@ -137,7 +138,23 @@ export default function InvoicesPage() {
                   <span className="col-span-2">
                     <Badge status={inv.status} />
                   </span>
-                  <span className="col-span-2 text-xs text-slate-500">{fmtDate(inv.dueDate)}</span>
+                  <span className="col-span-2">
+                    <span className="text-xs text-slate-500 block">{fmtDate(inv.dueDate)}</span>
+                    {(() => {
+                      const risk = computeRiskScore(inv);
+                      if (risk?.level === 'high') return <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-danger-600 mt-0.5">🔴 Risque élevé</span>;
+                      const next = getNextInvoiceReminder(inv);
+                      if (!next) return null;
+                      return (
+                        <span className={cn(
+                          'inline-flex items-center gap-1 text-[10px] font-semibold mt-0.5',
+                          next.status === 'overdue' ? 'text-danger-600' : 'text-accent-500'
+                        )}>
+                          {next.status === 'overdue' ? '🔴 Relance requise' : `🔔 ${fmtDate(next.date)}`}
+                        </span>
+                      );
+                    })()}
+                  </span>
                   <span className="col-span-2 text-sm font-semibold text-slate-900 text-right tabular-nums">
                     {fmt(inv.total)}
                   </span>

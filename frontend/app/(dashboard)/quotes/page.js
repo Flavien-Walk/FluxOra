@@ -13,6 +13,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import { SkeletonTable } from '@/components/ui/Skeleton';
 import QuoteForm from '@/components/modules/QuoteForm';
 import { FilePlus, ClipboardList, ChevronRight, Search, X } from 'lucide-react';
+import { getNextQuoteReminder } from '@/lib/reminderUtils';
 
 const FILTERS = [
   { label: 'Tous',      value: '' },
@@ -134,7 +135,23 @@ export default function QuotesPage() {
                     )}
                   </span>
                   <span className="col-span-2"><Badge status={q.status} /></span>
-                  <span className="col-span-2 text-xs text-slate-500">{fmtDate(q.expiryDate)}</span>
+                  <span className="col-span-2">
+                    <span className="text-xs text-slate-500 block">{fmtDate(q.expiryDate)}</span>
+                    {(() => {
+                      const next = getNextQuoteReminder(q);
+                      if (!next) return null;
+                      const isOverdue = next.status === 'overdue';
+                      return (
+                        <span className={cn(
+                          'inline-flex items-center gap-1 text-[10px] font-semibold mt-0.5',
+                          isOverdue ? 'text-danger-600' : 'text-accent-500'
+                        )}>
+                          <span>{isOverdue ? '🔴' : '🔔'}</span>
+                          {isOverdue ? 'Relance en retard' : `Relance ${fmtDate(next.date)}`}
+                        </span>
+                      );
+                    })()}
+                  </span>
                   <span className="col-span-2 text-sm font-semibold text-slate-900 text-right tabular-nums">{fmt(q.total)}</span>
                   <span className="col-span-1 flex justify-end">
                     <ChevronRight size={14} className="text-slate-300 group-hover:text-slate-500 transition-colors" />

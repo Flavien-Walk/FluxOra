@@ -1,202 +1,596 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import useSWR from 'swr';
-import Header from '@/components/layout/Header';
-import { Card, CardBody, CardHeader } from '@/components/ui/Card';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useVatSummary, useVatDeclarations, createVatDeclaration, updateCreditOption } from '@/hooks/useVat';
+import { useOrganization } from '@/hooks/useOrganization';
+import { Card, CardHeader, CardBody, StatCard } from '@/components/ui/Card';
+import { Skeleton } from '@/components/ui/Skeleton';
 import Button from '@/components/ui/Button';
-import api from '@/lib/api';
-import { SkeletonTable } from '@/components/ui/Skeleton';
-import { 
-    FileText, Download, ChevronsLeft, ChevronsRight, 
-    TrendingUp, TrendingDown, Info, AlertTriangle 
+import Badge from '@/components/ui/Badge';
+import { DateRangePicker } from '@/components/ui/DateRangePicker';
+import {
+  AlertCircle, TrendingUp, TrendingDown, Landmark, Scale, Coins,
+  CheckCircle, RefreshCw, Archive, FileDown, ShieldAlert, Receipt
 } from 'lucide-react';
+import { toast } from 'sonner';
+import { subMonths, subYears, startOfYear, endOfYear, startOfMonth, endOfMonth } from 'date-fns';
+import { cn } from '@/lib/utils';
 
-const fmt = (n) =>
-  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n ?? 0);
-
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const fmt = (v) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(v ?? 0);
 const fmtDate = (d) => new Date(d).toLocaleDateString('fr-FR');
+const r = (n) => Math.round((n ?? 0) * 100) / 100;
 
-const getMonthRange = (year, month) => {
-    const start = new Date(year, month - 1, 1);
-    const end = new Date(year, month, 0, 23, 59, 59, 999);
-    return { 
-        from: start.toISOString(), 
-        to: end.toISOString(), 
-        period: `${year}-${String(month).padStart(2, '0')}` 
-    };
-};
+// ─── Composant : Jauge de complétude ──────────────────────────────────────────
+function CompletionGauge({ stats }) {
+  if (!stats) return null;
+  const { totalExpenses, withReceipt, completionPct } = stats;
+  const missing = totalExpenses - withReceipt;
 
-const fetcher = (url) => api.get(url).then((r) => r.data);
+  const color = completionPct >= 90
+    ? { bar: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-100' }
+    : completionPct >= 60
+    ? { bar: 'bg-amber-400', text: 'text-amber-700', bg: 'bg-amber-50 border-amber-100' }
+    : { bar: 'bg-red-400', text: 'text-red-700', bg: 'bg-red-50 border-red-100' };
 
-export default function VATDashboardPage() {
-    const [currentDate, setCurrentDate] = useState(new Date());
-    const [showDetails, setShowDetails] = useState(false);
+  return (
+    <div className={`rounded-2xl border p-5 ${color.bg}`}>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Receipt className={`w-5 h-5 ${color.text}`} />
+          <span className="font-semibold text-gray-800 text-sm">Complétude des justificatifs</span>
+        </div>
+        <span className={`text-lg font-bold ${color.text}`}>{completionPct} %</span>
+      </div>
 
-    const { from, to, period } = useMemo(() => {
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth() + 1;
-        return getMonthRange(year, month);
-    }, [currentDate]);
+      {/* Barre de progression */}
+      <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden mb-3">
+        <div
+          className={`h-full rounded-full transition-all duration-500 ${color.bar}`}
+          style={{ width: `${completionPct}%` }}
+        />
+      </div>
 
-    // Data fetching
-    const { data: summary, error: summaryError, isLoading: loadingSummary } = useSWR(
-        `/api/vat/summary?from=${from}&to=${to}`, fetcher
-    );
-    
-    const { data: details, error: detailsError, isLoading: loadingDetails } = useSWR(
-        showDetails ? `/api/vat/details?from=${from}&to=${to}` : null, fetcher
-    );
+      <div className="flex items-center justify-between text-sm">
+        <span className="text-gray-600">
+          <span className="font-semibold text-gray-900">{withReceipt}</span> / {totalExpenses} justificatifs associés
+        </span>
+        {missing > 0 && (
+          <Link href="/expenses" className={`text-xs font-medium underline ${color.text}`}>
+            {missing} manquant{missing > 1 ? 's' : ''} — Compléter →
+          </Link>
+        )}
+      </div>
 
-    const periodLabel = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(currentDate);
+      {missing > 0 && (
+        <p className="text-xs text-gray-500 mt-2">
+          Ajoutez les justificatifs manquants pour maximiser votre récupération de TVA.
+        </p>
+      )}
+    </div>
+  );
+}
 
-    const handleDownloadPDF = async () => {
-        try {
-            const response = await api.get(`/api/vat/pdf?from=${from}&to=${to}`, {
-                responseType: 'blob'
-            });
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `TVA_${period}.pdf`);
-            document.body.appendChild(link);
-            link.click();
-            link.parentNode.removeChild(link);
-            window.URL.revokeObjectURL(url); // Nettoyage
-        } catch (e) {
-            alert('Erreur lors du téléchargement du PDF');
-        }
-    };
+// ─── Composant : Tableau mapping CA3 ──────────────────────────────────────────
+function CA3Table({ summary, collectedVAT_details }) {
+  const vatDueOrCredit = summary.vatDue > 0 ? summary.vatDue : -summary.vatCredit;
 
-    return (
-        <>
-            <Header title="Déclaration TVA" />
-            <div className="flex-1 p-6 space-y-6">
-                
-                {/* Contrôles Période & Actions */}
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                    <div className="flex items-center gap-3 bg-gray-50 p-1 rounded-lg">
-                        <Button variant="ghost" size="sm" onClick={() => setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))}><ChevronsLeft size={18} /></Button>
-                        <span className="w-32 text-center font-semibold text-gray-700 capitalize">{periodLabel}</span>
-                        <Button variant="ghost" size="sm" onClick={() => setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))}><ChevronsRight size={18} /></Button>
-                    </div>
-                    <div className="flex gap-2">
-                        <Button variant="secondary" onClick={() => setShowDetails(!showDetails)}>
-                            <FileText size={16} className="mr-2" />
-                            {showDetails ? 'Masquer détails' : 'Voir les opérations'}
-                        </Button>
-                        <Button onClick={handleDownloadPDF}>
-                            <Download size={16} className="mr-2" />
-                            Télécharger PDF
-                        </Button>
-                    </div>
-                </div>
+  const rows = [
+    { section: 'TVA collectée', cases: [
+      { num: '01', label: 'Base imposable taux normal 20 %',        value: collectedVAT_details[20]?.baseHT,    highlight: false },
+      { num: '11', label: 'Base imposable taux intermédiaire 10 %', value: collectedVAT_details[10]?.baseHT,    highlight: false },
+      { num: '13', label: 'Base imposable taux réduit 5,5 %',       value: collectedVAT_details[5.5]?.baseHT,   highlight: false },
+      { num: '08', label: 'Total TVA brute collectée',              value: summary.collectedVAT, highlight: true },
+    ]},
+    { section: 'TVA déductible', cases: [
+      { num: '20', label: 'TVA déductible — biens et services',     value: summary.deductibleVAT_services, highlight: false },
+      { num: '21', label: 'TVA déductible — immobilisations',       value: summary.deductibleVAT_assets,   highlight: false },
+      { num: '28', label: 'Total TVA déductible',                   value: summary.totalDeductibleVAT,     highlight: true },
+    ]},
+    { section: 'Résultat', cases: [
+      { num: '29', label: summary.vatDue > 0 ? 'TVA nette à payer' : 'Crédit de TVA', value: Math.abs(vatDueOrCredit), highlight: true, isResult: true },
+    ]},
+  ];
 
-                {/* Résumé des Cartes */}
-                {summaryError ? (
-                    <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 flex items-center gap-2">
-                        <AlertTriangle size={20} />
-                        <p>Impossible de charger le résumé de TVA. Vérifiez que le Backend est lancé et accessible.</p>
-                    </div>
-                ) : loadingSummary ? <SkeletonTable rows={1} cols={3} /> : summary && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <Card className="border-l-4 border-l-blue-500">
-                            <CardBody>
-                                <div className="flex items-start justify-between">
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-500 mb-1">TVA Collectée (Ventes)</p>
-                                        <h3 className="text-2xl font-bold text-gray-900">{fmt(summary.collectedVAT.total)}</h3>
-                                    </div>
-                                    <div className="p-2 bg-blue-50 rounded-lg text-blue-600"><TrendingUp size={20} /></div>
-                                </div>
-                            </CardBody>
-                        </Card>
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-gray-800">Mapping Formulaire CA3 — DGFiP</h3>
+            <p className="text-xs text-gray-400 mt-0.5">Données calculées à partir de vos scans et transactions</p>
+          </div>
+          <Badge variant="blue">Officieux</Badge>
+        </div>
+      </CardHeader>
+      <CardBody className="p-0">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-gray-100 bg-gray-50">
+              <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide w-16">Case</th>
+              <th className="text-left px-3 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Libellé</th>
+              <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide w-32">Montant</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(({ section, cases }) => (
+              <>
+                <tr key={section} className="bg-gray-50/50">
+                  <td colSpan={3} className="px-5 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide border-t border-b border-gray-100">
+                    {section}
+                  </td>
+                </tr>
+                {cases.map(({ num, label, value, highlight, isResult }) => (
+                  <tr key={num} className={cn(
+                    'border-b border-gray-50 hover:bg-gray-50/50 transition-colors',
+                    isResult && (summary.vatDue > 0 ? 'bg-red-50/60' : 'bg-emerald-50/60')
+                  )}>
+                    <td className="px-5 py-3">
+                      <span className="inline-flex items-center justify-center w-8 h-7 bg-blue-100 text-blue-700 text-xs font-bold rounded-lg">
+                        {num}
+                      </span>
+                    </td>
+                    <td className={cn('px-3 py-3', highlight ? 'font-medium text-gray-900' : 'text-gray-600')}>
+                      {label}
+                    </td>
+                    <td className={cn(
+                      'px-5 py-3 text-right tabular-nums',
+                      isResult
+                        ? summary.vatDue > 0 ? 'font-bold text-red-600 text-base' : 'font-bold text-emerald-600 text-base'
+                        : highlight ? 'font-semibold text-gray-900' : 'text-gray-700'
+                    )}>
+                      {value != null ? fmt(value) : <span className="text-gray-300">—</span>}
+                    </td>
+                  </tr>
+                ))}
+              </>
+            ))}
+          </tbody>
+        </table>
+      </CardBody>
+    </Card>
+  );
+}
 
-                        <Card className="border-l-4 border-l-indigo-500">
-                            <CardBody>
-                                <div className="flex items-start justify-between">
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-500 mb-1">TVA Déductible (Achats)</p>
-                                        <h3 className="text-2xl font-bold text-gray-900">{fmt(summary.deductibleVAT.total)}</h3>
-                                        <div className="text-xs text-gray-400 mt-1">
-                                            Dont immo: {fmt(summary.deductibleVAT.fixedAssets.total)}
-                                        </div>
-                                    </div>
-                                    <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600"><TrendingDown size={20} /></div>
-                                </div>
-                            </CardBody>
-                        </Card>
+// ─── Génération PDF ────────────────────────────────────────────────────────────
+async function generateVatPDF({ summary, collectedVAT_details, expenses, fromDate, toDate, orgName, regime }) {
+  const { jsPDF } = await import('jspdf');
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
 
-                        <Card className={`border-l-4 ${summary.vatDue > 0 ? 'border-l-red-500' : 'border-l-green-500'}`}>
-                            <CardBody>
-                                <div className="flex items-start justify-between">
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-500 mb-1">
-                                            {summary.vatDue > 0 ? 'TVA à Payer' : 'Crédit de TVA'}
-                                        </p>
-                                        <h3 className={`text-2xl font-bold ${summary.vatDue > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                                            {fmt(summary.vatDue > 0 ? summary.vatDue : summary.vatCredit)}
-                                        </h3>
-                                    </div>
-                                    <div className={`p-2 rounded-lg ${summary.vatDue > 0 ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
-                                        <Info size={20} />
-                                    </div>
-                                </div>
-                            </CardBody>
-                        </Card>
-                    </div>
-                )}
+  const W = 210;
+  const MARGIN = 20;
+  const COL = W - MARGIN * 2;
+  let y = 0;
 
-                {/* Tableau détaillé (Conditionnel) */}
-                {showDetails && (
-                    <Card className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-                        <CardHeader><h3 className="font-semibold text-gray-800">Détail des opérations ({periodLabel})</h3></CardHeader>
-                        <CardBody className="p-0">
-                            {detailsError ? (
-                                <div className="p-4 text-red-600 flex items-center gap-2">
-                                    <AlertTriangle size={16} />
-                                    Erreur de chargement des détails.
-                                </div>
-                            ) : loadingDetails ? <SkeletonTable rows={5} cols={6} /> : (
-                                <div className="overflow-x-auto max-h-[500px]">
-                                    <table className="w-full text-sm text-left">
-                                        <thead className="bg-gray-50 text-gray-500 sticky top-0">
-                                            <tr>
-                                                <th className="px-4 py-3 font-medium">Date</th>
-                                                <th className="px-4 py-3 font-medium">Type</th>
-                                                <th className="px-4 py-3 font-medium">Tiers</th>
-                                                <th className="px-4 py-3 font-medium text-right">HT</th>
-                                                <th className="px-4 py-3 font-medium text-right">TVA</th>
-                                                <th className="px-4 py-3 font-medium text-right">TTC</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-100">
-                                            {details?.operations?.length > 0 ? details.operations.map((op) => (
-                                                <tr key={op.id} className="hover:bg-gray-50 transition-colors">
-                                                    <td className="px-4 py-3 text-gray-600">{fmtDate(op.date)}</td>
-                                                    <td className="px-4 py-3">
-                                                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                                                            op.type === 'sale' ? 'bg-blue-100 text-blue-700' : 'bg-indigo-100 text-indigo-700'
-                                                        }`}>
-                                                            {op.type === 'sale' ? 'Vente' : 'Achat'}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-4 py-3 font-medium text-gray-900">{op.thirdParty}</td>
-                                                    <td className="px-4 py-3 text-right text-gray-600">{fmt(op.amountHT)}</td>
-                                                    <td className="px-4 py-3 text-right font-medium text-gray-800">{fmt(op.vatAmount)}</td>
-                                                    <td className="px-4 py-3 text-right text-gray-500">{fmt(op.amountTTC)}</td>
-                                                </tr>
-                                            )) : (
-                                                <tr><td colSpan="6" className="text-center py-8 text-gray-400">Aucune opération sur cette période.</td></tr>
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-                        </CardBody>
-                    </Card>
-                )}
+  const addSection = (title) => {
+    y += 4;
+    doc.setFillColor(241, 245, 249);
+    doc.rect(MARGIN, y, COL, 7, 'F');
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(100, 116, 139);
+    doc.text(title.toUpperCase(), MARGIN + 3, y + 5);
+    y += 10;
+    doc.setTextColor(30, 41, 59);
+  };
+
+  const addRow = (left, right, bold = false, color = null) => {
+    doc.setFontSize(9);
+    doc.setFont('helvetica', bold ? 'bold' : 'normal');
+    if (color) doc.setTextColor(...color);
+    else doc.setTextColor(30, 41, 59);
+    doc.text(left, MARGIN + 2, y);
+    doc.text(right, W - MARGIN - 2, y, { align: 'right' });
+    y += 6;
+    doc.setTextColor(30, 41, 59);
+  };
+
+  const addDivider = () => {
+    doc.setDrawColor(226, 232, 240);
+    doc.line(MARGIN, y, W - MARGIN, y);
+    y += 3;
+  };
+
+  // ── En-tête ─────────────────────────────────────────────────────────────────
+  doc.setFillColor(15, 23, 42);
+  doc.rect(0, 0, W, 28, 'F');
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(255, 255, 255);
+  doc.text('FLUXORA', MARGIN, 13);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(148, 163, 184);
+  doc.text('Récapitulatif de préparation à la déclaration de TVA', MARGIN, 20);
+
+  // Bandeau bleu résultat
+  const isDue = summary.vatDue > 0;
+  doc.setFillColor(isDue ? 220 : 5, isDue ? 38 : 150, isDue ? 38 : 105);
+  doc.rect(W - 80, 0, 80, 28, 'F');
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(255, 255, 255);
+  doc.text(isDue ? 'TVA À PAYER' : 'CRÉDIT DE TVA', W - MARGIN, 10, { align: 'right' });
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text(fmt(isDue ? summary.vatDue : summary.vatCredit), W - MARGIN, 22, { align: 'right' });
+
+  y = 36;
+
+  // ── Infos entreprise ────────────────────────────────────────────────────────
+  addSection('Informations');
+  addRow('Entreprise', orgName || '—');
+  addRow('Période', `${fmtDate(fromDate)} → ${fmtDate(toDate)}`);
+  addRow('Régime fiscal', regime);
+  addRow('Généré le', new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }));
+  addDivider();
+
+  // ── Synthèse ────────────────────────────────────────────────────────────────
+  addSection('Synthèse TVA');
+  addRow('TVA collectée (ventes)', fmt(summary.collectedVAT));
+  addRow('TVA déductible — biens & services', fmt(summary.deductibleVAT_services));
+  addRow('TVA déductible — immobilisations', fmt(summary.deductibleVAT_assets));
+  addRow('Total TVA déductible', fmt(summary.totalDeductibleVAT), true);
+  addDivider();
+  addRow(
+    isDue ? '→ TVA NETTE À PAYER' : '→ CRÉDIT DE TVA',
+    fmt(isDue ? summary.vatDue : summary.vatCredit),
+    true,
+    isDue ? [220, 38, 38] : [5, 150, 105]
+  );
+  y += 2;
+  addDivider();
+
+  // ── Mapping CA3 ─────────────────────────────────────────────────────────────
+  addSection('Mapping Formulaire CA3 (DGFiP)');
+  const ca3Rows = [
+    ['01', 'Base imposable 20 % (HT)',       collectedVAT_details[20]?.baseHT],
+    ['11', 'Base imposable 10 % (HT)',        collectedVAT_details[10]?.baseHT],
+    ['13', 'Base imposable 5,5 % (HT)',       collectedVAT_details[5.5]?.baseHT],
+    ['08', 'TVA brute collectée',             summary.collectedVAT],
+    ['20', 'TVA déductible biens & services', summary.deductibleVAT_services],
+    ['21', 'TVA déductible immobilisations',  summary.deductibleVAT_assets],
+    ['28', 'Total TVA déductible',            summary.totalDeductibleVAT],
+    ['29', isDue ? 'TVA nette à payer' : 'Crédit de TVA', isDue ? summary.vatDue : summary.vatCredit],
+  ];
+  ca3Rows.forEach(([num, label, val]) => {
+    const isFinal = num === '08' || num === '28' || num === '29';
+    doc.setFontSize(9);
+    doc.setFont('helvetica', isFinal ? 'bold' : 'normal');
+    doc.setTextColor(isFinal ? 15 : 71, isFinal ? 23 : 85, isFinal ? 42 : 99);
+    doc.setFillColor(num === '29' ? (isDue ? 254 : 240) : 248, num === '29' ? (isDue ? 242 : 253) : 250, num === '29' ? (isDue ? 242 : 244) : 252);
+    doc.rect(MARGIN, y - 4.5, COL, 6.5, 'F');
+    doc.text(`[${num}]`, MARGIN + 2, y);
+    doc.text(label, MARGIN + 14, y);
+    doc.text(val != null ? fmt(val) : '—', W - MARGIN - 2, y, { align: 'right' });
+    y += 7;
+  });
+  y += 2;
+  addDivider();
+
+  // ── Justificatifs ───────────────────────────────────────────────────────────
+  if (expenses.length > 0) {
+    // Check if we need a new page
+    if (y > 220) { doc.addPage(); y = 20; }
+    addSection(`Justificatifs dépenses (${expenses.length})`);
+    const CATS = { marketing: 'Marketing', software: 'Logiciels', salaries: 'Salaires', suppliers: 'Fournisseurs', taxes: 'Taxes', banking: 'Banque', travel: 'Déplacements', office: 'Bureaux', other: 'Autre' };
+    expenses.forEach((exp) => {
+      if (y > 270) { doc.addPage(); y = 20; }
+      const hasReceipt = exp.receiptUrl && exp.receiptUrl.trim() !== '';
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(30, 41, 59);
+      doc.text(hasReceipt ? '✓' : '✗', MARGIN + 1, y);
+      doc.setTextColor(hasReceipt ? 5 : 220, hasReceipt ? 150 : 38, hasReceipt ? 105 : 38);
+      const desc = (exp.description || exp.vendor || '—').substring(0, 40);
+      doc.setTextColor(30, 41, 59);
+      doc.text(desc, MARGIN + 7, y);
+      doc.text(CATS[exp.category] || exp.category, MARGIN + 90, y);
+      doc.text(`${exp.vatRate}%`, MARGIN + 125, y);
+      doc.text(fmt(exp.vatRecoverable), W - MARGIN - 2, y, { align: 'right' });
+      y += 5.5;
+    });
+    addDivider();
+  }
+
+  // ── Disclaimer ──────────────────────────────────────────────────────────────
+  if (y > 260) { doc.addPage(); y = 20; }
+  y += 3;
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica', 'italic');
+  doc.setTextColor(148, 163, 184);
+  doc.text(
+    'Outil d\'aide au calcul. La validation finale doit être effectuée sur votre espace impots.gouv.fr. Fluxora ne saurait être tenu',
+    MARGIN, y
+  );
+  y += 4.5;
+  doc.text('responsable des erreurs ou omissions dans les montants présentés.', MARGIN, y);
+
+  // Téléchargement
+  const period = `${fromDate}_${toDate}`;
+  doc.save(`declaration-tva-${period}.pdf`);
+}
+
+// ─── Composant : gestion crédit TVA ──────────────────────────────────────────
+function CreditOptionManager({ decl, mutate }) {
+  const [loading, setLoading] = useState(false);
+  const handle = async (option) => {
+    setLoading(true);
+    try {
+      await updateCreditOption(decl._id, option);
+      toast.success("Option de crédit mise à jour.");
+      mutate();
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Erreur lors de la mise à jour.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  if (decl.vatCredit <= 0) return <Button variant="outline" size="sm" disabled>Pas de crédit</Button>;
+  if (decl.creditOption === 'carry_forward') return <Badge variant="green"><Archive size={12} className="mr-1" />Reporté</Badge>;
+  if (decl.creditOption === 'refund') return <Badge variant="purple"><RefreshCw size={12} className="mr-1" />Remboursé</Badge>;
+  return (
+    <div className="flex gap-2">
+      <Button onClick={() => handle('carry_forward')} variant="outline" size="sm" loading={loading}>Reporter</Button>
+      <Button onClick={() => handle('refund')} variant="outline" size="sm" loading={loading}>Rembourser</Button>
+    </div>
+  );
+}
+
+// ─── Composant : historique déclarations ─────────────────────────────────────
+function DeclarationsHistory({ mutate }) {
+  const { declarations, isLoading } = useVatDeclarations();
+  if (isLoading) return <Skeleton className="h-24 w-full" />;
+  if (!declarations.length) return (
+    <Card><CardBody><p className="text-sm text-gray-500 text-center py-6">Aucune déclaration enregistrée.</p></CardBody></Card>
+  );
+  return (
+    <Card>
+      <CardHeader><h3 className="font-semibold text-gray-800">Historique des déclarations</h3></CardHeader>
+      <CardBody className="divide-y divide-gray-100 p-0">
+        {declarations.map((decl) => (
+          <div key={decl._id} className="py-3 px-5 grid grid-cols-2 md:grid-cols-6 gap-4 items-center">
+            <div className="col-span-2">
+              <p className="font-medium text-gray-800 text-sm">
+                {fmtDate(decl.startDate)} → {fmtDate(decl.endDate)}
+              </p>
+              <Badge variant={decl.regime === 'CA3' ? 'blue' : 'purple'}>{decl.regime}</Badge>
             </div>
-        </>
-    );
+            <div>
+              <p className="text-xs text-gray-500">TVA due</p>
+              <p className="font-medium text-gray-900 text-sm">{fmt(decl.vatDue)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Crédit TVA</p>
+              <p className="font-medium text-emerald-600 text-sm">{fmt(decl.vatCredit)}</p>
+            </div>
+            <div className="col-span-2 flex justify-end items-center gap-2">
+              <CreditOptionManager decl={decl} mutate={mutate} />
+              <Link href={`/vat/${decl._id}`}>
+                <Button variant="outline" size="sm">Détail</Button>
+              </Link>
+            </div>
+          </div>
+        ))}
+      </CardBody>
+    </Card>
+  );
+}
+
+// ─── Composant : sélecteur de régime ─────────────────────────────────────────
+function RegimeSwitcher({ regime, setRegime }) {
+  return (
+    <div className="flex items-center p-1 bg-gray-100 rounded-lg">
+      {['CA3', 'CA12'].map((r) => (
+        <button key={r} onClick={() => setRegime(r)}
+          className={cn('px-3 py-1 text-sm font-medium rounded-md transition-colors',
+            regime === r ? 'bg-white text-accent-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+          )}>
+          {r === 'CA3' ? 'Mensuel (CA3)' : 'Annuel (CA12)'}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ─── Page principale ──────────────────────────────────────────────────────────
+export default function VatPage() {
+  const [regime, setRegime] = useState('CA3');
+  const [dateRange, setDateRange] = useState();
+  const [isCreating, setIsCreating] = useState(false);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
+
+  const { organization } = useOrganization();
+
+  useEffect(() => {
+    const today = new Date();
+    if (regime === 'CA3') {
+      const prev = subMonths(today, 1);
+      setDateRange({ from: startOfMonth(prev), to: endOfMonth(prev) });
+    } else {
+      const prev = subYears(today, 1);
+      setDateRange({ from: startOfYear(prev), to: endOfYear(prev) });
+    }
+  }, [regime]);
+
+  const fromDate = dateRange?.from?.toISOString().split('T')[0];
+  const toDate   = dateRange?.to?.toISOString().split('T')[0];
+
+  const { summary, completionStats, expenses, collectedVAT_details, isLoading, error } = useVatSummary(fromDate, toDate);
+  const { declarations, mutate: mutateDeclarations } = useVatDeclarations();
+
+  const handleCreateDeclaration = async () => {
+    if (!dateRange?.from || !dateRange?.to) return toast.error('Sélectionnez une période complète.');
+    setIsCreating(true);
+    try {
+      await createVatDeclaration({ startDate: fromDate, endDate: toDate, regime });
+      toast.success('Déclaration sauvegardée avec succès.');
+      mutateDeclarations();
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Une erreur est survenue.');
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleGeneratePDF = async () => {
+    if (!summary) return;
+    setIsPdfLoading(true);
+    try {
+      await generateVatPDF({
+        summary, collectedVAT_details, expenses,
+        fromDate, toDate,
+        orgName: organization?.name,
+        regime
+      });
+    } catch (e) {
+      toast.error('Erreur lors de la génération du PDF.');
+      console.error(e);
+    } finally {
+      setIsPdfLoading(false);
+    }
+  };
+
+  return (
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="max-w-5xl mx-auto space-y-8">
+
+        {/* ── Header ────────────────────────────────────────────────────────── */}
+        <header className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Centre Fiscal — TVA</h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Préparez votre déclaration {regime} et exportez votre récapitulatif PDF.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <RegimeSwitcher regime={regime} setRegime={setRegime} />
+            <DateRangePicker range={dateRange} onSelectRange={setDateRange} />
+            <Button onClick={handleCreateDeclaration} disabled={isCreating || !summary} variant="outline">
+              {isCreating ? 'Sauvegarde...' : 'Sauvegarder'}
+            </Button>
+            <Button
+              onClick={handleGeneratePDF}
+              disabled={isPdfLoading || !summary}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <FileDown className="w-4 h-4" />
+              {isPdfLoading ? 'Génération...' : 'Générer mon PDF'}
+            </Button>
+          </div>
+        </header>
+
+        {/* ── Loading / Erreur ──────────────────────────────────────────────── */}
+        {(isLoading || !dateRange) && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}
+          </div>
+        )}
+
+        {error && (
+          <Card className="border-red-200 bg-red-50">
+            <CardBody className="flex items-center gap-4">
+              <AlertCircle className="text-red-600 shrink-0" size={24} />
+              <div>
+                <h3 className="font-semibold text-red-800">Erreur de chargement</h3>
+                <p className="text-sm text-red-700">{error.message}</p>
+              </div>
+            </CardBody>
+          </Card>
+        )}
+
+        {summary && !isLoading && !error && (
+          <>
+            {/* ── KPI cards ─────────────────────────────────────────────────── */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <StatCard
+                label="Solde de TVA"
+                value={fmt(summary.vatDue > 0 ? summary.vatDue : summary.vatCredit)}
+                sub={summary.vatDue > 0 ? 'Montant à payer' : 'Crédit de TVA'}
+                icon={Scale}
+                color={summary.vatDue > 0 ? 'red' : 'green'}
+              />
+              <StatCard label="TVA Collectée" value={fmt(summary.collectedVAT)} icon={TrendingUp} color="indigo" />
+              <StatCard label="TVA Déductible" value={fmt(summary.totalDeductibleVAT)} icon={TrendingDown} color="blue" />
+            </div>
+
+            {/* ── Jauge de complétude ───────────────────────────────────────── */}
+            <CompletionGauge stats={completionStats} />
+
+            {/* ── Tableau CA3 ───────────────────────────────────────────────── */}
+            <CA3Table summary={summary} collectedVAT_details={collectedVAT_details} />
+
+            {/* ── Détail calcul ─────────────────────────────────────────────── */}
+            <Card>
+              <CardHeader>
+                <h3 className="font-semibold text-gray-800">Détail du calcul</h3>
+              </CardHeader>
+              <CardBody>
+                <dl className="space-y-4">
+                  <div className="flex justify-between items-center py-2 border-b">
+                    <dt className="flex items-center gap-2 text-sm font-medium text-gray-600">
+                      <TrendingUp size={16} className="text-indigo-500" />TVA Collectée (ventes)
+                    </dt>
+                    <dd className="text-sm font-semibold text-gray-900 tabular-nums">{fmt(summary.collectedVAT)}</dd>
+                  </div>
+                  <div className="flex justify-between items-center py-2">
+                    <dt className="flex items-center gap-2 text-sm font-medium text-gray-600">
+                      <TrendingDown size={16} className="text-blue-500" />TVA Déductible (achats)
+                    </dt>
+                    <dd className="text-sm font-semibold text-gray-900 tabular-nums">{fmt(summary.totalDeductibleVAT)}</dd>
+                  </div>
+                  <div className="flex justify-between items-center pl-8 pb-2">
+                    <dt className="flex items-center gap-2 text-xs text-gray-500"><Coins size={14} />... sur biens et services</dt>
+                    <dd className="text-xs text-gray-700 tabular-nums">{fmt(summary.deductibleVAT_services)}</dd>
+                  </div>
+                  <div className="flex justify-between items-center pl-8 pb-2 border-b">
+                    <dt className="flex items-center gap-2 text-xs text-gray-500"><Landmark size={14} />... sur immobilisations</dt>
+                    <dd className="text-xs text-gray-700 tabular-nums">{fmt(summary.deductibleVAT_assets)}</dd>
+                  </div>
+                  <div className="flex justify-between items-center pt-4">
+                    <dt className="text-base font-semibold text-gray-800">
+                      {summary.vatDue > 0 ? 'TVA à payer' : 'Crédit de TVA'}
+                    </dt>
+                    <dd className={`text-base font-bold tabular-nums ${summary.vatDue > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                      {fmt(summary.vatDue > 0 ? summary.vatDue : summary.vatCredit)}
+                    </dd>
+                  </div>
+                </dl>
+              </CardBody>
+            </Card>
+
+            {/* ── Bouton PDF (aussi en bas) ──────────────────────────────────── */}
+            <div className="flex justify-center">
+              <button
+                onClick={handleGeneratePDF}
+                disabled={isPdfLoading}
+                className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <FileDown className="w-5 h-5" />
+                {isPdfLoading ? 'Génération en cours...' : 'Générer mon PDF de déclaration'}
+              </button>
+            </div>
+
+            {/* ── Disclaimer ────────────────────────────────────────────────── */}
+            <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-100 rounded-2xl">
+              <ShieldAlert className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+              <p className="text-sm text-amber-700">
+                <span className="font-semibold">Outil d'aide au calcul.</span> La validation finale doit être effectuée sur votre espace{' '}
+                <a href="https://www.impots.gouv.fr" target="_blank" rel="noopener noreferrer" className="underline font-medium">
+                  impots.gouv.fr
+                </a>. Les montants présentés sont calculés automatiquement à partir de vos transactions et scans — ils ne constituent pas une déclaration fiscale officielle.
+              </p>
+            </div>
+          </>
+        )}
+
+        {/* ── Historique des déclarations ───────────────────────────────────── */}
+        <div>
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Historique des déclarations</h2>
+          <DeclarationsHistory mutate={mutateDeclarations} />
+        </div>
+      </div>
+    </div>
+  );
 }
