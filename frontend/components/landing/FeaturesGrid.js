@@ -1,38 +1,20 @@
 'use client';
 
 import {
-  Users, FileText, ClipboardList, Receipt,
-  BookOpen, BarChart3,
+  CreditCard, Receipt, ArrowRightLeft,
+  BarChart3, BookOpen, FileText,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const FEATURES = [
   {
-    icon: Users,
+    icon: CreditCard,
     iconBg: 'bg-emerald-500/10',
     iconColor: 'text-emerald-400',
     glowColor: 'group-hover:shadow-[0_0_30px_rgba(16,185,129,0.12)]',
     accentBar: 'from-emerald-400 to-teal-400',
-    title: 'CRM Clients',
-    desc: "Centralisez vos contacts, suivez l'historique de chaque client et accédez à toutes leurs factures en un clic.",
-  },
-  {
-    icon: ClipboardList,
-    iconBg: 'bg-blue-500/10',
-    iconColor: 'text-blue-400',
-    glowColor: 'group-hover:shadow-[0_0_30px_rgba(59,130,246,0.12)]',
-    accentBar: 'from-blue-400 to-cyan-400',
-    title: 'Devis professionnels',
-    desc: "Créez des devis en quelques secondes, envoyez-les par email et transformez-les en factures d'un clic.",
-  },
-  {
-    icon: FileText,
-    iconBg: 'bg-indigo-500/10',
-    iconColor: 'text-indigo-400',
-    glowColor: 'group-hover:shadow-[0_0_30px_rgba(99,102,241,0.12)]',
-    accentBar: 'from-indigo-400 to-violet-400',
-    title: 'Facturation simple',
-    desc: 'Générez des factures PDF conformes, suivez les paiements et relancez automatiquement les clients en retard.',
+    title: 'Cartes entreprises',
+    desc: 'Émettez des cartes virtuelles et physiques pour vos équipes. Fixez des plafonds par carte, bloquez ou débloquez en un clic.',
   },
   {
     icon: Receipt,
@@ -40,17 +22,17 @@ const FEATURES = [
     iconColor: 'text-rose-400',
     glowColor: 'group-hover:shadow-[0_0_30px_rgba(244,63,94,0.12)]',
     accentBar: 'from-rose-400 to-pink-400',
-    title: 'Suivi des dépenses',
-    desc: 'Enregistrez vos dépenses par catégorie, visualisez vos postes de coût et gardez le cap sur votre budget.',
+    title: 'Dépenses & approbations',
+    desc: "Centralisez toutes les dépenses de l'entreprise. Workflow d'approbation, reçus photographiés, catégorisation automatique.",
   },
   {
-    icon: BookOpen,
-    iconBg: 'bg-amber-500/10',
-    iconColor: 'text-amber-400',
-    glowColor: 'group-hover:shadow-[0_0_30px_rgba(245,158,11,0.12)]',
-    accentBar: 'from-amber-400 to-orange-400',
-    title: 'Comptabilité intégrée',
-    desc: "Toutes vos entrées et sorties dans un journal comptable clair. Export simplifié pour votre expert-comptable.",
+    icon: ArrowRightLeft,
+    iconBg: 'bg-blue-500/10',
+    iconColor: 'text-blue-400',
+    glowColor: 'group-hover:shadow-[0_0_30px_rgba(59,130,246,0.12)]',
+    accentBar: 'from-blue-400 to-cyan-400',
+    title: 'Virements & bénéficiaires',
+    desc: 'Gérez vos bénéficiaires, planifiez des virements récurrents et suivez chaque transaction depuis un seul écran.',
   },
   {
     icon: BarChart3,
@@ -58,8 +40,26 @@ const FEATURES = [
     iconColor: 'text-purple-400',
     glowColor: 'group-hover:shadow-[0_0_30px_rgba(168,85,247,0.12)]',
     accentBar: 'from-purple-400 to-fuchsia-400',
-    title: 'Dashboard analytique',
-    desc: 'Visualisez votre chiffre d\'affaires, votre cashflow et vos KPI clés en temps réel sur un seul écran.',
+    title: 'Reporting temps réel',
+    desc: 'Visualisez votre cashflow, vos KPI clés et vos projections de trésorerie en temps réel. Anticipez, ne subissez plus.',
+  },
+  {
+    icon: BookOpen,
+    iconBg: 'bg-amber-500/10',
+    iconColor: 'text-amber-400',
+    glowColor: 'group-hover:shadow-[0_0_30px_rgba(245,158,11,0.12)]',
+    accentBar: 'from-amber-400 to-orange-400',
+    title: 'Automatisation comptable',
+    desc: "Toutes vos écritures générées automatiquement. Export simplifié pour votre expert-comptable. Zéro ressaisie manuelle.",
+  },
+  {
+    icon: FileText,
+    iconBg: 'bg-indigo-500/10',
+    iconColor: 'text-indigo-400',
+    glowColor: 'group-hover:shadow-[0_0_30px_rgba(99,102,241,0.12)]',
+    accentBar: 'from-indigo-400 to-violet-400',
+    title: 'Factures & relances',
+    desc: 'Générez des factures PDF conformes, suivez les paiements et relancez automatiquement les clients en retard.',
   },
 ];
 
@@ -88,7 +88,7 @@ export default function FeaturesGrid() {
             Un cockpit complet pour votre activité
           </h2>
           <p className="text-lg text-slate-500 max-w-2xl mx-auto">
-            Fluxora remplace cinq outils par un seul. Moins de friction, plus de clarté, plus de temps pour votre métier.
+            Fluxora réunit cartes, dépenses, virements, trésorerie et comptabilité dans un seul outil. Moins de friction, plus de clarté.
           </p>
         </motion.div>
 

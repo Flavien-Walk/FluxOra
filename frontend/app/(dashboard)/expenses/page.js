@@ -69,6 +69,9 @@ export default function ExpensesPage() {
   const { alerts, openCount, mutate: mutateAlerts } = useAlerts('open');
   const { data: vatSummary } = useSWR('/api/expenses/vat-summary', fetcher, { revalidateOnFocus: false });
 
+  const totalHT        = expenses.reduce((s, e) => s + (e.amountHT       || 0), 0);
+  const vatRecoverable = expenses.reduce((s, e) => s + (e.vatRecoverable || 0), 0);
+
   const [modalOpen,      setModalOpen]      = useState(false);
   const [alertsOpen,     setAlertsOpen]     = useState(false);
   const [saving,         setSaving]         = useState(false);
@@ -226,11 +229,11 @@ export default function ExpensesPage() {
           </div>
           <div className="bg-white border border-[rgba(148,163,184,0.3)] rounded-xl shadow-card p-4">
             <p className="text-[11px] text-slate-400 uppercase font-semibold tracking-wide mb-1.5">Total HT</p>
-            <p className="text-2xl font-bold text-slate-900 tabular-nums">{fmt(vatSummary?.totalHT)}</p>
+            <p className="text-2xl font-bold text-slate-900 tabular-nums">{fmt(totalHT)}</p>
           </div>
           <div className="bg-accent-50 border border-accent-100 rounded-xl shadow-card p-4">
             <p className="text-[11px] text-accent-600 uppercase font-semibold tracking-wide mb-1.5">TVA récupérable</p>
-            <p className="text-2xl font-bold text-accent-700 tabular-nums">{fmt(vatSummary?.vatRecoverable)}</p>
+            <p className="text-2xl font-bold text-accent-700 tabular-nums">{fmt(vatRecoverable)}</p>
           </div>
           <button
             onClick={() => setAlertsOpen(true)}
@@ -254,7 +257,7 @@ export default function ExpensesPage() {
         </div>
 
         {/* Détail TVA par taux */}
-        {vatSummary?.vatRecoverable > 0 && (
+        {vatRecoverable > 0 && (
           <div className="bg-accent-50 border border-accent-100 rounded-xl p-4">
             <p className="text-[11px] text-accent-700 font-semibold uppercase tracking-wide mb-3">Détail TVA récupérable par taux</p>
             <div className="flex flex-wrap gap-3">

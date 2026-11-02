@@ -2,108 +2,112 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { CheckCircle2, Zap, Star, Building2 } from 'lucide-react';
+import { CheckCircle2, Zap, Star, Building2, Phone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const PLANS = [
   {
     name: 'Starter',
     icon: Star,
-    price: '0',
+    price: '49',
+    priceLabel: null,
     period: '/mois',
-    description: 'Pour démarrer et tester Fluxora sans engagement.',
-    cta: 'Commencer gratuitement',
+    description: 'Pour les freelances et micro-entreprises.',
+    cta: 'Démarrer',
     ctaHref: '/sign-up',
     popular: false,
     accentColor: 'emerald',
     features: [
-      '3 clients maximum',
-      '5 factures par mois',
-      '5 devis par mois',
+      '1 utilisateur',
+      'Cartes virtuelles (2 max)',
       'Suivi des dépenses',
-      'Dashboard basique',
+      'Factures & devis illimités',
+      'Comptabilité de base',
+      'Export comptable CSV/PDF',
       'Support par email',
     ],
   },
   {
-    name: 'Pro',
+    name: 'Business',
     icon: Zap,
-    price: '29',
+    price: '99',
+    priceLabel: null,
     period: '/mois',
-    description: 'La solution complète pour les freelances actifs.',
+    description: 'Pour les TPE et PME en croissance.',
     cta: "Démarrer l'essai gratuit",
     ctaHref: '/sign-up',
     popular: true,
     accentColor: 'indigo',
     features: [
-      'Clients illimités',
-      'Factures illimitées',
-      'Devis illimités',
-      'Comptabilité complète',
+      'Jusqu\'à 10 utilisateurs',
+      'Cartes physiques & virtuelles illimitées',
+      'Workflow d\'approbation des dépenses',
+      'Virements & bénéficiaires illimités',
+      'Reporting temps réel',
+      'Automatisation comptable',
       'Relances automatiques',
-      'Paiements Stripe intégrés',
-      'Export comptable',
       'Support prioritaire',
     ],
   },
   {
-    name: 'Business',
+    name: 'Enterprise',
     icon: Building2,
-    price: '79',
-    period: '/mois',
-    description: 'Pour les équipes et PME avec des besoins avancés.',
+    price: null,
+    priceLabel: 'Sur devis',
+    period: null,
+    description: 'Pour les structures multi-équipes.',
     cta: "Contacter l'équipe",
-    ctaHref: '/sign-up',
+    ctaHref: 'mailto:sales@fluxora.io',
     popular: false,
     accentColor: 'violet',
     features: [
-      'Tout du plan Pro',
-      'Multi-utilisateurs (5 seats)',
+      'Utilisateurs illimités',
       'Multi-organisations',
-      'API access',
-      'Rapports avancés',
-      'Intégrations comptables',
+      'API & intégrations sur mesure',
+      'Rapports avancés & exports',
       'Onboarding dédié',
-      'SLA 99.9%',
+      'SLA 99.9% garanti',
+      'Gestionnaire de compte dédié',
+      'Conformité & audit trail',
     ],
   },
 ];
 
 const ACCENT = {
   emerald: {
-    ring:   'ring-emerald-500',
-    glow:   '0 0 0 2px #10B981, 0 0 40px rgba(16,185,129,0.25)',
-    badge:  'from-emerald-500 to-teal-500',
-    cta:    'bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-400 hover:to-teal-400',
-    ctaGlow:'shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:shadow-[0_0_32px_rgba(16,185,129,0.6)]',
-    check:  'text-emerald-500',
-    icon:   'bg-emerald-50 text-emerald-600',
-    bar:    'from-emerald-400 to-teal-400',
+    ring:    'ring-emerald-500',
+    glow:    '0 0 0 2px #10B981, 0 0 40px rgba(16,185,129,0.25)',
+    badge:   'from-emerald-500 to-teal-500',
+    cta:     'bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-400 hover:to-teal-400',
+    ctaGlow: 'shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:shadow-[0_0_32px_rgba(16,185,129,0.6)]',
+    check:   'text-emerald-500',
+    icon:    'bg-emerald-50 text-emerald-600',
+    bar:     'from-emerald-400 to-teal-400',
   },
   indigo: {
-    ring:   'ring-indigo-500',
-    glow:   '0 0 0 2px #6366F1, 0 0 50px rgba(99,102,241,0.3)',
-    badge:  'from-blue-600 to-indigo-600',
-    cta:    'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-500 hover:to-indigo-500',
-    ctaGlow:'shadow-[0_0_24px_rgba(79,70,229,0.4)] hover:shadow-[0_0_40px_rgba(79,70,229,0.6)]',
-    check:  'text-indigo-500',
-    icon:   'bg-indigo-50 text-indigo-600',
-    bar:    'from-blue-400 to-indigo-500',
+    ring:    'ring-indigo-500',
+    glow:    '0 0 0 2px #6366F1, 0 0 50px rgba(99,102,241,0.3)',
+    badge:   'from-blue-600 to-indigo-600',
+    cta:     'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-500 hover:to-indigo-500',
+    ctaGlow: 'shadow-[0_0_24px_rgba(79,70,229,0.4)] hover:shadow-[0_0_40px_rgba(79,70,229,0.6)]',
+    check:   'text-indigo-500',
+    icon:    'bg-indigo-50 text-indigo-600',
+    bar:     'from-blue-400 to-indigo-500',
   },
   violet: {
-    ring:   'ring-violet-500',
-    glow:   '0 0 0 2px #8B5CF6, 0 0 40px rgba(139,92,246,0.25)',
-    badge:  'from-violet-500 to-purple-600',
-    cta:    'bg-gradient-to-r from-violet-500 to-purple-600 text-white hover:from-violet-400 hover:to-purple-500',
-    ctaGlow:'shadow-[0_0_20px_rgba(139,92,246,0.4)] hover:shadow-[0_0_32px_rgba(139,92,246,0.6)]',
-    check:  'text-violet-500',
-    icon:   'bg-violet-50 text-violet-600',
-    bar:    'from-violet-400 to-purple-500',
+    ring:    'ring-violet-500',
+    glow:    '0 0 0 2px #8B5CF6, 0 0 40px rgba(139,92,246,0.25)',
+    badge:   'from-violet-500 to-purple-600',
+    cta:     'bg-gradient-to-r from-violet-500 to-purple-600 text-white hover:from-violet-400 hover:to-purple-500',
+    ctaGlow: 'shadow-[0_0_20px_rgba(139,92,246,0.4)] hover:shadow-[0_0_32px_rgba(139,92,246,0.6)]',
+    check:   'text-violet-500',
+    icon:    'bg-violet-50 text-violet-600',
+    bar:     'from-violet-400 to-purple-500',
   },
 };
 
 export default function PricingSection({ isConnected }) {
-  const [selected, setSelected] = useState('Pro');
+  const [selected, setSelected] = useState('Business');
 
   return (
     <section id="pricing" className="bg-white py-24">
@@ -118,7 +122,7 @@ export default function PricingSection({ isConnected }) {
             Un plan pour chaque étape
           </h2>
           <p className="text-lg text-slate-500 max-w-xl mx-auto">
-            Démarrez gratuitement. Évoluez quand vous en avez besoin. Pas de frais cachés.
+            Pas de frais cachés. Pas de surprise. Évoluez quand vous en avez besoin.
           </p>
         </div>
 
@@ -197,10 +201,17 @@ export default function PricingSection({ isConnected }) {
 
                   {/* Price */}
                   <div className="mb-8 mt-2">
-                    <div className="flex items-end gap-1">
-                      <span className="text-5xl font-bold text-slate-900 tracking-tight">{plan.price}€</span>
-                      <span className="text-slate-400 text-sm mb-1.5">{plan.period}</span>
-                    </div>
+                    {plan.price !== null ? (
+                      <div className="flex items-end gap-1">
+                        <span className="text-5xl font-bold text-slate-900 tracking-tight">{plan.price}€</span>
+                        <span className="text-slate-400 text-sm mb-1.5">{plan.period}</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Phone size={18} className="text-violet-500" />
+                        <span className="text-2xl font-bold text-slate-900">{plan.priceLabel}</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Features */}
@@ -250,7 +261,7 @@ export default function PricingSection({ isConnected }) {
 
         {/* Bottom note */}
         <p className="text-center text-sm text-slate-400 mt-10">
-          Tous les prix sont HT. Annulation à tout moment. Aucune carte bancaire requise pour le plan Starter.
+          Tous les prix sont HT · TVA 20% · Annulation à tout moment sans frais
         </p>
       </div>
     </section>
