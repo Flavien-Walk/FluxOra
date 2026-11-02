@@ -23,6 +23,11 @@ Spécificités LinkedIn :
 • Emojis avec parcimonie (0 à 3), jamais en remplacement des mots.
 • Voix active, « vous » pour s'adresser au lecteur, pas de jargon inutile.
 
+Spécificités Instagram :
+• Une légende courte accompagne la photo : l'accroche tient dans les 125 premiers caractères (ensuite « …plus »).
+• Ton direct et visuel, phrases courtes, emojis bienvenus sans excès ; 2 200 caractères et 30 hashtags maximum.
+• Les liens ne sont pas cliquables dans une légende : renvoyer vers « le lien en bio », jamais une URL.
+
 Formules d'accroche efficaces :
 • Chiffre surprenant — « 73 % des freelances perdent 5 h par mois à relancer leurs clients. »
 • Contre-pied — « Le meilleur mois de notre année n'était pas celui où l'on a le plus facturé. »
@@ -47,8 +52,8 @@ const getAI = () => {
 };
 
 const DRAFT_TOOL = {
-  name: 'submit_linkedin_posts',
-  description: 'Renvoie les variantes de post LinkedIn rédigées et la requête photo.',
+  name: 'submit_social_posts',
+  description: 'Renvoie les variantes de post rédigées et la requête photo.',
   input_schema: {
     type: 'object',
     properties: {
@@ -71,6 +76,11 @@ const DRAFT_TOOL = {
   },
 };
 
+const NETWORK_CONTEXT = {
+  linkedin:  { label: 'LinkedIn',  maxChars: 3000, audience: 'publiés sur le profil personnel du dirigeant (freelance ou PME)' },
+  instagram: { label: 'Instagram', maxChars: 2200, audience: 'publiés avec une photo sur le compte professionnel de l\'entreprise (freelance ou PME)' },
+};
+
 const TONES = {
   professionnel: 'professionnel et crédible',
   inspirant: 'inspirant et positif',
@@ -79,16 +89,17 @@ const TONES = {
 };
 
 /**
- * Génère jusqu'à 3 variantes de post LinkedIn à partir d'un brief.
+ * Génère jusqu'à 3 variantes de post (LinkedIn ou Instagram) à partir d'un brief.
  * @returns {{ variants: {angle,text}[], imageQuery: string }}
  */
-async function generateLinkedInDrafts({ brief, tone = 'professionnel', audience, orgName, facts }) {
+async function generateSocialDrafts({ network = 'linkedin', brief, tone = 'professionnel', audience, orgName, facts }) {
+  const context = NETWORK_CONTEXT[network];
   if (!process.env.ANTHROPIC_API_KEY) {
     throw Object.assign(new Error('Assistant IA non configuré (ANTHROPIC_API_KEY manquante).'), { status: 503, code: 'ASSISTANT_INVALID_KEY' });
   }
 
   const system = `Tu es le rédacteur marketing de Fluxora, au service de l'entreprise « ${orgName || 'l\'utilisateur'} ».
-Tu écris des posts LinkedIn publiés sur le profil personnel du dirigeant (freelance ou PME).
+Tu écris des posts ${context.label} ${context.audience}.
 ${MARKETING_GUIDELINES}`;
 
   const userPrompt = [
@@ -110,7 +121,7 @@ ${MARKETING_GUIDELINES}`;
     });
     const out = res.content.find((b) => b.type === 'tool_use')?.input || {};
     return {
-      variants: (out.variants || []).map((v) => ({ angle: v.angle, text: String(v.text || '').slice(0, 3000) })),
+      variants: (out.variants || []).map((v) => ({ angle: v.angle, text: String(v.text || '').slice(0, context.maxChars) })),
       imageQuery: out.image_query || '',
     };
   } catch (err) {
@@ -121,4 +132,4 @@ ${MARKETING_GUIDELINES}`;
   }
 }
 
-module.exports = { MARKETING_GUIDELINES, generateLinkedInDrafts };
+module.exports = { MARKETING_GUIDELINES, generateSocialDrafts };
