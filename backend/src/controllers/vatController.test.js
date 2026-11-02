@@ -6,6 +6,7 @@ const { MongoMemoryServer } = require('mongodb-memory-server');
 const Organization = require('../models/Organization');
 const Invoice = require('../models/Invoice');
 const Expense = require('../models/Expense');
+require('../models/Client'); // requis par populate('clientId')
 const vatRoutes = require('../routes/vat');
 
 // Mock a partie du middleware qui nous intéresse
@@ -45,6 +46,71 @@ beforeEach(async () => {
 });
 
 describe('VAT Controller - /api/vat', () => {
+
+  describe('GET /details et /pdf', () => {
+    const seed = async () => {
+      const org = await Organization.create({ name: 'Test Corp', clerkOwnerId: 'user123' });
+      await Invoice.create([
+        { // Payée le dernier jour de la période -> Incluse
+          organizationId: org._id, number: 'INV-1', status: 'paid', paidAt: new Date('2026-03-31T15:00:00Z'),
+          clientId: new mongoose.Types.ObjectId(), lines: [{ description: 'Service', quantity: 1, unitPrice: 500, vatRate: 20 }],
+        },
+        { // Hors période -> Exclue
+          organizationId: org._id, number: 'INV-2', status: 'paid', paidAt: new Date('2026-04-01T08:00:00Z'),
+          vatAmount: 50, total: 300, clientId: new mongoose.Types.ObjectId(),
+        },
+      ]);
+      await Expense.create([
+        { organizationId: org._id, description: 'SaaS', status: 'validated', date: new Date('2026-03-02'), category: 'software', vatRecoverable: 20, amount: 120 },
+        { organizationId: org._id, description: 'Ordinateur', status: 'validated', date: new Date('2026-03-10'), assetCategory: true, category: 'office', vatRecoverable: 200, amount: 1200 },
+        { organizationId: org._id, description: 'Restaurant', status: 'pending_review', date: new Date('2026-03-05'), category: 'travel', vatRecoverable: 5, amount: 55 },
+      ]);
+    };
+    const period = 'from=2026-03-01&to=2026-03-31';
+
+    it('liste les opérations retenues, dernier jour inclus, par date croissante', async () => {
+      await seed();
+      const res = await request(appWithRoutes).get(`/api/vat/details?${period}`);
+      expect(res.statusCode).toBe(200);
+      expect(res.body.operations.map((op) => op.type)).toEqual(['purchase', 'asset', 'sale']);
+      expect(res.body.operations[2].label).toBe('Facture INV-1');
+    });
+
+    it('donne les mêmes totaux que le résumé', async () => {
+      await seed();
+      const [details, summary] = await Promise.all([
+        request(appWithRoutes).get(`/api/vat/details?${period}`),
+        request(appWithRoutes).get(`/api/vat/summary?${period}`),
+      ]);
+      const sum = (types) => details.body.operations
+        .filter((op) => types.includes(op.type))
+        .reduce((total, op) => total + op.vatAmount, 0);
+      expect(sum(['sale'])).toBe(100);
+      expect(sum(['sale'])).toBe(summary.body.collectedVAT);
+      expect(sum(['purchase', 'asset'])).toBe(summary.body.totalDeductibleVAT);
+    });
+
+    it('génère un PDF', async () => {
+      await seed();
+      const res = await request(appWithRoutes)
+        .get(`/api/vat/pdf?${period}`)
+        .buffer(true)
+        .parse((r, cb) => {
+          const chunks = [];
+          r.on('data', (c) => chunks.push(c));
+          r.on('end', () => cb(null, Buffer.concat(chunks)));
+        });
+      expect(res.statusCode).toBe(200);
+      expect(res.headers['content-type']).toContain('application/pdf');
+      expect(res.body.slice(0, 4).toString()).toBe('%PDF');
+    });
+
+    it('refuse une période absente ou invalide', async () => {
+      await Organization.create({ name: 'Test Corp', clerkOwnerId: 'user123' });
+      expect((await request(appWithRoutes).get('/api/vat/details')).statusCode).toBe(400);
+      expect((await request(appWithRoutes).get('/api/vat/pdf?from=abc&to=def')).statusCode).toBe(400);
+    });
+  });
 
   describe('GET /summary', () => {
 

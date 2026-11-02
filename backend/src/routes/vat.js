@@ -3,6 +3,8 @@ const router = express.Router();
 const { requireAuth } = require('../middleware/auth');
 const {
   getVatSummary,
+  getVatDetails,
+  downloadVatPdf,
   getVatDeclarations,
   getVatDeclaration,
   createVatDeclaration,
@@ -13,6 +15,16 @@ const {
 // @desc    Récupère un résumé de la TVA collectée et déductible sur une période
 // @access  Privé
 router.get('/summary', requireAuth, getVatSummary);
+
+// @route   GET /api/vat/details
+// @desc    Liste les opérations (ventes et achats) retenues sur une période
+// @access  Privé
+router.get('/details', requireAuth, getVatDetails);
+
+// @route   GET /api/vat/pdf
+// @desc    Génère le relevé de TVA d'une période au format PDF
+// @access  Privé
+router.get('/pdf', requireAuth, downloadVatPdf);
 
 // @route   GET /api/vat/declarations
 // @desc    Récupère la liste des déclarations de TVA passées
