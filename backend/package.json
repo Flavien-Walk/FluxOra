@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
-    "@clerk/express": "^2.1.72",
+    "@clerk/express": "^2.1.85",
     "@sendgrid/mail": "^8.1.0",
     "axios": "^1.20.0",
     "cors": "^2.8.5",
