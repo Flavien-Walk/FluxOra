@@ -18,7 +18,7 @@
     "@anthropic-ai/sdk": "^0.78.0",
     "@clerk/express": "^2.1.72",
     "@sendgrid/mail": "^8.1.0",
-    "axios": "^1.20.0",
+    "axios": "^1.21.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.22.3",
