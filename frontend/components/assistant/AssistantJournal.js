@@ -13,7 +13,7 @@ export default function AssistantJournal({ entries }) {
 
   return (
     <div className="border-t border-slate-100 px-4 py-3">
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
         Journal de l&apos;agent
       </p>
       <div className="mt-2 flex flex-wrap gap-1.5">

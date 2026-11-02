@@ -1,5 +1,7 @@
 'use client';
 
+import { toast } from 'sonner';
+
 import { useState } from 'react';
 import { useTransfers, useBeneficiaries } from '@/hooks/useTransfers';
 import api from '@/lib/api';
@@ -65,7 +67,7 @@ export default function TransfersPage() {
       setForm(EMPTY_TRANSFER);
       setPendingTransfer(null);
     } catch (err) {
-      alert(err.response?.data?.error || 'Erreur lors du virement.');
+      toast.error(err.response?.data?.error || 'Erreur lors du virement.');
     } finally {
       setSaving(false);
     }
@@ -80,7 +82,7 @@ export default function TransfersPage() {
       setBenefModal(false);
       setBenefForm(EMPTY_BENEFICIARY);
     } catch (err) {
-      alert(err.response?.data?.error || 'Erreur lors de l\'ajout.');
+      toast.error(err.response?.data?.error || 'Erreur lors de l\'ajout.');
     } finally {
       setSaving(false);
     }
@@ -99,7 +101,7 @@ export default function TransfersPage() {
       await api.patch(`/api/transfers/${id}/cancel`);
       mutate();
     } catch (err) {
-      alert(err.response?.data?.error || 'Impossible d\'annuler.');
+      toast.error(err.response?.data?.error || 'Impossible d\'annuler.');
     } finally {
       setCancelling('');
     }
@@ -112,7 +114,7 @@ export default function TransfersPage() {
   return (
     <>
       <Header title="Virements" />
-      <div className="flex-1 p-6 space-y-6">
+      <div className="flex-1 p-4 lg:p-6 space-y-6">
 
         {/* Bannière simulation */}
         <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-3 flex items-start gap-3">
@@ -147,7 +149,7 @@ export default function TransfersPage() {
             <CardHeader>
               <div className="flex justify-between items-center">
                 <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <Users size={14} className="text-gray-400" /> Bénéficiaires
+                  <Users size={14} className="text-gray-500" /> Bénéficiaires
                 </h2>
                 <Button size="sm" variant="secondary" onClick={() => setBenefModal(true)}>
                   <Plus size={13} /> Ajouter
@@ -157,7 +159,7 @@ export default function TransfersPage() {
             <CardBody className="p-0">
               {beneficiaries.length === 0 ? (
                 <div className="px-4 py-8 text-center">
-                  <p className="text-gray-400 text-sm">Aucun bénéficiaire enregistré</p>
+                  <p className="text-gray-500 text-sm">Aucun bénéficiaire enregistré</p>
                 </div>
               ) : (
                 <ul className="divide-y divide-gray-50">
@@ -165,11 +167,11 @@ export default function TransfersPage() {
                     <li key={b._id} className="flex items-center gap-3 px-4 py-3">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">{b.name}</p>
-                        <p className="text-xs text-gray-400 font-mono">
+                        <p className="text-xs text-gray-500 font-mono">
                           {b.iban.slice(0, 4)} •••• •••• {b.iban.slice(-4)}
                         </p>
                       </div>
-                      <button
+                      <button aria-label="Supprimer"
                         onClick={() => handleDeleteBenef(b._id)}
                         className="text-gray-300 hover:text-red-500 p-1 flex-shrink-0"
                       >
@@ -207,7 +209,7 @@ export default function TransfersPage() {
                   <div className="flex flex-col items-center py-12 text-center">
                     <ArrowUpRight size={36} className="text-gray-300 mb-2" />
                     <p className="text-gray-500 font-medium">Aucun virement</p>
-                    <p className="text-gray-400 text-sm mt-1">
+                    <p className="text-gray-500 text-sm mt-1">
                       {beneficiaries.length === 0
                         ? 'Commencez par ajouter un bénéficiaire'
                         : 'Effectuez votre premier virement'}
@@ -223,7 +225,7 @@ export default function TransfersPage() {
                             <p className="text-sm font-medium text-gray-900 truncate">
                               {t.beneficiaryId?.name || 'Bénéficiaire inconnu'}
                             </p>
-                            <p className="text-xs text-gray-400">
+                            <p className="text-xs text-gray-500">
                               {t.reference} · {fmtDate(t.createdAt)}
                             </p>
                           </div>
@@ -234,7 +236,7 @@ export default function TransfersPage() {
                             </span>
                           </div>
                           {t.status === 'processing' && (
-                            <button
+                            <button aria-label="Effacer"
                               onClick={() => handleCancel(t._id)}
                               disabled={cancelling === t._id}
                               className="text-gray-300 hover:text-red-500 p-1"
@@ -258,8 +260,8 @@ export default function TransfersPage() {
       <Modal open={transferModal} onClose={() => setTransferModal(false)} title="Nouveau virement">
         <form onSubmit={handleTransferSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Bénéficiaire</label>
-            <select
+            <label htmlFor="transfers-page-beneficiaire" className="block text-sm font-medium text-gray-700 mb-1">Bénéficiaire</label>
+            <select id="transfers-page-beneficiaire"
               name="beneficiaryId"
               value={form.beneficiaryId}
               onChange={handleChange}
@@ -276,8 +278,8 @@ export default function TransfersPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Montant (€)</label>
-            <input
+            <label htmlFor="transfers-page-montant" className="block text-sm font-medium text-gray-700 mb-1">Montant (€)</label>
+            <input id="transfers-page-montant"
               type="number"
               name="amount"
               value={form.amount}
@@ -291,8 +293,8 @@ export default function TransfersPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Motif / référence</label>
-            <input
+            <label htmlFor="transfers-page-motif-reference" className="block text-sm font-medium text-gray-700 mb-1">Motif / référence</label>
+            <input id="transfers-page-motif-reference"
               type="text"
               name="reference"
               value={form.reference}
@@ -352,8 +354,8 @@ export default function TransfersPage() {
       <Modal open={benefModal} onClose={() => setBenefModal(false)} title="Ajouter un bénéficiaire">
         <form onSubmit={handleCreateBenef} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
-            <input
+            <label htmlFor="transfers-page-nom" className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+            <input id="transfers-page-nom"
               type="text"
               name="name"
               value={benefForm.name}
@@ -364,8 +366,8 @@ export default function TransfersPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">IBAN</label>
-            <input
+            <label htmlFor="transfers-page-iban" className="block text-sm font-medium text-gray-700 mb-1">IBAN</label>
+            <input id="transfers-page-iban"
               type="text"
               name="iban"
               value={benefForm.iban}
@@ -377,8 +379,8 @@ export default function TransfersPage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">BIC (optionnel)</label>
-              <input
+              <label htmlFor="transfers-page-bic-optionnel" className="block text-sm font-medium text-gray-700 mb-1">BIC (optionnel)</label>
+              <input id="transfers-page-bic-optionnel"
                 type="text"
                 name="bic"
                 value={benefForm.bic}
@@ -388,8 +390,8 @@ export default function TransfersPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email (optionnel)</label>
-              <input
+              <label htmlFor="transfers-page-email-optionnel" className="block text-sm font-medium text-gray-700 mb-1">Email (optionnel)</label>
+              <input id="transfers-page-email-optionnel"
                 type="email"
                 name="email"
                 value={benefForm.email}

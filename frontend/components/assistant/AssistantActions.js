@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   PencilLine,
   CheckCircle2,
+  Link2,
 } from 'lucide-react';
 
 const ICON_MAP = {
@@ -30,6 +31,7 @@ const ICON_MAP = {
   shield: ShieldCheck,
   edit: PencilLine,
   check: CheckCircle2,
+  link: Link2,
 };
 
 const STYLE_MAP = {

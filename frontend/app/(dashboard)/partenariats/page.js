@@ -41,7 +41,7 @@ export default function PartenariatsPage() {
     <>
       <Header title="Bons plans & intégrations" />
 
-      <div className="flex-1 p-6 space-y-6">
+      <div className="flex-1 p-4 lg:p-6 space-y-6">
 
         {/* Hero */}
         <div className="bg-white border border-slate-100 rounded-xl p-5 flex items-start justify-between gap-4 flex-wrap shadow-card">
@@ -62,12 +62,12 @@ export default function PartenariatsPage() {
           <div className="flex gap-6 flex-shrink-0">
             <div className="text-center">
               <p className="text-2xl font-bold text-slate-900 tabular-nums">{PARTNERS.length}</p>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mt-0.5">Partenaires</p>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mt-0.5">Partenaires</p>
             </div>
             <div className="w-px bg-slate-100" />
             <div className="text-center">
               <p className="text-2xl font-bold text-accent-700 tabular-nums">{connectedCount}</p>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mt-0.5">Connectés</p>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mt-0.5">Connectés</p>
             </div>
           </div>
         </div>
@@ -114,7 +114,7 @@ export default function PartenariatsPage() {
         {/* Connected partners summary */}
         {connectedCount > 0 && (
           <div className="bg-white border border-slate-100 rounded-xl p-5 shadow-card">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-3">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-3">
               Services connectés
             </p>
             <div className="flex flex-wrap gap-2">

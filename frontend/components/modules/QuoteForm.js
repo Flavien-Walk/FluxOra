@@ -91,8 +91,8 @@ export default function QuoteForm({ quote, initialValues, onSuccess, onCancel })
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Client *</label>
-          <select
+          <label htmlFor="modules-quoteform-client" className="block text-sm font-medium text-gray-700 mb-1">Client *</label>
+          <select id="modules-quoteform-client"
             value={clientId}
             onChange={(e) => setClientId(e.target.value)}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -104,8 +104,8 @@ export default function QuoteForm({ quote, initialValues, onSuccess, onCancel })
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Valable jusqu&apos;au</label>
-          <input
+          <label htmlFor="modules-quoteform-valable-jusqu-apos-au" className="block text-sm font-medium text-gray-700 mb-1">Valable jusqu&apos;au</label>
+          <input id="modules-quoteform-valable-jusqu-apos-au"
             type="date"
             value={expiryDate}
             onChange={(e) => setExpiryDate(e.target.value)}
@@ -145,7 +145,7 @@ export default function QuoteForm({ quote, initialValues, onSuccess, onCancel })
                 <option value={10}>10%</option>
                 <option value={20}>20%</option>
               </select>
-              <button type="button" onClick={() => removeLine(i)} disabled={lines.length === 1} className="col-span-1 flex justify-center text-gray-400 hover:text-red-500 disabled:opacity-30">
+              <button aria-label="Supprimer" type="button" onClick={() => removeLine(i)} disabled={lines.length === 1} className="col-span-1 flex justify-center text-gray-500 hover:text-red-500 disabled:opacity-30">
                 <Trash2 size={15} />
               </button>
             </div>
@@ -160,8 +160,8 @@ export default function QuoteForm({ quote, initialValues, onSuccess, onCancel })
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-        <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Conditions, délais, mentions..." className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+        <label htmlFor="modules-quoteform-notes" className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+        <textarea id="modules-quoteform-notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Conditions, délais, mentions..." className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
       </div>
 
       {error && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}

@@ -14,6 +14,9 @@ import Header from '@/components/layout/Header';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
+import EquitiesMarket from '@/components/investments/EquitiesMarket';
+import StockPortfolio from '@/components/investments/StockPortfolio';
+import AdvisorPortfolio from '@/components/investments/AdvisorPortfolio';
 import { cn } from '@/lib/utils';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -45,15 +48,15 @@ function ProductCard({ product, onInvest, availableTreasury }) {
       <CardBody className="flex flex-col flex-1 gap-4">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
               {product.category}
             </span>
             <h3 className="font-semibold text-slate-900 mt-0.5 leading-tight">{product.name}</h3>
-            <p className="text-xs text-slate-400 mt-1">{product.partner}</p>
+            <p className="text-xs text-slate-500 mt-1">{product.partner}</p>
           </div>
           <div className="text-right shrink-0">
             <div className="text-2xl font-bold text-slate-900">{fmtPct(product.currentRate)}</div>
-            <div className="text-xs text-slate-400">annuel</div>
+            <div className="text-xs text-slate-500">annuel</div>
           </div>
         </div>
 
@@ -77,7 +80,7 @@ function ProductCard({ product, onInvest, availableTreasury }) {
           </span>
         </div>
 
-        <div className="text-xs text-slate-400">
+        <div className="text-xs text-slate-500">
           Montant minimum : <span className="font-medium text-slate-600">{fmt(product.minAmount)}</span>
         </div>
 
@@ -91,7 +94,7 @@ function ProductCard({ product, onInvest, availableTreasury }) {
               Investir maintenant
             </button>
           ) : (
-            <div className="w-full py-2.5 rounded-xl text-sm font-medium text-center bg-slate-100 text-slate-400 cursor-not-allowed flex items-center justify-center gap-2">
+            <div className="w-full py-2.5 rounded-xl text-sm font-medium text-center bg-slate-100 text-slate-500 cursor-not-allowed flex items-center justify-center gap-2">
               <AlertTriangle className="w-4 h-4" />
               Fonds insuffisants
             </div>
@@ -178,11 +181,11 @@ function InvestModal({ product, availableTreasury, onClose, onSuccess }) {
 
         {/* Montant */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1.5">
-            Montant à placer <span className="text-slate-400 font-normal">(min. {fmt(product.minAmount)})</span>
+          <label htmlFor="investissements-montant" className="block text-sm font-medium text-slate-700 mb-1.5">
+            Montant à placer <span className="text-slate-500 font-normal">(min. {fmt(product.minAmount)})</span>
           </label>
           <div className="relative">
-            <input
+            <input id="investissements-montant"
               type="number" value={amount} min={product.minAmount} step={1000}
               onChange={e => setAmount(parseFloat(e.target.value) || 0)}
               className={cn(
@@ -192,7 +195,7 @@ function InvestModal({ product, availableTreasury, onClose, onSuccess }) {
                   : 'border-slate-200 focus:ring-accent-500'
               )}
             />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">€</span>
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 font-medium">€</span>
           </div>
           {isOverBudget && (
             <p className="text-xs text-danger-600 mt-1.5 flex items-center gap-1">
@@ -205,8 +208,8 @@ function InvestModal({ product, availableTreasury, onClose, onSuccess }) {
         {/* Durée (uniquement pour CAT) */}
         {product.liquidity === 'À maturité' && (
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Durée</label>
-            <select
+            <label htmlFor="investissements-duree" className="block text-sm font-medium text-slate-700 mb-1.5">Durée</label>
+            <select id="investissements-duree"
               value={months}
               onChange={e => setMonths(parseInt(e.target.value))}
               className="w-full border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-accent-500 outline-none"
@@ -284,14 +287,14 @@ export default function InvestissementsPage() {
         subtitle="Faites travailler votre trésorerie dormante"
       />
 
-      <div className="flex-1 p-6 max-w-5xl mx-auto w-full space-y-6">
+      <div className="flex-1 p-4 lg:p-6 max-w-5xl mx-auto w-full space-y-6">
 
         {/* ── KPI cards ──────────────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {/* Tréso disponible */}
           <Card>
             <CardBody className="py-4">
-              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-1">
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-1">
                 Tréso disponible
               </p>
               <p className={cn(
@@ -300,18 +303,18 @@ export default function InvestissementsPage() {
               )}>
                 {availableTreasury !== null ? fmt(availableTreasury) : '—'}
               </p>
-              <p className="text-xs text-slate-400 mt-1">solde comptable net</p>
+              <p className="text-xs text-slate-500 mt-1">solde comptable net</p>
             </CardBody>
           </Card>
 
           {/* Total placé */}
           <Card>
             <CardBody className="py-4">
-              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-1">
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-1">
                 Total placé
               </p>
               <p className="text-xl font-bold text-slate-900">{fmt(totalInvested)}</p>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 {activeInvestments.length} placement{activeInvestments.length > 1 ? 's' : ''} actif{activeInvestments.length > 1 ? 's' : ''}
               </p>
             </CardBody>
@@ -320,18 +323,18 @@ export default function InvestissementsPage() {
           {/* Gain accumulé */}
           <Card>
             <CardBody className="py-4">
-              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-1">
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-1">
                 Gain accumulé
               </p>
               <p className="text-xl font-bold text-success-700">+{fmt(totalGain)}</p>
-              <p className="text-xs text-slate-400 mt-1">depuis le 1er placement</p>
+              <p className="text-xs text-slate-500 mt-1">depuis le 1er placement</p>
             </CardBody>
           </Card>
 
           {/* Valeur totale */}
           <Card>
             <CardBody className="py-4">
-              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-1">
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-1">
                 Valeur totale
               </p>
               <p className="text-xl font-bold text-slate-900">{fmt(totalInvested + totalGain)}</p>
@@ -353,16 +356,18 @@ export default function InvestissementsPage() {
         )}
 
         {/* ── Tabs ───────────────────────────────────────────────────────────── */}
-        <div className="flex gap-1 bg-slate-100 rounded-xl p-1 w-fit">
+        <div className="flex gap-1 bg-slate-100 rounded-xl p-1 w-full sm:w-fit overflow-x-auto">
           {[
             { key: 'catalogue', label: 'Catalogue', icon: BarChart3 },
+            { key: 'market', label: 'Marchés actions', icon: TrendingUp },
+            { key: 'advisor', label: 'Conseiller', icon: Zap },
             { key: 'portfolio', label: 'Mon portefeuille', icon: Wallet },
           ].map(({ key, label, icon: Icon }) => (
             <button
               key={key}
               onClick={() => setTab(key)}
               className={cn(
-                'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
+                'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap',
                 tab === key
                   ? 'bg-accent-600 text-white shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
@@ -379,12 +384,18 @@ export default function InvestissementsPage() {
           ))}
         </div>
 
+        {/* ── MARCHÉS ACTIONS (Euronext Paris / Growth) ──────────────────────── */}
+        {tab === 'market' && <EquitiesMarket onInvested={() => setTab('portfolio')} />}
+
+        {/* ── CONSEILLER (Score Fluxora + portefeuille optimisé) ─────────────── */}
+        {tab === 'advisor' && <AdvisorPortfolio onInvested={() => setTab('portfolio')} />}
+
         {/* ── CATALOGUE ──────────────────────────────────────────────────────── */}
         {tab === 'catalogue' && (
           <div className="space-y-5">
             {/* Refresh indicator */}
             {products.length > 0 && !products[0]?.isFallback && (
-              <div className="flex items-center gap-2 text-xs text-slate-400">
+              <div className="flex items-center gap-2 text-xs text-slate-500">
                 <div className="w-2 h-2 bg-success-500 rounded-full animate-pulse" />
                 Taux mis à jour le {products[0].ratesDate} via BCE &amp; Yahoo Finance
               </div>
@@ -425,7 +436,11 @@ export default function InvestissementsPage() {
 
         {/* ── PORTEFEUILLE ───────────────────────────────────────────────────── */}
         {tab === 'portfolio' && (
-          <div>
+          <div className="space-y-6">
+            {/* Actions : portefeuille simulé */}
+            <StockPortfolio onBrowse={() => setTab('market')} />
+
+            <h2 className="text-sm font-semibold text-slate-900">Placements de trésorerie</h2>
             {loadingPortfolio ? (
               <div className="space-y-3">
                 {[1, 2, 3].map(i => (
@@ -439,7 +454,7 @@ export default function InvestissementsPage() {
                   <TrendingUp className="w-8 h-8 text-slate-300" />
                 </div>
                 <p className="text-slate-500 font-medium mb-2">Aucun placement actif</p>
-                <p className="text-slate-400 text-sm mb-5">
+                <p className="text-slate-500 text-sm mb-5">
                   Explorez le catalogue pour démarrer votre premier placement.
                 </p>
                 <Button onClick={() => setTab('catalogue')} size="md">
@@ -451,11 +466,11 @@ export default function InvestissementsPage() {
               <Card>
                 {/* Header row */}
                 <div className="grid grid-cols-12 gap-4 px-5 py-3.5 items-center bg-slate-50/60 border-b border-slate-100">
-                  <div className="col-span-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Placement</div>
-                  <div className="col-span-2 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Statut</div>
-                  <div className="col-span-2 text-[11px] font-semibold text-slate-400 uppercase tracking-wide text-right">Investi</div>
-                  <div className="col-span-2 text-[11px] font-semibold text-slate-400 uppercase tracking-wide text-right">Gain</div>
-                  <div className="col-span-2 text-[11px] font-semibold text-slate-400 uppercase tracking-wide text-right">Actions</div>
+                  <div className="col-span-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Placement</div>
+                  <div className="col-span-2 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Statut</div>
+                  <div className="col-span-2 text-[11px] font-semibold text-slate-500 uppercase tracking-wide text-right">Investi</div>
+                  <div className="col-span-2 text-[11px] font-semibold text-slate-500 uppercase tracking-wide text-right">Gain</div>
+                  <div className="col-span-2 text-[11px] font-semibold text-slate-500 uppercase tracking-wide text-right">Actions</div>
                 </div>
 
                 <div className="divide-y divide-[rgba(148,163,184,0.12)]">
@@ -470,7 +485,7 @@ export default function InvestissementsPage() {
                           </div>
                           <div className="min-w-0">
                             <p className="font-semibold text-slate-900 text-sm truncate">{inv.productName}</p>
-                            <p className="text-xs text-slate-400 mt-0.5">
+                            <p className="text-xs text-slate-500 mt-0.5">
                               {new Date(inv.investedAt).toLocaleDateString('fr-FR')} · {fmtPct(inv.expectedRate)} /an
                               {inv.maturityDate && ` · Éch. ${new Date(inv.maturityDate).toLocaleDateString('fr-FR')}`}
                             </p>
@@ -504,7 +519,7 @@ export default function InvestissementsPage() {
                             <span className="font-semibold text-slate-900 text-sm">{fmt(inv.withdrawnAmount)}</span>
                           )}
                           {inv.status === 'matured' && (
-                            <span className="text-slate-400 text-sm">—</span>
+                            <span className="text-slate-500 text-sm">—</span>
                           )}
                         </div>
 

@@ -8,6 +8,8 @@ import Header from '@/components/layout/Header';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Building2, User, CheckCircle, AlertCircle } from 'lucide-react';
+import PrivacySettings from '@/components/settings/PrivacySettings';
+import MembersSettings from '@/components/settings/MembersSettings';
 
 const fetcher = (url) => api.get(url).then((r) => r.data);
 
@@ -75,7 +77,7 @@ export default function SettingsPage() {
   return (
     <>
       <Header title="Paramètres" />
-      <div className="flex-1 p-6 max-w-2xl space-y-6">
+      <div className="flex-1 p-4 lg:p-6 max-w-2xl space-y-6">
 
         {/* Profil utilisateur (Clerk) */}
         <Card>
@@ -140,24 +142,24 @@ export default function SettingsPage() {
             ) : (
               <form onSubmit={handleSave} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="settings-page-nom-de-l-organisation" className="block text-sm font-medium text-gray-700 mb-1">
                     Nom de l'organisation <span className="text-red-500">*</span>
                   </label>
-                  <input
+                  <input id="settings-page-nom-de-l-organisation"
                     type="text"
                     name="name"
                     value={form.name}
                     onChange={handleChange}
                     required
-                    placeholder="Ex: Fluxora SAS"
+                    placeholder="Ex : Studio Lumen SAS"
                     className={inputCls}
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email de contact</label>
-                    <input
+                    <label htmlFor="settings-page-email-de-contact" className="block text-sm font-medium text-gray-700 mb-1">Email de contact</label>
+                    <input id="settings-page-email-de-contact"
                       type="email"
                       name="email"
                       value={form.email}
@@ -167,8 +169,8 @@ export default function SettingsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
-                    <input
+                    <label htmlFor="settings-page-telephone" className="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
+                    <input id="settings-page-telephone"
                       type="tel"
                       name="phone"
                       value={form.phone}
@@ -180,8 +182,8 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
-                  <input
+                  <label htmlFor="settings-page-adresse" className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
+                  <input id="settings-page-adresse"
                     type="text"
                     name="address"
                     value={form.address}
@@ -191,10 +193,10 @@ export default function SettingsPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">N° TVA intracommunautaire</label>
-                    <input
+                    <label htmlFor="settings-page-n-tva-intracommunautaire" className="block text-sm font-medium text-gray-700 mb-1">N° TVA intracommunautaire</label>
+                    <input id="settings-page-n-tva-intracommunautaire"
                       type="text"
                       name="vatNumber"
                       value={form.vatNumber}
@@ -204,8 +206,8 @@ export default function SettingsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">SIRET</label>
-                    <input
+                    <label htmlFor="settings-page-siret" className="block text-sm font-medium text-gray-700 mb-1">SIRET</label>
+                    <input id="settings-page-siret"
                       type="text"
                       name="siret"
                       value={form.siret}
@@ -217,8 +219,8 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="w-40">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Devise</label>
-                  <select
+                  <label htmlFor="settings-page-devise" className="block text-sm font-medium text-gray-700 mb-1">Devise</label>
+                  <select id="settings-page-devise"
                     name="currency"
                     value={form.currency}
                     onChange={handleChange}
@@ -255,26 +257,11 @@ export default function SettingsPage() {
           </CardBody>
         </Card>
 
-        {/* Membres */}
-        {org?.members?.length > 0 && (
-          <Card>
-            <CardHeader>
-              <h2 className="text-sm font-semibold text-gray-700">Membres de l'organisation</h2>
-            </CardHeader>
-            <CardBody className="p-0">
-              <ul className="divide-y divide-gray-100">
-                {org.members.map((m) => (
-                  <li key={m.clerkUserId} className="flex items-center justify-between px-6 py-3">
-                    <p className="text-xs text-gray-700 font-mono">{m.clerkUserId}</p>
-                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full capitalize">
-                      {m.role}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </CardBody>
-          </Card>
-        )}
+        {/* Membres : noms, rôles, invitations */}
+        {org && <MembersSettings />}
+
+        {/* Confidentialité : suivi des emails, IA, export et suppression (RGPD) */}
+        {org && <PrivacySettings org={org} isOwner={org.clerkOwnerId === user?.id} onChange={mutate} />}
       </div>
     </>
   );

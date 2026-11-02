@@ -1,5 +1,7 @@
 'use client';
 
+import { toast } from 'sonner';
+
 import { useState, useMemo } from 'react';
 import useSWR from 'swr';
 import { useExpenses } from '@/hooks/useExpenses';
@@ -150,7 +152,7 @@ export default function ExpensesPage() {
       mutateAlerts();
       closeModal();
     } catch (err) {
-      alert(err.response?.data?.error || 'Erreur lors de l\'enregistrement.');
+      toast.error(err.response?.data?.error || 'Erreur lors de l\'enregistrement.');
     } finally {
       setSaving(false);
     }
@@ -217,18 +219,18 @@ export default function ExpensesPage() {
   return (
     <>
       <Header title="Dépenses" />
-      <div className="flex-1 p-6 space-y-6">
+      <div className="flex-1 p-4 lg:p-6 space-y-6">
 
         {/* KPI */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white border border-[rgba(148,163,184,0.3)] rounded-xl shadow-card p-4">
-            <p className="text-[11px] text-slate-400 uppercase font-semibold tracking-wide mb-1.5">Total TTC</p>
+            <p className="text-[11px] text-slate-500 uppercase font-semibold tracking-wide mb-1.5">Total TTC</p>
             <p className="text-2xl font-bold text-slate-900 tabular-nums">
               {fmt(expenses.reduce((s, e) => s + (e.amount || 0), 0))}
             </p>
           </div>
           <div className="bg-white border border-[rgba(148,163,184,0.3)] rounded-xl shadow-card p-4">
-            <p className="text-[11px] text-slate-400 uppercase font-semibold tracking-wide mb-1.5">Total HT</p>
+            <p className="text-[11px] text-slate-500 uppercase font-semibold tracking-wide mb-1.5">Total HT</p>
             <p className="text-2xl font-bold text-slate-900 tabular-nums">{fmt(totalHT)}</p>
           </div>
           <div className="bg-accent-50 border border-accent-100 rounded-xl shadow-card p-4">
@@ -244,7 +246,7 @@ export default function ExpensesPage() {
                 : 'bg-white border-[rgba(148,163,184,0.3)] hover:bg-slate-50'
             )}
           >
-            <p className={cn('text-[11px] uppercase font-semibold tracking-wide mb-1.5', openCount > 0 ? 'text-warning-600' : 'text-slate-400')}>
+            <p className={cn('text-[11px] uppercase font-semibold tracking-wide mb-1.5', openCount > 0 ? 'text-warning-600' : 'text-slate-500')}>
               Alertes ouvertes
             </p>
             <div className="flex items-center gap-2">
@@ -277,7 +279,7 @@ export default function ExpensesPage() {
             <div className="flex items-center gap-3 flex-wrap">
               <h2 className="text-sm font-semibold text-slate-800 flex-shrink-0">Liste des dépenses</h2>
               <div className="relative">
-                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input
                   type="text"
                   placeholder="Description, fournisseur…"
@@ -286,7 +288,7 @@ export default function ExpensesPage() {
                   className="pl-8 pr-8 h-8 w-52 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent placeholder:text-slate-400"
                 />
                 {search && (
-                  <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                  <button aria-label="Fermer" onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-600">
                     <X size={12} />
                   </button>
                 )}
@@ -312,13 +314,13 @@ export default function ExpensesPage() {
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50/80 border-b border-slate-100">
                     <tr>
-                      <th className="text-left px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Date</th>
-                      <th className="text-left px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Description</th>
-                      <th className="text-left px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Catégorie</th>
-                      <th className="text-right px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">HT</th>
+                      <th className="text-left px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Date</th>
+                      <th className="text-left px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Description</th>
+                      <th className="text-left px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Catégorie</th>
+                      <th className="text-right px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">HT</th>
                       <th className="text-right px-4 py-3 text-[11px] font-semibold text-accent-600 uppercase tracking-wide">TVA récup.</th>
                       <th className="text-right px-4 py-3 text-[11px] font-semibold text-danger-600 uppercase tracking-wide">TTC</th>
-                      <th className="px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Statut</th>
+                      <th className="px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Statut</th>
                       <th className="px-4 py-3" />
                     </tr>
                   </thead>
@@ -335,7 +337,7 @@ export default function ExpensesPage() {
                           <td className="px-4 py-3 text-slate-500 text-xs whitespace-nowrap">{fmtDate(exp.date)}</td>
                           <td className="px-4 py-3 text-slate-900 font-medium">
                             <div>{exp.description}</div>
-                            {exp.vendor && <div className="text-xs text-slate-400 mt-0.5">{exp.vendor}</div>}
+                            {exp.vendor && <div className="text-xs text-slate-500 mt-0.5">{exp.vendor}</div>}
                           </td>
                           <td className="px-4 py-3">
                             <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
@@ -356,17 +358,17 @@ export default function ExpensesPage() {
                           </td>
                           <td className="px-4 py-3 text-right">
                             <div className="flex items-center justify-end gap-1">
-                              <button
+                              <button aria-label="Modifier"
                                 onClick={(e) => { e.stopPropagation(); openEdit(exp); }}
-                                className="text-slate-400 hover:text-accent-500 p-1 rounded transition-colors"
+                                className="text-slate-500 hover:text-accent-500 p-1 rounded transition-colors"
                                 title="Modifier"
                               >
                                 <Pencil size={14} />
                               </button>
-                              <button
+                              <button aria-label="Supprimer"
                                 onClick={(e) => { e.stopPropagation(); handleDelete(exp._id); }}
                                 disabled={deleting === exp._id}
-                                className="text-slate-400 hover:text-danger-500 p-1 rounded transition-colors"
+                                className="text-slate-500 hover:text-danger-500 p-1 rounded transition-colors"
                                 title="Supprimer"
                               >
                                 <Trash2 size={14} />
@@ -421,9 +423,9 @@ export default function ExpensesPage() {
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-3">
-                  <FileUp size={32} className="text-gray-400" />
+                  <FileUp size={32} className="text-gray-500" />
                   <p className="text-sm font-medium text-gray-700">Importez une photo de ticket ou facture</p>
-                  <p className="text-xs text-gray-400">JPG, PNG, PDF — Max 5 Mo</p>
+                  <p className="text-xs text-gray-500">JPG, PNG, PDF — Max 5 Mo</p>
                   <label className="cursor-pointer">
                     <span className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors">
                       <Camera size={14} /> Choisir un fichier
@@ -457,8 +459,8 @@ export default function ExpensesPage() {
         <form onSubmit={handleSubmit} className={`space-y-4 ${!editingExpense && modalTab === 'scan' ? 'hidden' : ''}`}>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-              <input
+              <label htmlFor="expenses-page-date" className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+              <input id="expenses-page-date"
                 type="date"
                 name="date"
                 value={form.date}
@@ -468,8 +470,8 @@ export default function ExpensesPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
-              <select
+              <label htmlFor="expenses-page-categorie" className="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
+              <select id="expenses-page-categorie"
                 name="category"
                 value={form.category}
                 onChange={handleChange}
@@ -482,8 +484,8 @@ export default function ExpensesPage() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <input
+            <label htmlFor="expenses-page-description" className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <input id="expenses-page-description"
               type="text"
               name="description"
               value={form.description}
@@ -494,8 +496,8 @@ export default function ExpensesPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Fournisseur</label>
-            <input
+            <label htmlFor="expenses-page-fournisseur" className="block text-sm font-medium text-gray-700 mb-1">Fournisseur</label>
+            <input id="expenses-page-fournisseur"
               type="text"
               name="vendor"
               value={form.vendor}
@@ -506,8 +508,8 @@ export default function ExpensesPage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Montant HT (€)</label>
-              <input
+              <label htmlFor="expenses-page-montant-ht" className="block text-sm font-medium text-gray-700 mb-1">Montant HT (€)</label>
+              <input id="expenses-page-montant-ht"
                 type="number"
                 name="amountHT"
                 value={form.amountHT}
@@ -520,8 +522,8 @@ export default function ExpensesPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Taux TVA</label>
-              <select
+              <label htmlFor="expenses-page-taux-tva" className="block text-sm font-medium text-gray-700 mb-1">Taux TVA</label>
+              <select id="expenses-page-taux-tva"
                 name="vatRate"
                 value={form.vatRate}
                 onChange={handleChange}
@@ -556,8 +558,8 @@ export default function ExpensesPage() {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-            <textarea
+            <label htmlFor="expenses-page-notes" className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <textarea id="expenses-page-notes"
               name="notes"
               value={form.notes}
               onChange={handleChange}
@@ -583,7 +585,7 @@ export default function ExpensesPage() {
               <AlertTriangle size={20} className="text-green-600" />
             </div>
             <p className="text-gray-500 font-medium">Aucune alerte ouverte</p>
-            <p className="text-gray-400 text-sm mt-1">Toutes vos dépenses sont conformes.</p>
+            <p className="text-gray-500 text-sm mt-1">Toutes vos dépenses sont conformes.</p>
           </div>
         ) : (
           <div className="space-y-3">

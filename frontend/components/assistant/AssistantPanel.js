@@ -26,11 +26,11 @@ import AssistantAgentLog from "./AssistantAgentLog";
 import AssistantWorkflowCard from "./AssistantWorkflowCard";
 
 const FALLBACK_SUGGESTIONS = [
-  { text: 'Anticipe ma tresorerie sur 30 jours' },
-  { text: 'Quel est mon score de sante financiere ?' },
-  { text: 'Analyse mes depenses du mois' },
-  { text: 'Quels fournisseurs me coutent le plus cher ?' },
-  { text: 'Propose une meilleure repartition budgetaire' },
+  { text: 'Anticipe ma trésorerie sur 30 jours' },
+  { text: 'Quel est mon score de santé financière ?' },
+  { text: 'Analyse mes dépenses du mois' },
+  { text: 'Quels fournisseurs me coûtent le plus cher ?' },
+  { text: 'Propose une meilleure répartition budgétaire' },
   { text: 'Quel est mon bilan du mois ?' },
 ];
 
@@ -242,10 +242,10 @@ export default function AssistantPanel({ open, onClose }) {
         appendAssistantMessage(data.message);
       } else if (data.redirectTo) {
         appendAssistantMessage({
-          content: 'Action executee. Vous pouvez verifier le resultat dans Fluxora.',
+          content: 'Action exécutée. Vous pouvez vérifier le résultat dans Fluxora.',
           journalEntry: {
             type: 'assistant_action',
-            label: action.label || 'Action executee',
+            label: action.label || 'Action exécutée',
             status: 'success',
           },
         });
@@ -253,7 +253,7 @@ export default function AssistantPanel({ open, onClose }) {
     } catch (err) {
       appendAssistantMessage({
         content: '',
-        error: err.response?.data?.error || "Impossible d'executer cette action.",
+        error: err.response?.data?.error || "Impossible d’exécuter cette action.",
       });
     } finally {
       setExecutingAction(null);
@@ -349,12 +349,12 @@ export default function AssistantPanel({ open, onClose }) {
     } catch (err) {
       const code = err.response?.data?.code;
       const errorMessage = code === 'ASSISTANT_NO_CREDITS'
-        ? "Credits IA epuises, l'assistant est temporairement indisponible."
+        ? "Crédits IA épuisés : l’assistant est temporairement indisponible."
         : code === 'ASSISTANT_INVALID_KEY'
-          ? "Assistant IA non configure. Contactez l'administrateur."
+          ? "L’assistant IA n’est pas configuré. Contactez l’administrateur."
           : code === 'ASSISTANT_UNAVAILABLE'
-            ? "Assistant temporairement indisponible. Reessayez dans quelques instants."
-            : err.response?.data?.error || "Erreur de connexion a l'assistant.";
+            ? "Assistant temporairement indisponible. Réessayez dans quelques instants."
+            : err.response?.data?.error || "Impossible de joindre l’assistant. Vérifiez votre connexion.";
 
       setMessages((current) => [...current, { role: 'assistant', content: '', error: errorMessage }]);
       pushJournalEntry({
@@ -423,20 +423,20 @@ export default function AssistantPanel({ open, onClose }) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-[14px] font-semibold text-slate-900">Assistant Fluxora</p>
-                  <p className="text-[11px] text-slate-400">Agent metier interactif</p>
+                  <p className="text-[11px] text-slate-500">Agent metier interactif</p>
                 </div>
                 {messages.length > 0 && (
                   <button
                     onClick={clearConversation}
-                    title="Nouvelle conversation"
-                    className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                    title="Nouvelle conversation" aria-label="Nouvelle conversation"
+                    className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-600"
                   >
                     <RotateCcw size={14} />
                   </button>
                 )}
-                <button
+                <button aria-label="Fermer"
                   onClick={onClose}
-                  className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                  className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-600"
                 >
                   <X size={16} />
                 </button>
@@ -453,7 +453,7 @@ export default function AssistantPanel({ open, onClose }) {
                         <Sparkles size={22} className="text-accent-600" strokeWidth={1.5} />
                       </div>
                       <p className="mb-1 text-[14px] font-semibold text-slate-900">Comment puis-je vous aider ?</p>
-                      <p className="max-w-[260px] text-[11px] leading-relaxed text-slate-400">
+                      <p className="max-w-[260px] text-[11px] leading-relaxed text-slate-500">
                         Analyse, brouillons, controles manuels et actions confirmees
                       </p>
                     </div>
@@ -469,7 +469,7 @@ export default function AssistantPanel({ open, onClose }) {
                     </div>
 
                     {loadingSugg ? (
-                      <div className="flex items-center gap-2 py-2 text-xs text-slate-400">
+                      <div className="flex items-center gap-2 py-2 text-xs text-slate-500">
                         <Loader2 size={12} className="animate-spin" />
                         <span>Chargement...</span>
                       </div>
@@ -606,8 +606,8 @@ export default function AssistantPanel({ open, onClose }) {
                           <Sparkles size={12} strokeWidth={1.75} className="text-white" />
                         </div>
                         <div className="flex items-center gap-2 rounded-2xl rounded-tl-md border border-slate-100 bg-slate-50 px-4 py-3">
-                          <Loader2 size={13} className="animate-spin text-slate-400" />
-                          <span className="text-[13px] text-slate-400">Analyse en cours...</span>
+                          <Loader2 size={13} className="animate-spin text-slate-500" />
+                          <span className="text-[13px] text-slate-500">Analyse en cours...</span>
                         </div>
                       </div>
                     )}
@@ -627,12 +627,13 @@ export default function AssistantPanel({ open, onClose }) {
                     value={input}
                     onChange={(event) => setInput(event.target.value)}
                     onKeyDown={onKeyDown}
-                    placeholder="Posez votre question financiere..."
+                    aria-label="Message à l’assistant IA"
+                    placeholder="Posez votre question financière…"
                     disabled={loading}
                     className="flex-1 resize-none bg-transparent text-[13px] leading-relaxed text-slate-800 outline-none placeholder:text-slate-400"
                     style={{ maxHeight: '88px' }}
                   />
-                  <button
+                  <button aria-label="Envoyer"
                     onClick={() => send()}
                     disabled={!input.trim() || loading}
                     className="self-end flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-accent-600 text-white transition-colors hover:bg-accent-700 disabled:bg-slate-200 disabled:text-slate-400"
@@ -640,8 +641,8 @@ export default function AssistantPanel({ open, onClose }) {
                     <Send size={13} strokeWidth={2} />
                   </button>
                 </div>
-                <p className="mt-2 text-center text-[10px] text-slate-400">
-                  Lecture, analyse, brouillons et actions confirmees uniquement
+                <p className="mt-2 text-center text-[10px] text-slate-500">
+                  Assistant IA (Claude, Anthropic) : il peut se tromper, vérifiez avant de valider. Aucune action sans votre confirmation.
                 </p>
               </div>
             </motion.aside>

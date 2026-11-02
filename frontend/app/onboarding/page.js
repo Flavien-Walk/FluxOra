@@ -74,10 +74,10 @@ export default function OnboardingPage() {
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="onboarding-page-nom-de-l-organisation" className="block text-sm font-medium text-gray-700 mb-1">
                 Nom de l'organisation *
               </label>
-              <input
+              <input id="onboarding-page-nom-de-l-organisation"
                 name="name"
                 value={form.name}
                 onChange={handleChange}
@@ -87,10 +87,10 @@ export default function OnboardingPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="onboarding-page-email-professionnel" className="block text-sm font-medium text-gray-700 mb-1">
                 Email professionnel
               </label>
-              <input
+              <input id="onboarding-page-email-professionnel"
                 name="email"
                 type="email"
                 value={form.email}
@@ -100,10 +100,10 @@ export default function OnboardingPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="onboarding-page-devise" className="block text-sm font-medium text-gray-700 mb-1">
                 Devise
               </label>
-              <select
+              <select id="onboarding-page-devise"
                 name="currency"
                 value={form.currency}
                 onChange={handleChange}

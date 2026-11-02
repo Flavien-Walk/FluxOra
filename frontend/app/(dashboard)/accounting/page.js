@@ -1,5 +1,7 @@
 'use client';
 
+import LedgerSection from '@/components/accounting/LedgerSection';
+
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useAccounting } from '@/hooks/useAccounting';
@@ -127,7 +129,9 @@ export default function AccountingPage() {
   return (
     <>
       <Header title="Comptabilité" />
-      <div className="flex-1 p-6 space-y-6">
+      <div className="flex-1 p-4 lg:p-6 space-y-6">
+        <LedgerSection />
+
 
         {/* KPI solde */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -144,11 +148,11 @@ export default function AccountingPage() {
                   Recettes
                 </span>
               </div>
-              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-1">
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-1">
                 Entrées (crédits)
               </p>
               <p className="text-2xl font-bold text-slate-900 tabular-nums">{fmt(summary?.totalCredits)}</p>
-              <p className="text-xs text-slate-400 mt-1.5">Factures payées · paiements reçus</p>
+              <p className="text-xs text-slate-500 mt-1.5">Factures payées · paiements reçus</p>
             </div>
           </div>
 
@@ -164,11 +168,11 @@ export default function AccountingPage() {
                   Charges
                 </span>
               </div>
-              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-1">
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-1">
                 Sorties (débits)
               </p>
               <p className="text-2xl font-bold text-slate-900 tabular-nums">{fmt(summary?.totalDebits)}</p>
-              <p className="text-xs text-slate-400 mt-1.5">Dépenses · charges enregistrées</p>
+              <p className="text-xs text-slate-500 mt-1.5">Dépenses · charges enregistrées</p>
             </div>
           </div>
 
@@ -195,13 +199,13 @@ export default function AccountingPage() {
                   {balance >= 0 ? 'Positif ✓' : 'Déficit'}
                 </span>
               </div>
-              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-1">
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-1">
                 Solde net
               </p>
               <p className={cn('text-2xl font-bold tabular-nums', balance >= 0 ? 'text-accent-700' : 'text-warning-700')}>
                 {balance >= 0 ? '+' : ''}{fmt(balance)}
               </p>
-              <p className="text-xs text-slate-400 mt-1.5">Entrées − Sorties</p>
+              <p className="text-xs text-slate-500 mt-1.5">Entrées − Sorties</p>
             </div>
           </div>
         </div>
@@ -237,7 +241,7 @@ export default function AccountingPage() {
 
                 {/* Search */}
                 <div className="relative">
-                  <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                   <input
                     type="text"
                     placeholder="Description, référence…"
@@ -265,19 +269,19 @@ export default function AccountingPage() {
               />
             ) : filtered.length === 0 ? (
               <div className="py-12 text-center">
-                <p className="text-sm text-slate-400">Aucun résultat pour cette recherche.</p>
+                <p className="text-sm text-slate-500">Aucun résultat pour cette recherche.</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50/80 border-b border-slate-100">
                     <tr>
-                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Date</th>
-                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Description</th>
-                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Référence</th>
-                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Catégorie</th>
-                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Source</th>
-                      <th className="text-right px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Montant</th>
+                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Date</th>
+                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Description</th>
+                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Référence</th>
+                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Catégorie</th>
+                      <th className="text-left px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Source</th>
+                      <th className="text-right px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Montant</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
@@ -336,15 +340,15 @@ export default function AccountingPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Date</label>
-              <input
+              <label htmlFor="accounting-page-date" className="block text-sm font-medium text-slate-700 mb-1">Date</label>
+              <input id="accounting-page-date"
                 type="date" name="date" value={form.date} onChange={handleChange} required
                 className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-accent-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Type</label>
-              <select
+              <label htmlFor="accounting-page-type" className="block text-sm font-medium text-slate-700 mb-1">Type</label>
+              <select id="accounting-page-type"
                 name="type" value={form.type} onChange={handleChange}
                 className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-accent-500"
               >
@@ -354,8 +358,8 @@ export default function AccountingPage() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
-            <input
+            <label htmlFor="accounting-page-description" className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+            <input id="accounting-page-description"
               type="text" name="description" value={form.description} onChange={handleChange} required
               placeholder="Ex: Virement client, Achat matériel..."
               className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-accent-500"
@@ -363,8 +367,8 @@ export default function AccountingPage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Catégorie</label>
-              <select
+              <label htmlFor="accounting-page-categorie" className="block text-sm font-medium text-slate-700 mb-1">Catégorie</label>
+              <select id="accounting-page-categorie"
                 name="category" value={form.category} onChange={handleChange}
                 className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-accent-500"
               >
@@ -372,8 +376,8 @@ export default function AccountingPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Montant (€)</label>
-              <input
+              <label htmlFor="accounting-page-montant" className="block text-sm font-medium text-slate-700 mb-1">Montant (€)</label>
+              <input id="accounting-page-montant"
                 type="number" name="amount" value={form.amount} onChange={handleChange}
                 required min="0.01" step="0.01" placeholder="0.00"
                 className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-accent-500"
@@ -413,7 +417,7 @@ export default function AccountingPage() {
                     {selectedEntry.type === 'credit' ? '+' : '-'}{fmt(selectedEntry.amount)}
                   </p>
                 </div>
-                <button onClick={() => setSelectedEntry(null)} className="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                <button aria-label="Fermer" onClick={() => setSelectedEntry(null)} className="text-slate-500 hover:text-slate-600 p-1 rounded-lg">
                   <X size={18} />
                 </button>
               </div>
@@ -421,39 +425,39 @@ export default function AccountingPage() {
 
             <div className="px-6 py-5 space-y-4">
               <div>
-                <p className="text-[11px] text-slate-400 uppercase font-semibold tracking-wide mb-0.5">Description</p>
+                <p className="text-[11px] text-slate-500 uppercase font-semibold tracking-wide mb-0.5">Description</p>
                 <p className="text-sm font-semibold text-slate-900">{selectedEntry.description}</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-[11px] text-slate-400 uppercase font-semibold tracking-wide mb-0.5">Date</p>
+                  <p className="text-[11px] text-slate-500 uppercase font-semibold tracking-wide mb-0.5">Date</p>
                   <p className="text-sm text-slate-700">{fmtDate(selectedEntry.date)}</p>
                 </div>
                 <div>
-                  <p className="text-[11px] text-slate-400 uppercase font-semibold tracking-wide mb-0.5">Catégorie</p>
+                  <p className="text-[11px] text-slate-500 uppercase font-semibold tracking-wide mb-0.5">Catégorie</p>
                   <p className="text-sm text-slate-700">{CATEGORY_LABELS[selectedEntry.category] || selectedEntry.category}</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-[11px] text-slate-400 uppercase font-semibold tracking-wide mb-1">Source</p>
+                  <p className="text-[11px] text-slate-500 uppercase font-semibold tracking-wide mb-1">Source</p>
                   <SourceBadge source={selectedEntry.source} reference={selectedEntry.reference} />
                 </div>
                 {selectedEntry.reference && (
                   <div>
-                    <p className="text-[11px] text-slate-400 uppercase font-semibold tracking-wide mb-0.5">Référence</p>
+                    <p className="text-[11px] text-slate-500 uppercase font-semibold tracking-wide mb-0.5">Référence</p>
                     <p className="text-sm text-slate-700 font-mono bg-slate-50 px-2 py-0.5 rounded inline-block">{selectedEntry.reference}</p>
                   </div>
                 )}
               </div>
               {selectedEntry.notes && (
                 <div>
-                  <p className="text-[11px] text-slate-400 uppercase font-semibold tracking-wide mb-0.5">Notes</p>
+                  <p className="text-[11px] text-slate-500 uppercase font-semibold tracking-wide mb-0.5">Notes</p>
                   <p className="text-sm text-slate-600">{selectedEntry.notes}</p>
                 </div>
               )}
               <div>
-                <p className="text-[11px] text-slate-400 uppercase font-semibold tracking-wide mb-0.5">Créé le</p>
+                <p className="text-[11px] text-slate-500 uppercase font-semibold tracking-wide mb-0.5">Créé le</p>
                 <p className="text-sm text-slate-500">{fmtDateTime(selectedEntry.createdAt)}</p>
               </div>
             </div>
@@ -464,7 +468,7 @@ export default function AccountingPage() {
                   Supprimer
                 </button>
               ) : (
-                <p className="text-xs text-slate-400">Écriture générée automatiquement</p>
+                <p className="text-xs text-slate-500">Écriture générée automatiquement</p>
               )}
               <Button size="sm" variant="secondary" onClick={() => setSelectedEntry(null)}>Fermer</Button>
             </div>

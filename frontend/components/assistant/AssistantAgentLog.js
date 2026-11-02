@@ -29,7 +29,7 @@ export default function AssistantAgentLog({ entries }) {
     <div className="mt-2">
       <button
         onClick={() => setExpanded((v) => !v)}
-        className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-[10px] text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+        className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-[10px] text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-600"
       >
         <Bot size={11} />
         <span>{entries.length} outil{entries.length > 1 ? 's' : ''} · {totalMs}ms</span>
@@ -65,7 +65,7 @@ export default function AssistantAgentLog({ entries }) {
                       <span className="font-mono text-[10px] font-semibold text-slate-600">
                         {TOOL_LABELS[entry.tool] || entry.tool}
                       </span>
-                      <span className="shrink-0 text-[10px] text-slate-400">{entry.durationMs}ms</span>
+                      <span className="shrink-0 text-[10px] text-slate-500">{entry.durationMs}ms</span>
                     </div>
                     <p className="mt-0.5 text-[10px] leading-relaxed text-slate-500 truncate">
                       {entry.resultSummary}

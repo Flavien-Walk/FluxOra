@@ -1,5 +1,7 @@
 'use client';
 
+import { toast } from 'sonner';
+
 import { useState } from 'react';
 import { useCards } from '@/hooks/useCards';
 import api from '@/lib/api';
@@ -58,7 +60,7 @@ export default function CardsPage() {
       setForm(EMPTY_FORM);
       setSelected(0);
     } catch (err) {
-      alert(err.response?.data?.error || 'Erreur lors de la création.');
+      toast.error(err.response?.data?.error || 'Erreur lors de la création.');
     } finally {
       setSaving(false);
     }
@@ -105,7 +107,7 @@ export default function CardsPage() {
   return (
     <>
       <Header title="Cartes virtuelles" />
-      <div className="flex-1 p-6 space-y-6">
+      <div className="flex-1 p-4 lg:p-6 space-y-6">
 
         {/* Banner simulation */}
         <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-3 flex items-start gap-3">
@@ -126,7 +128,7 @@ export default function CardsPage() {
                 <CreditCard size={18} strokeWidth={1.75} />
               </div>
             </div>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Cartes actives</p>
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-1">Cartes actives</p>
             <p className="text-2xl font-bold text-slate-900 tabular-nums">
               {cards.filter((c) => c.status === 'active').length}
             </p>
@@ -138,7 +140,7 @@ export default function CardsPage() {
                 <BarChart3 size={18} strokeWidth={1.75} />
               </div>
             </div>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Budget total / mois</p>
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-1">Budget total / mois</p>
             <p className="text-2xl font-bold text-slate-900 tabular-nums">{fmt(totalBudget)}</p>
           </div>
           <div className="bg-white border border-slate-100 rounded-xl p-5 shadow-card group transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5">
@@ -148,7 +150,7 @@ export default function CardsPage() {
                 <Zap size={18} strokeWidth={1.75} fill="currentColor" />
               </div>
             </div>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1">Dépensé ce mois</p>
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-1">Dépensé ce mois</p>
             <p className="text-2xl font-bold text-slate-900 tabular-nums">{fmt(totalSpend)}</p>
           </div>
         </div>
@@ -160,12 +162,12 @@ export default function CardsPage() {
           </div>
         ) : cards.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-slate-900 text-slate-400 flex items-center justify-center mb-4"
+            <div className="w-16 h-16 rounded-2xl bg-slate-900 text-slate-500 flex items-center justify-center mb-4"
               style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
               <CreditCard size={28} strokeWidth={1.5} />
             </div>
             <p className="text-slate-700 font-semibold text-base mb-1">Aucune carte virtuelle</p>
-            <p className="text-slate-400 text-sm mt-1 mb-5 max-w-xs">
+            <p className="text-slate-500 text-sm mt-1 mb-5 max-w-xs">
               Créez des cartes dédiées par poste de dépense pour mieux contrôler votre budget
             </p>
             <Button onClick={() => setCreateOpen(true)}>
@@ -180,7 +182,7 @@ export default function CardsPage() {
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
               <div>
                 <h2 className="text-sm font-semibold text-slate-800">Vos cartes</h2>
-                <p className="text-xs text-slate-400 mt-0.5">Cliquez sur une carte pour voir les détails</p>
+                <p className="text-xs text-slate-500 mt-0.5">Cliquez sur une carte pour voir les détails</p>
               </div>
               <Button size="sm" onClick={() => setCreateOpen(true)}>
                 <Plus size={14} /> Nouvelle carte
@@ -221,17 +223,17 @@ export default function CardsPage() {
               <div className="mx-6 mb-5 rounded-xl bg-slate-50 border border-slate-100 px-5 py-3.5 flex items-center justify-between gap-4 flex-wrap">
                 <div className="flex items-center gap-5 min-w-0 flex-wrap">
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-0.5">Carte sélectionnée</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-0.5">Carte sélectionnée</p>
                     <p className="text-sm font-semibold text-slate-800 truncate">{cards[selected].name}</p>
                   </div>
                   <div className="hidden sm:block w-px h-7 bg-slate-200" />
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-0.5">Numéro</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-0.5">Numéro</p>
                     <p className="text-sm font-mono text-slate-600">•••• {cards[selected].last4}</p>
                   </div>
                   <div className="hidden sm:block w-px h-7 bg-slate-200" />
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-0.5">Budget restant</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-0.5">Budget restant</p>
                     <p className="text-sm font-semibold text-slate-800 tabular-nums">
                       {fmt(cards[selected].monthlyLimit - cards[selected].currentMonthSpend)}
                     </p>
@@ -261,8 +263,8 @@ export default function CardsPage() {
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Nouvelle carte virtuelle">
         <form onSubmit={handleCreate} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Nom de la carte</label>
-            <input
+            <label htmlFor="cards-page-nom-de-la-carte" className="block text-sm font-medium text-slate-700 mb-1">Nom de la carte</label>
+            <input id="cards-page-nom-de-la-carte"
               type="text" name="name" value={form.name} onChange={handleChange}
               required placeholder="Ex: Abonnements SaaS, Publicité..."
               className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 text-slate-900 placeholder:text-slate-400"
@@ -270,15 +272,15 @@ export default function CardsPage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Catégorie</label>
-              <select name="category" value={form.category} onChange={handleChange}
+              <label htmlFor="cards-page-categorie" className="block text-sm font-medium text-slate-700 mb-1">Catégorie</label>
+              <select id="cards-page-categorie" name="category" value={form.category} onChange={handleChange}
                 className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 text-slate-900">
                 {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Plafond mensuel (€)</label>
-              <input
+              <label htmlFor="cards-page-plafond-mensuel" className="block text-sm font-medium text-slate-700 mb-1">Plafond mensuel (€)</label>
+              <input id="cards-page-plafond-mensuel"
                 type="number" name="monthlyLimit" value={form.monthlyLimit} onChange={handleChange}
                 required min="1" step="1"
                 className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 text-slate-900"
@@ -286,8 +288,8 @@ export default function CardsPage() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Fournisseur associé (optionnel)</label>
-            <input
+            <label htmlFor="cards-page-fournisseur-associe-optionnel" className="block text-sm font-medium text-slate-700 mb-1">Fournisseur associé (optionnel)</label>
+            <input id="cards-page-fournisseur-associe-optionnel"
               type="text" name="linkedVendor" value={form.linkedVendor} onChange={handleChange}
               placeholder="Ex: AWS, Google Ads..."
               className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 text-slate-900 placeholder:text-slate-400"

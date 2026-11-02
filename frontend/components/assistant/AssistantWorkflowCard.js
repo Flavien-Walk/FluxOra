@@ -12,7 +12,7 @@ function ClientSection({ client }) {
 
   return (
     <div className="space-y-1.5">
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Client</p>
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Client</p>
       <div className="flex items-start gap-2.5 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2.5">
         {isNew ? (
           <UserPlus size={13} className="mt-0.5 shrink-0 text-violet-500" />
@@ -42,14 +42,14 @@ function LinesSection({ lines }) {
 
   return (
     <div className="space-y-1.5">
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Prestation(s)</p>
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Prestation(s)</p>
       <div className="divide-y divide-slate-100 rounded-lg border border-slate-100 overflow-hidden">
         {lines.map((line, i) => (
           <div key={i} className="flex items-center justify-between gap-3 bg-slate-50 px-3 py-2">
             <div className="min-w-0">
               <p className="text-[12px] text-slate-700 truncate">{line.description || 'Prestation'}</p>
               {line.quantity > 1 && (
-                <p className="text-[10px] text-slate-400">{line.quantity} × {fmt(line.unitPrice)}</p>
+                <p className="text-[10px] text-slate-500">{line.quantity} × {fmt(line.unitPrice)}</p>
               )}
             </div>
             <p className="shrink-0 text-[12px] font-semibold text-slate-600">
@@ -101,7 +101,7 @@ function UpdateClientSection({ client, fields }) {
       <div className="divide-y divide-slate-100 rounded-lg border border-slate-100 overflow-hidden">
         {Object.entries(fields).map(([key, value]) => (
           <div key={key} className="flex items-center justify-between gap-3 bg-slate-50 px-3 py-2">
-            <p className="text-[10.5px] text-slate-400 font-medium">{FIELD_LABELS[key] || key}</p>
+            <p className="text-[10.5px] text-slate-500 font-medium">{FIELD_LABELS[key] || key}</p>
             <p className="text-[11.5px] text-slate-700 font-medium truncate max-w-[60%] text-right">{value}</p>
           </div>
         ))}

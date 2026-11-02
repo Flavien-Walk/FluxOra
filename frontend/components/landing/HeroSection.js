@@ -234,7 +234,7 @@ export default function HeroSection({ isConnected }) {
             </motion.div>
 
             <motion.h1 variants={fadeUp} className="text-5xl lg:text-6xl font-bold tracking-tight text-white leading-[1.08] mb-6">
-              Voir, contrôler et faire avancer{' '}
+              Factures, trésorerie, TVA : pilotez{' '}
               <span className="bg-gradient-to-r from-blue-400 via-indigo-400 to-violet-400 bg-clip-text text-transparent">
                 votre cash
               </span>

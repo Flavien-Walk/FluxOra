@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import api from '@/lib/api';
+import { toast } from 'sonner';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import {
   computeQuoteTimeline, computeInvoiceTimeline, computeRiskScore,
@@ -16,7 +17,7 @@ import {
 
 // ─── Step status config ───────────────────────────────────────────────────────
 const STEP_STYLE = {
-  done:    { dot: 'bg-success-500 border-success-200',  text: 'text-slate-400 line-through', badge: 'bg-success-50 text-success-700' },
+  done:    { dot: 'bg-success-500 border-success-200',  text: 'text-slate-500 line-through', badge: 'bg-success-50 text-success-700' },
   pending: { dot: 'bg-slate-200 border-slate-100',      text: 'text-slate-700',              badge: 'bg-slate-50 text-slate-500' },
   overdue: { dot: 'bg-danger-500 border-danger-200',    text: 'text-danger-700 font-medium', badge: 'bg-danger-50 text-danger-700' },
   skipped: { dot: 'bg-slate-100 border-slate-50',       text: 'text-slate-300',              badge: 'bg-slate-50 text-slate-300' },
@@ -97,7 +98,7 @@ function SettingsPanel({ type, config, onSave, saving }) {
           onChange={(e) => setLocal((p) => ({ ...p, [fieldKey]: Number(e.target.value) }))}
           className="w-16 h-8 border border-slate-200 rounded-lg px-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-accent-500"
         />
-        <span className="text-xs text-slate-400">{hint}</span>
+        <span className="text-xs text-slate-500">{hint}</span>
       </div>
     </div>
   );
@@ -122,7 +123,7 @@ function SettingsPanel({ type, config, onSave, saving }) {
 
   return (
     <div className="bg-slate-50/80 rounded-xl border border-slate-100 p-4 space-y-4">
-      <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Paramètres de relance</p>
+      <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">Paramètres de relance</p>
       <div className="grid grid-cols-2 gap-4">
         {type === 'quote' && (
           <>
@@ -135,7 +136,7 @@ function SettingsPanel({ type, config, onSave, saving }) {
             <Field label="Rappel avant échéance" fieldKey="beforeDueDays" hint="jours avant" />
             <div className="col-span-2">
               <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide block mb-1">Relances impayées</label>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500">
                 {type === 'invoice' && (local.afterDueDays || [5, 15]).join(' j · ')} j après échéance
               </p>
             </div>
@@ -162,7 +163,7 @@ function SettingsPanel({ type, config, onSave, saving }) {
 // ─── History list ─────────────────────────────────────────────────────────────
 function HistoryList({ history }) {
   if (!history || history.length === 0) {
-    return <p className="text-xs text-slate-400 text-center py-3">Aucune relance envoyée</p>;
+    return <p className="text-xs text-slate-500 text-center py-3">Aucune relance envoyée</p>;
   }
   return (
     <div className="space-y-2">
@@ -171,7 +172,7 @@ function HistoryList({ history }) {
           <div className="w-1.5 h-1.5 rounded-full bg-accent-400 flex-shrink-0 mt-1.5" />
           <div className="flex-1 min-w-0">
             <p className="font-medium text-slate-700">{entry.note || entry.type}</p>
-            <p className="text-slate-400">{entry.recipientEmail} · {fmtDateFull(entry.sentAt)}</p>
+            <p className="text-slate-500">{entry.recipientEmail} · {fmtDateFull(entry.sentAt)}</p>
           </div>
           <span className={cn(
             'px-1.5 py-0.5 rounded-full text-[10px] font-semibold flex-shrink-0',
@@ -228,11 +229,13 @@ export default function ReminderBlock({ doc, docType, mutate }) {
   const handleSendReminder = async (reminderType) => {
     setSendingType(reminderType);
     try {
-      await api.post(`${apiBase}/${doc._id}/send-reminder`, { type: reminderType });
+      const { data } = await api.post(`${apiBase}/${doc._id}/send-reminder`, { type: reminderType });
       setLastSent(reminderType);
+      toast.success(`Relance envoyée à ${data?.historyEntry?.recipientEmail || 'votre client'}.`);
       mutate();
     } catch (err) {
-      alert(err.response?.data?.error || 'Erreur lors de l\'envoi');
+      mutate();
+      toast.error(err.response?.data?.error || 'Erreur lors de l\'envoi');
     } finally {
       setSendingType('');
     }
@@ -244,21 +247,21 @@ export default function ReminderBlock({ doc, docType, mutate }) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className={cn('w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0', enabled ? 'bg-accent-50' : 'bg-slate-100')}>
-              {enabled ? <Bell size={13} className="text-accent-600" /> : <BellOff size={13} className="text-slate-400" />}
+              {enabled ? <Bell size={13} className="text-accent-600" /> : <BellOff size={13} className="text-slate-500" />}
             </div>
             <div>
               <h3 className="text-sm font-semibold text-slate-800">Relances automatiques</h3>
               {nextReminder && enabled && (
-                <p className="text-[11px] text-slate-400 mt-0.5">
+                <p className="text-[11px] text-slate-500 mt-0.5">
                   Prochaine : {fmtDate(nextReminder.date)} — {nextReminder.label}
                 </p>
               )}
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button
+            <button aria-label="Réglages"
               onClick={() => setShowSettings((v) => !v)}
-              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-600 transition-colors"
             >
               <Settings2 size={13} />
             </button>
@@ -316,7 +319,7 @@ export default function ReminderBlock({ doc, docType, mutate }) {
         {/* Timeline */}
         {enabled && timeline.length > 0 && (
           <div>
-            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-3">Calendrier de relance</p>
+            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-3">Calendrier de relance</p>
             <ol className="space-y-0">
               {timeline.map((step, i) => {
                 const style = STEP_STYLE[step.status] || STEP_STYLE.pending;
@@ -332,7 +335,7 @@ export default function ReminderBlock({ doc, docType, mutate }) {
                         <p className={cn('text-xs leading-snug', style.text)}>
                           {STEP_TYPE_ICON[step.type]} {step.label}
                         </p>
-                        <p className="text-[11px] text-slate-400 mt-0.5">{fmtDate(step.date)}</p>
+                        <p className="text-[11px] text-slate-500 mt-0.5">{fmtDate(step.date)}</p>
                       </div>
                       {step.type === 'reminder' && step.status === 'overdue' && (
                         <button
@@ -352,7 +355,7 @@ export default function ReminderBlock({ doc, docType, mutate }) {
         )}
 
         {!enabled && (
-          <p className="text-xs text-slate-400 text-center py-2">
+          <p className="text-xs text-slate-500 text-center py-2">
             Les relances automatiques sont désactivées pour ce document.
           </p>
         )}
@@ -360,7 +363,7 @@ export default function ReminderBlock({ doc, docType, mutate }) {
         {/* History toggle */}
         <button
           onClick={() => setShowHistory((v) => !v)}
-          className="w-full flex items-center justify-between text-[11px] text-slate-400 hover:text-slate-600 transition-colors pt-1 border-t border-slate-100"
+          className="w-full flex items-center justify-between text-[11px] text-slate-500 hover:text-slate-600 transition-colors pt-1 border-t border-slate-100"
         >
           <span className="flex items-center gap-1.5">
             <History size={11} />

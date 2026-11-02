@@ -1,5 +1,8 @@
 'use client';
 
+import ServerWakeLoader from '@/components/ui/ServerWakeLoader';
+import ForecastCard from '@/components/dashboard/ForecastCard';
+import AgingCard from '@/components/dashboard/AgingCard';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -52,7 +55,7 @@ function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-slate-900 text-white rounded-xl px-3.5 py-2.5 shadow-lg border border-slate-700">
-      <p className="text-[11px] font-medium text-slate-400 mb-1">{label}</p>
+      <p className="text-[11px] font-medium text-slate-500 mb-1">{label}</p>
       <p className="text-sm font-bold text-white tabular-nums">{fmt(payload[0]?.value)}</p>
     </div>
   );
@@ -85,9 +88,7 @@ export default function DashboardPage() {
 
   if (orgLoading || !hasOrg) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="w-5 h-5 border-2 border-accent-600 border-t-transparent rounded-full animate-spin" />
-      </div>
+      <ServerWakeLoader />
     );
   }
 
@@ -110,7 +111,7 @@ export default function DashboardPage() {
   return (
     <>
       <Header title="Dashboard" />
-      <div className="flex-1 p-6 space-y-5">
+      <div className="flex-1 p-4 lg:p-6 space-y-5">
 
         {/* ══════════════════════════════════════════════════
             HERO — Section premium navy gradient
@@ -131,7 +132,7 @@ export default function DashboardPage() {
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <Sparkles size={13} className="text-accent-400" />
-                  <p className="text-slate-400 text-xs font-medium uppercase tracking-widest">
+                  <p className="text-slate-500 text-xs font-medium uppercase tracking-widest">
                     {getGreeting()}
                   </p>
                 </div>
@@ -196,7 +197,7 @@ export default function DashboardPage() {
         ══════════════════════════════════════════════════ */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
-            label="Chiffre d'affaires"
+            label="Chiffre d'affaires HT"
             value={sumLoading ? '…' : fmt(summary?.revenue?.total)}
             numericValue={sumLoading ? null : (summary?.revenue?.total ?? 0)}
             formatter={fmt}
@@ -209,7 +210,7 @@ export default function DashboardPage() {
             value={sumLoading ? '…' : fmt(summary?.cashflowNet)}
             numericValue={sumLoading ? null : (summary?.cashflowNet ?? 0)}
             formatter={fmt}
-            sub={cashflowPositive ? 'Solde positif ✓' : 'Solde négatif'}
+            sub={`Ce mois : encaissé ${fmt(summary?.cashflow?.in)} − dépenses ${fmt(summary?.cashflow?.out)}`}
             icon={Wallet}
             color={cashflowPositive ? 'indigo' : 'red'}
           />
@@ -271,7 +272,7 @@ export default function DashboardPage() {
               >
                 <Send size={18} strokeWidth={1.75} />
               </div>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-1">
                 Taux d'acceptation
               </p>
               {sumLoading ? (
@@ -287,7 +288,7 @@ export default function DashboardPage() {
                       style={{ width: `${summary.quotes.acceptanceRate}%` }}
                     />
                   </div>
-                  <p className="text-xs text-slate-400 mt-1.5">Taux de conversion devis</p>
+                  <p className="text-xs text-slate-500 mt-1.5">Taux de conversion devis</p>
                 </>
               ) : (
                 <p className="text-2xl font-bold text-slate-200">—</p>
@@ -299,6 +300,12 @@ export default function DashboardPage() {
         {/* ══════════════════════════════════════════════════
             GRAPHIQUE + ACTIONS RAPIDES
         ══════════════════════════════════════════════════ */}
+        {/* Trésorerie prévisionnelle & impayés */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+          <ForecastCard />
+          <AgingCard />
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
           {/* Graphique CA — 2/3 */}
@@ -306,8 +313,8 @@ export default function DashboardPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-sm font-semibold text-slate-800">Chiffre d'affaires</h2>
-                  <p className="text-xs text-slate-400 mt-0.5">Évolution sur 6 mois</p>
+                  <h2 className="text-sm font-semibold text-slate-800">Chiffre d'affaires HT</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">Évolution sur 6 mois</p>
                 </div>
                 {!sumLoading && summary?.revenue?.total > 0 && (
                   <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-success-50 text-success-700">
@@ -373,11 +380,11 @@ export default function DashboardPage() {
           <Card>
             <CardHeader>
               <h2 className="text-sm font-semibold text-slate-800">Dépenses</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Par catégorie</p>
+              <p className="text-xs text-slate-500 mt-0.5">Par catégorie</p>
             </CardHeader>
             <CardBody>
               {(summary?.expensesByCategory?.length || 0) === 0 ? (
-                <p className="text-sm text-slate-400 text-center py-6">Aucune dépense cette année</p>
+                <p className="text-sm text-slate-500 text-center py-6">Aucune dépense cette année</p>
               ) : (
                 <div className="space-y-3.5">
                   {summary.expensesByCategory.slice(0, 5).map((cat, idx) => {
@@ -421,7 +428,7 @@ export default function DashboardPage() {
             </CardHeader>
             <div className="divide-y divide-[rgba(148,163,184,0.15)]">
               {(summary?.recentInvoices?.length || 0) === 0 ? (
-                <p className="text-sm text-slate-400 text-center py-8">Aucune facture</p>
+                <p className="text-sm text-slate-500 text-center py-8">Aucune facture</p>
               ) : summary.recentInvoices.map((inv) => (
                 <Link
                   key={inv._id}
@@ -430,7 +437,7 @@ export default function DashboardPage() {
                 >
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-slate-900 truncate">{inv.number}</p>
-                    <p className="text-xs text-slate-400 truncate">{inv.clientId?.name || '—'}</p>
+                    <p className="text-xs text-slate-500 truncate">{inv.clientId?.name || '—'}</p>
                   </div>
                   <div className="flex items-center gap-2.5 flex-shrink-0">
                     <Badge status={inv.status} />
@@ -466,7 +473,7 @@ export default function DashboardPage() {
             </CardHeader>
             <div className="divide-y divide-[rgba(148,163,184,0.15)]">
               {(summary?.recentQuotes?.length || 0) === 0 ? (
-                <p className="text-sm text-slate-400 text-center py-8">Aucun devis</p>
+                <p className="text-sm text-slate-500 text-center py-8">Aucun devis</p>
               ) : summary.recentQuotes.map((q) => (
                 <Link
                   key={q._id}
@@ -475,7 +482,7 @@ export default function DashboardPage() {
                 >
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-slate-900 truncate">{q.number}</p>
-                    <p className="text-xs text-slate-400 truncate">{q.clientId?.name || '—'}</p>
+                    <p className="text-xs text-slate-500 truncate">{q.clientId?.name || '—'}</p>
                   </div>
                   <div className="flex items-center gap-2.5 flex-shrink-0">
                     <Badge status={q.status} />
@@ -511,7 +518,7 @@ export default function DashboardPage() {
                   <div key={inv._id} className="flex items-center justify-between px-5 py-3">
                     <div>
                       <p className="text-sm font-medium text-slate-900">{inv.number}</p>
-                      <p className="text-xs text-slate-400">{inv.clientId?.name || '—'} · {fmtDate(inv.sentAt)}</p>
+                      <p className="text-xs text-slate-500">{inv.clientId?.name || '—'} · {fmtDate(inv.sentAt)}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-semibold text-warning-700 tabular-nums">{fmt(inv.total)}</span>
@@ -531,7 +538,7 @@ export default function DashboardPage() {
                     <CheckCircle2 size={20} className="text-success-600" />
                   </div>
                   <p className="text-sm font-semibold text-slate-700">Aucune relance en attente</p>
-                  <p className="text-xs text-slate-400 mt-1">Toutes vos factures sont à jour.</p>
+                  <p className="text-xs text-slate-500 mt-1">Toutes vos factures sont à jour.</p>
                 </div>
               </CardBody>
             </Card>

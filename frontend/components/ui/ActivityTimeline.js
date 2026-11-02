@@ -147,9 +147,9 @@ function TimelineItem({ event, isLast }) {
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="text-sm font-medium text-slate-800 truncate">{event.title}</p>
-            <p className="text-xs text-slate-400 truncate mt-0.5">{event.sub}</p>
+            <p className="text-xs text-slate-500 truncate mt-0.5">{event.sub}</p>
           </div>
-          <span className="text-[11px] text-slate-400 whitespace-nowrap flex-shrink-0 mt-0.5">
+          <span className="text-[11px] text-slate-500 whitespace-nowrap flex-shrink-0 mt-0.5">
             {fmtRelative(event.date)}
           </span>
         </div>
@@ -187,7 +187,7 @@ export default function ActivityTimeline({ events = [], isLoading = false }) {
   if (events.length === 0) {
     return (
       <div className="py-8 text-center">
-        <p className="text-sm text-slate-400">Aucune activité récente</p>
+        <p className="text-sm text-slate-500">Aucune activité récente</p>
       </div>
     );
   }

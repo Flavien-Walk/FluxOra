@@ -4,6 +4,7 @@ import {
   BarChart2,
   BookOpen,
   FileText,
+  Megaphone,
   Receipt,
   Search,
   Send,
@@ -47,6 +48,13 @@ const HUB = [
     },
   },
   {
+    id: 'hub_linkedin',
+    label: 'Post LinkedIn',
+    icon: Megaphone,
+    color: 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100',
+    prompt: 'Rédige un post LinkedIn pour présenter mon activité et donner envie de me contacter.',
+  },
+  {
     id: 'hub_transfer',
     label: 'Virement',
     icon: Send,
@@ -72,7 +80,7 @@ const HUB = [
 export default function AssistantHubActions({ onAction }) {
   return (
     <div>
-      <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+      <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
         Actions rapides
       </p>
       <div className="grid grid-cols-3 gap-2">

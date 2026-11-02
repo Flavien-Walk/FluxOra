@@ -1,5 +1,7 @@
 'use client';
 
+import { toast } from 'sonner';
+
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 
@@ -81,10 +83,10 @@ export default function PublicQuotePage() {
         setActionDone('accepted');
         setQuote((q) => ({ ...q, status: 'accepted' }));
       } else {
-        alert(data.error || 'Impossible d\'accepter ce devis.');
+        toast.error(data.error || 'Impossible d\'accepter ce devis.');
       }
     } catch {
-      alert('Erreur réseau, veuillez réessayer.');
+      toast.error('Erreur réseau, veuillez réessayer.');
     } finally {
       setActionLoading('');
     }
@@ -105,10 +107,10 @@ export default function PublicQuotePage() {
         setRefuseOpen(false);
         setQuote((q) => ({ ...q, status: 'refused' }));
       } else {
-        alert(data.error || 'Impossible de refuser ce devis.');
+        toast.error(data.error || 'Impossible de refuser ce devis.');
       }
     } catch {
-      alert('Erreur réseau, veuillez réessayer.');
+      toast.error('Erreur réseau, veuillez réessayer.');
     } finally {
       setActionLoading('');
     }
@@ -150,7 +152,7 @@ export default function PublicQuotePage() {
         {/* Header org */}
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs text-gray-400 uppercase font-semibold tracking-wide">Document émis par</p>
+            <p className="text-xs text-gray-500 uppercase font-semibold tracking-wide">Document émis par</p>
             <p className="text-lg font-bold text-gray-900">{org?.name}</p>
             {org?.email && <p className="text-sm text-gray-500">{org.email}</p>}
           </div>
@@ -201,7 +203,7 @@ export default function PublicQuotePage() {
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-xs text-gray-400 uppercase font-medium">Total TTC</p>
+                <p className="text-xs text-gray-500 uppercase font-medium">Total TTC</p>
                 <p className="text-3xl font-bold text-indigo-600">{fmt(quote.total, quote.currency)}</p>
               </div>
             </div>
@@ -210,13 +212,13 @@ export default function PublicQuotePage() {
           {/* Adresses */}
           <div className="grid grid-cols-2 gap-4 px-6 py-4 bg-gray-50 border-b border-gray-100 text-sm">
             <div>
-              <p className="text-xs text-gray-400 uppercase font-semibold mb-1">De</p>
+              <p className="text-xs text-gray-500 uppercase font-semibold mb-1">De</p>
               <p className="font-medium text-gray-900">{org?.name}</p>
               {org?.email && <p className="text-gray-500">{org.email}</p>}
-              {org?.siret && <p className="text-gray-400 text-xs">SIRET : {org.siret}</p>}
+              {org?.siret && <p className="text-gray-500 text-xs">SIRET : {org.siret}</p>}
             </div>
             <div>
-              <p className="text-xs text-gray-400 uppercase font-semibold mb-1">Pour</p>
+              <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Pour</p>
               <p className="font-medium text-gray-900">{client?.name}</p>
               {client?.company && <p className="text-gray-500">{client.company}</p>}
               {client?.email && <p className="text-gray-500">{client.email}</p>}
@@ -241,7 +243,7 @@ export default function PublicQuotePage() {
                     <td className="px-6 py-3 text-gray-900">{line.description}</td>
                     <td className="px-3 py-3 text-center text-gray-500">{line.quantity}</td>
                     <td className="px-3 py-3 text-right text-gray-500">{fmt(line.unitPrice, quote.currency)}</td>
-                    <td className="px-3 py-3 text-center text-gray-400">{line.vatRate}%</td>
+                    <td className="px-3 py-3 text-center text-gray-500">{line.vatRate}%</td>
                     <td className="px-6 py-3 text-right font-medium text-gray-900">{fmt(line.quantity * line.unitPrice, quote.currency)}</td>
                   </tr>
                 ))}
@@ -309,7 +311,7 @@ export default function PublicQuotePage() {
         )}
 
         {/* Contact */}
-        <p className="text-center text-xs text-gray-400">
+        <p className="text-center text-xs text-gray-500">
           Une question ? Contactez {org?.name} à{' '}
           <a href={`mailto:${org?.email}`} className="text-indigo-500 hover:underline">{org?.email}</a>
         </p>

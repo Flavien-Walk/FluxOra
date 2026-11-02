@@ -125,7 +125,7 @@ export function StatCard({ label, value, sub, icon: Icon, color = 'indigo', tren
         </div>
 
         {/* Label */}
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1">
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-1">
           {label}
         </p>
 
@@ -136,7 +136,7 @@ export function StatCard({ label, value, sub, icon: Icon, color = 'indigo', tren
 
         {/* Sub */}
         {sub && (
-          <p className="text-xs text-slate-400 mt-1.5">{sub}</p>
+          <p className="text-xs text-slate-500 mt-1.5">{sub}</p>
         )}
       </div>
     </div>

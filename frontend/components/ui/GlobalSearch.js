@@ -134,7 +134,7 @@ export default function GlobalSearch() {
       <div className="relative">
         <Search
           size={13}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
         />
         <input
           ref={inputRef}
@@ -151,9 +151,9 @@ export default function GlobalSearch() {
           )}
         />
         {query && (
-          <button
+          <button aria-label="Fermer"
             onClick={clear}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-600 transition-colors"
           >
             <X size={11} />
           </button>
@@ -164,9 +164,9 @@ export default function GlobalSearch() {
       {isOpen && (
         <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-xl shadow-lg border border-slate-200 z-50 overflow-hidden">
           {loading ? (
-            <div className="px-4 py-3 text-xs text-slate-400 text-center">Recherche en cours…</div>
+            <div className="px-4 py-3 text-xs text-slate-500 text-center">Recherche en cours…</div>
           ) : results.length === 0 ? (
-            <div className="px-4 py-3 text-xs text-slate-400 text-center">
+            <div className="px-4 py-3 text-xs text-slate-500 text-center">
               Aucun résultat pour &ldquo;{query}&rdquo;
             </div>
           ) : (
@@ -194,7 +194,7 @@ export default function GlobalSearch() {
                         <p className="text-xs font-semibold text-slate-800 truncate">
                           {buildTitle(type, item)}
                         </p>
-                        <p className="text-[10px] text-slate-400 truncate">
+                        <p className="text-[10px] text-slate-500 truncate">
                           {cfg.label}{buildSub(type, item) ? ` · ${buildSub(type, item)}` : ''}
                         </p>
                       </div>

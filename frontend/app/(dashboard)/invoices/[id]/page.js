@@ -1,5 +1,7 @@
 'use client';
 
+import { toast } from 'sonner';
+
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -12,10 +14,13 @@ import Badge from '@/components/ui/Badge';
 import Modal from '@/components/ui/Modal';
 import InvoiceForm from '@/components/modules/InvoiceForm';
 import ReminderBlock from '@/components/reminders/ReminderBlock';
+import CreditNotePanel from '@/components/invoices/CreditNotePanel';
+import { useOrganization } from '@/hooks/useOrganization';
+import { downloadDocumentPdf, displayNumber } from '@/lib/documentPdf';
 import { cn } from '@/lib/utils';
 import {
   ArrowLeft, Pencil, Trash2, Send, CreditCard, Mail, Clock,
-  CheckCircle2, User, FileText,
+  CheckCircle2, User, FileText, Download,
 } from 'lucide-react';
 
 const EVENT_CONFIG = {
@@ -37,6 +42,7 @@ export default function InvoiceDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const { invoice, isLoading, mutate } = useInvoice(id);
+  const { organization } = useOrganization();
   const [editOpen,       setEditOpen]      = useState(false);
   const [emailOpen,      setEmailOpen]     = useState(false);
   const [loading,        setLoading]       = useState('');
@@ -73,7 +79,7 @@ export default function InvoiceDetailPage() {
       setEmailOpen(false);
       mutate();
     } catch (err) {
-      alert(err.response?.data?.error || "Erreur lors de l'envoi.");
+      toast.error(err.response?.data?.error || "Erreur lors de l'envoi.");
     } finally {
       setLoading('');
     }
@@ -98,13 +104,14 @@ export default function InvoiceDetailPage() {
   const isSent   = invoice.status === 'sent';
   const isPaid   = invoice.status === 'paid';
   const canEdit  = isDraft;
-  const canDelete = isDraft || invoice.status === 'cancelled';
+  const canDelete = isDraft; // une facture émise se conserve (correction par avoir)
+  const canMarkPaid = ['sent', 'email_opened', 'viewed', 'late', 'payment_pending'].includes(invoice.status);
   const clientEmail = invoice.clientId?.email;
 
   return (
     <>
-      <Header title={invoice.number} />
-      <div className="flex-1 p-6 max-w-3xl space-y-5">
+      <Header title={displayNumber(invoice.number)} />
+      <div className="flex-1 p-4 lg:p-6 max-w-3xl space-y-5">
 
         {/* Navigation + actions */}
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -117,17 +124,20 @@ export default function InvoiceDetailPage() {
                 <Pencil size={14} /> Modifier
               </Button>
             )}
-            {!isPaid && (
+            {!isPaid && invoice.status !== 'cancelled' && (
               <Button variant="secondary" size="sm" onClick={() => { setEmailOverride(clientEmail || ''); setEmailOpen(true); }}>
                 <Mail size={14} /> Envoyer par email
               </Button>
             )}
             {isDraft && (
-              <Button size="sm" onClick={() => updateStatus('sent')} loading={loading === 'sent'}>
+              <Button size="sm" onClick={() => updateStatus('sent')} loading={loading === 'sent'} title="Le numéro définitif est attribué à l’émission">
                 <Send size={14} /> Marquer envoyée
               </Button>
             )}
-            {isSent && (
+            <Button variant="secondary" size="sm" onClick={() => downloadDocumentPdf('invoice', invoice, organization, invoice.clientId)}>
+              <Download size={14} /> PDF
+            </Button>
+            {canMarkPaid && (
               <Button size="sm" variant="secondary" onClick={() => updateStatus('paid')} loading={loading === 'paid'}>
                 <CreditCard size={14} /> Marquer payée
               </Button>
@@ -156,7 +166,7 @@ export default function InvoiceDetailPage() {
                   <div className="w-9 h-9 rounded-xl bg-accent-50 flex items-center justify-center">
                     <FileText size={16} className="text-accent-600" strokeWidth={1.75} />
                   </div>
-                  <h2 className="text-2xl font-bold font-mono text-slate-900">{invoice.number}</h2>
+                  <h2 className="text-2xl font-bold font-mono text-slate-900">{displayNumber(invoice.number)}</h2>
                   <Badge status={invoice.status} />
                 </div>
                 <p className="text-sm text-slate-500">
@@ -167,7 +177,7 @@ export default function InvoiceDetailPage() {
                 {invoice.paidAt && <p className="text-sm text-success-600 mt-1">Payée le {fmtDate(invoice.paidAt)}</p>}
               </div>
               <div className="text-right">
-                <p className="text-[11px] text-slate-400 uppercase font-semibold tracking-wide mb-1">Total TTC</p>
+                <p className="text-[11px] text-slate-500 uppercase font-semibold tracking-wide mb-1">Total TTC</p>
                 <p className="text-4xl font-bold text-slate-900 tabular-nums">{fmt(invoice.total)}</p>
               </div>
             </div>
@@ -179,7 +189,7 @@ export default function InvoiceDetailPage() {
           <Card hover>
             <CardHeader>
               <div className="flex items-center gap-2">
-                <User size={13} className="text-slate-400" />
+                <User size={13} className="text-slate-500" />
                 <h3 className="text-sm font-semibold text-slate-800">Client</h3>
               </div>
             </CardHeader>
@@ -193,7 +203,7 @@ export default function InvoiceDetailPage() {
                     {invoice.clientId.name}
                   </p>
                   {invoice.clientId.company && <p className="text-xs text-slate-500">{invoice.clientId.company}</p>}
-                  {invoice.clientId.email && <p className="text-xs text-slate-400">{invoice.clientId.email}</p>}
+                  {invoice.clientId.email && <p className="text-xs text-slate-500">{invoice.clientId.email}</p>}
                 </div>
               </Link>
             </CardBody>
@@ -209,11 +219,11 @@ export default function InvoiceDetailPage() {
             <table className="w-full text-sm">
               <thead className="bg-slate-50/80 border-b border-slate-100">
                 <tr>
-                  <th className="text-left px-6 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Description</th>
-                  <th className="text-center px-3 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Qté</th>
-                  <th className="text-right px-3 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">PU HT</th>
-                  <th className="text-center px-3 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">TVA</th>
-                  <th className="text-right px-6 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Total HT</th>
+                  <th className="text-left px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Description</th>
+                  <th className="text-center px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Qté</th>
+                  <th className="text-right px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">PU HT</th>
+                  <th className="text-center px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">TVA</th>
+                  <th className="text-right px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Total HT</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -222,7 +232,7 @@ export default function InvoiceDetailPage() {
                     <td className="px-6 py-3.5 text-slate-900 font-medium">{line.description}</td>
                     <td className="px-3 py-3.5 text-center text-slate-600 tabular-nums">{line.quantity}</td>
                     <td className="px-3 py-3.5 text-right text-slate-600 tabular-nums">{fmt(line.unitPrice)}</td>
-                    <td className="px-3 py-3.5 text-center text-slate-400">{line.vatRate}%</td>
+                    <td className="px-3 py-3.5 text-center text-slate-500">{line.vatRate}%</td>
                     <td className="px-6 py-3.5 text-right font-semibold text-slate-800 tabular-nums">{fmt(line.quantity * line.unitPrice)}</td>
                   </tr>
                 ))}
@@ -252,6 +262,9 @@ export default function InvoiceDetailPage() {
           </Card>
         )}
 
+        {/* Avoirs (correction / annulation d'une facture émise) */}
+        {!isDraft && <CreditNotePanel invoice={invoice} org={organization} onChange={mutate} />}
+
         {/* Relances automatiques */}
         {!isPaid && invoice.status !== 'cancelled' && (
           <ReminderBlock doc={invoice} docType="invoice" mutate={mutate} />
@@ -262,7 +275,7 @@ export default function InvoiceDetailPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Clock size={13} className="text-slate-400" />
+                <Clock size={13} className="text-slate-500" />
                 <h3 className="text-sm font-semibold text-slate-800">Historique</h3>
               </div>
             </CardHeader>
@@ -284,7 +297,7 @@ export default function InvoiceDetailPage() {
                           <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold', cfg.color)}>
                             {cfg.label}
                           </span>
-                          <time className="text-[11px] text-slate-400 whitespace-nowrap">
+                          <time className="text-[11px] text-slate-500 whitespace-nowrap">
                             {new Date(ev.timestamp).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}
                           </time>
                         </div>
@@ -306,11 +319,11 @@ export default function InvoiceDetailPage() {
       <Modal open={emailOpen} onClose={() => setEmailOpen(false)} title="Envoyer la facture par email">
         <form onSubmit={handleSendEmail} className="space-y-4">
           <p className="text-sm text-slate-600">
-            La facture <strong className="text-slate-900">{invoice.number}</strong> ({fmt(invoice.total)}) sera envoyée par email.
+            La facture <strong className="text-slate-900">{displayNumber(invoice.number)}</strong> ({fmt(invoice.total)}) sera envoyée par email.
           </p>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Email destinataire</label>
-            <input
+            <label htmlFor="invoices-id-page-email-destinataire" className="block text-sm font-medium text-slate-700 mb-1">Email destinataire</label>
+            <input id="invoices-id-page-email-destinataire"
               type="email"
               value={emailOverride}
               onChange={(e) => setEmailOverride(e.target.value)}
@@ -318,7 +331,7 @@ export default function InvoiceDetailPage() {
               className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-accent-500"
             />
             {clientEmail && (
-              <p className="text-xs text-slate-400 mt-1">Laissez vide pour utiliser {clientEmail}</p>
+              <p className="text-xs text-slate-500 mt-1">Laissez vide pour utiliser {clientEmail}</p>
             )}
           </div>
           <div className="flex justify-end gap-3">
