@@ -3,11 +3,12 @@ import api from '../lib/api';
 
 const fetcher = async (url) => (await api.get(url)).data;
 
-// Statut des intégrations (LinkedIn connecté, Unsplash / IA configurés)
+// Statut des intégrations (LinkedIn / Instagram connectés, Unsplash / IA configurés)
 export function useSocialStatus() {
   const { data, error, isLoading, mutate } = useSWR('/api/social/status', fetcher);
   return {
     linkedin: data?.linkedin || { configured: false, account: null },
+    instagram: data?.instagram || { configured: false, account: null },
     unsplash: data?.unsplash || { configured: false },
     ai: data?.ai || { configured: false },
     isLoading,
@@ -25,8 +26,8 @@ export function useSocialPosts() {
 }
 
 export const socialApi = {
-  connectLinkedIn: async () => (await api.get('/api/social/linkedin/connect')).data,
-  disconnectLinkedIn: async () => (await api.delete('/api/social/linkedin')).data,
+  connect: async (network) => (await api.get(`/api/social/${network}/connect`)).data,
+  disconnect: async (network) => (await api.delete(`/api/social/${network}`)).data,
   getPost: async (id) => (await api.get(`/api/social/posts/${id}`)).data.post,
   createPost: async (body) => (await api.post('/api/social/posts', body)).data.post,
   updatePost: async (id, body) => (await api.patch(`/api/social/posts/${id}`, body)).data.post,

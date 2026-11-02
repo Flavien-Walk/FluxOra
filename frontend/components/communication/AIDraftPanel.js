@@ -25,7 +25,7 @@ const IDEAS = [
  * Rédaction assistée : l'IA (compétence marketing) propose 3 variantes + des photos.
  * onApply({ text, photos, brief }) remplit l'éditeur.
  */
-export default function AIDraftPanel({ onApply, aiConfigured }) {
+export default function AIDraftPanel({ onApply, aiConfigured, network }) {
   const [brief, setBrief] = useState('');
   const [tone, setTone] = useState('professionnel');
   const [loading, setLoading] = useState(false);
@@ -35,7 +35,7 @@ export default function AIDraftPanel({ onApply, aiConfigured }) {
     if (brief.trim().length < 5) return toast.error('Décrivez le sujet du post en quelques mots.');
     setLoading(true);
     try {
-      const data = await socialApi.aiDraft({ brief: brief.trim(), tone });
+      const data = await socialApi.aiDraft({ brief: brief.trim(), tone, network });
       setResult(data);
     } catch (err) {
       toast.error(err.response?.data?.error || 'La rédaction IA a échoué.');

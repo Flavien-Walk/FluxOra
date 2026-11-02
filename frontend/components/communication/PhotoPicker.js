@@ -9,7 +9,7 @@ import { socialApi } from '@/hooks/useSocial';
 /**
  * Choix de la photo du post : suggestions de l'IA, recherche Unsplash, ou URL d'image.
  */
-export default function PhotoPicker({ image, options = [], onChange, unsplashConfigured }) {
+export default function PhotoPicker({ image, options = [], onChange, unsplashConfigured, required = false }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState(null);
   const [searching, setSearching] = useState(false);
@@ -97,7 +97,7 @@ export default function PhotoPicker({ image, options = [], onChange, unsplashCon
 
       {!photos.length && !image?.url && (
         <div className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2.5 text-xs text-slate-500">
-          <ImageOff size={14} /> Aucune photo — le post sera publié en texte seul.
+          <ImageOff size={14} /> {required ? 'Ajoutez une photo JPEG : elle est obligatoire sur Instagram.' : 'Aucune photo — le post sera publié en texte seul.'}
         </div>
       )}
 
